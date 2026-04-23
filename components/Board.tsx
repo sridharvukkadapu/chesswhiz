@@ -41,8 +41,8 @@ export default function Board({
         style={{
           gridTemplateColumns: "repeat(8, 1fr)",
           gridTemplateRows: "repeat(8, 1fr)",
-          width: "min(calc(100vw - 32px), 480px)",
-          height: "min(calc(100vw - 32px), 480px)",
+          width: "min(calc(100vw - 24px), 480px)",
+          height: "min(calc(100vw - 24px), 480px)",
           boxShadow: "0 12px 48px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05)",
         }}
       >

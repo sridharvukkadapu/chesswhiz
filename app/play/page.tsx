@@ -218,9 +218,9 @@ export default function PlayPage() {
       </header>
 
       {/* Main layout */}
-      <main className="flex flex-wrap justify-center items-start gap-4 max-w-5xl mx-auto p-4">
+      <main className="flex flex-wrap justify-center items-start gap-4 max-w-5xl mx-auto p-3 sm:p-4">
         {/* Left: Board */}
-        <div className="flex-shrink-0 flex flex-col gap-2">
+        <div className="flex flex-col gap-2 w-full" style={{ maxWidth: "min(calc(100vw - 24px), 480px)" }}>
           <PlayerBar
             name="ChessBot"
             colorLabel="Black"
@@ -250,7 +250,7 @@ export default function PlayPage() {
         </div>
 
         {/* Right: Coach + moves + actions */}
-        <div className="flex flex-col gap-3" style={{ flex: "1 1 280px", maxWidth: 400, minWidth: 260 }}>
+        <div className="flex flex-col gap-3 w-full" style={{ flex: "1 1 280px", maxWidth: 480 }}>
           <CoachPanel messages={coachMessages} loading={coachLoading} />
           <MoveHistory moves={moveHistory} />
 

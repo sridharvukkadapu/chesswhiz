@@ -5,8 +5,6 @@ export function shouldCoach(
   moveCount: number,
   lastCoachMove: number
 ): boolean {
-  if (!analysis) return false;
-
   const movesSinceCoach = moveCount - lastCoachMove;
 
   // Always coach on serious mistakes

@@ -16,6 +16,16 @@ const MSG_STYLES: Record<CoachMessage["type"], { bg: string; border: string }> =
   celebration: { bg: "rgba(196,232,91,0.08)",  border: "#c4e85b" },
 };
 
+function CoachIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2z" />
+      <path d="M12 12c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z" />
+      <path d="M9 7l1.5 1.5L13 6" strokeWidth="2.5" />
+    </svg>
+  );
+}
+
 export default function CoachPanel({ messages, loading }: CoachPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -27,13 +37,15 @@ export default function CoachPanel({ messages, loading }: CoachPanelProps) {
       className="flex flex-col rounded-xl border overflow-hidden"
       style={{ background: "#1e1c1a", borderColor: "#3a3633", flex: "1 1 0", minHeight: 240, maxHeight: 380 }}
     >
-      <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ borderColor: "#3a3633" }}>
-        <span className="text-lg">🐾</span>
-        <span className="text-sm font-bold" style={{ color: "#5bb8e8", fontFamily: "'Fredoka', sans-serif", letterSpacing: "0.3px" }}>
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b" style={{ borderColor: "#3a3633" }}>
+        <span className="flex items-center" style={{ color: "#5bb8e8" }}>
+          <CoachIcon />
+        </span>
+        <span className="text-sm font-bold" style={{ color: "#5bb8e8", fontFamily: "var(--font-baloo), sans-serif", letterSpacing: "0.3px" }}>
           Coach Pawn
         </span>
         {loading && (
-          <span className="ml-auto text-xs" style={{ color: "#5a5550", fontFamily: "'Outfit', sans-serif" }}>
+          <span className="ml-auto text-xs" style={{ color: "#5a5550", fontFamily: "var(--font-nunito), sans-serif" }}>
             thinking<span className="coach-dots">...</span>
           </span>
         )}
@@ -51,7 +63,7 @@ export default function CoachPanel({ messages, loading }: CoachPanelProps) {
                 borderRadius: "2px 12px 12px 12px",
               }}
             >
-              <p className="text-sm leading-relaxed m-0" style={{ color: "#c8c0b5", fontFamily: "'Outfit', sans-serif" }}>
+              <p className="text-sm leading-relaxed m-0" style={{ color: "#c8c0b5", fontFamily: "var(--font-nunito), sans-serif" }}>
                 {msg.text}
               </p>
             </div>

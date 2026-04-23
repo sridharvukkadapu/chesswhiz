@@ -20,13 +20,13 @@ export default function MoveHistory({ moves }: MoveHistoryProps) {
   return (
     <div className="rounded-xl border overflow-hidden" style={{ background: "#1e1c1a", borderColor: "#3a3633" }}>
       <div className="px-3 py-2 border-b" style={{ borderColor: "#3a3633" }}>
-        <span className="text-xs font-semibold tracking-wider" style={{ color: "#8a8278", fontFamily: "'Outfit', sans-serif" }}>
+        <span className="text-xs font-semibold tracking-wider" style={{ color: "#8a8278", fontFamily: "var(--font-nunito), sans-serif" }}>
           MOVES
         </span>
       </div>
       <div ref={ref} className="px-3 py-2 overflow-y-auto" style={{ maxHeight: 96 }}>
         {pairs.length === 0 ? (
-          <span className="text-xs italic" style={{ color: "#5a5550", fontFamily: "'Outfit', sans-serif" }}>
+          <span className="text-xs italic" style={{ color: "#5a5550", fontFamily: "var(--font-nunito), sans-serif" }}>
             Your move first!
           </span>
         ) : (

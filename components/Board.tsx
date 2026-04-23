@@ -87,7 +87,7 @@ export default function Board({
               {c === 0 && (
                 <span
                   className="absolute top-0.5 left-0.5 text-[9px] font-bold opacity-60"
-                  style={{ color: isLight ? "#ae825e" : "#ecd8b8", fontFamily: "'Outfit', sans-serif" }}
+                  style={{ color: isLight ? "#ae825e" : "#ecd8b8", fontFamily: "var(--font-nunito), sans-serif" }}
                 >
                   {8 - r}
                 </span>
@@ -95,7 +95,7 @@ export default function Board({
               {r === 7 && (
                 <span
                   className="absolute bottom-0.5 right-0.5 text-[9px] font-bold opacity-60"
-                  style={{ color: isLight ? "#ae825e" : "#ecd8b8", fontFamily: "'Outfit', sans-serif" }}
+                  style={{ color: isLight ? "#ae825e" : "#ecd8b8", fontFamily: "var(--font-nunito), sans-serif" }}
                 >
                   {COLS[c]}
                 </span>

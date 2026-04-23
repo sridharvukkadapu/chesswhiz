@@ -1,18 +1,18 @@
 import type { Metadata } from "next";
-import { Fredoka, Outfit } from "next/font/google";
+import { Baloo_2, Nunito } from "next/font/google";
 import "./globals.css";
 
-const fredoka = Fredoka({
+const baloo = Baloo_2({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-fredoka",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-baloo",
   display: "swap",
 });
 
-const outfit = Outfit({
+const nunito = Nunito({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  variable: "--font-outfit",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-nunito",
   display: "swap",
 });
 
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fredoka.variable} ${outfit.variable}`}>
+    <html lang="en" className={`${baloo.variable} ${nunito.variable}`}>
       <body style={{ margin: 0, background: "#151312" }}>{children}</body>
     </html>
   );

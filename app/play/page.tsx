@@ -195,21 +195,31 @@ export default function PlayPage() {
         style={{ background: "#1e1c1a", borderColor: "#3a3633" }}
       >
         <div className="flex items-center gap-2">
-          <span className="text-xl">♟</span>
-          <span className="text-lg font-bold" style={{ color: "#5be882", fontFamily: "'Fredoka', sans-serif" }}>
+          <span className="text-xl" aria-hidden="true">♟</span>
+          <span className="text-lg font-bold" style={{ color: "#5be882", fontFamily: "var(--font-baloo), sans-serif" }}>
             ChessWhiz
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs" style={{ color: "#5a5550", fontFamily: "'Outfit', sans-serif" }}>
-            {["🐱 Easy", "🔥 Medium", "🦁 Hard"][difficulty - 1]}
+          <span className="text-xs" style={{ color: "#5a5550", fontFamily: "var(--font-nunito), sans-serif" }}>
+            {["Easy", "Medium", "Hard"][difficulty - 1]}
           </span>
           <button
             onClick={() => store.resetGame()}
-            className="px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer transition-colors"
+            className="px-3 rounded-lg border text-xs font-semibold cursor-pointer"
             style={{
               background: "#282523", borderColor: "#3a3633",
-              color: "#c8c0b5", fontFamily: "'Outfit', sans-serif",
+              color: "#c8c0b5", fontFamily: "var(--font-nunito), sans-serif",
+              height: "36px",
+              transition: "background 0.15s ease, border-color 0.15s ease",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "#32302e";
+              (e.currentTarget as HTMLElement).style.borderColor = "#5a5550";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.background = "#282523";
+              (e.currentTarget as HTMLElement).style.borderColor = "#3a3633";
             }}
           >
             New Game
@@ -226,7 +236,7 @@ export default function PlayPage() {
             colorLabel="Black"
             isActive={chess.turn() === "b" && status === "playing"}
             isBotThinking={botThinking}
-            emoji="🤖"
+            isBot={true}
           />
           <Board
             chess={chess}
@@ -244,7 +254,7 @@ export default function PlayPage() {
             colorLabel="White"
             isActive={chess.turn() === "w" && status === "playing"}
             isBotThinking={false}
-            emoji="👦"
+            isBot={false}
           />
           <GameStatusBar status={status} playerName={playerName} onReset={() => store.resetGame()} />
         </div>
@@ -257,18 +267,54 @@ export default function PlayPage() {
           <div className="flex gap-2">
             <button
               onClick={() => store.resetGame()}
-              className="flex-1 py-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-colors"
-              style={{ background: "#282523", borderColor: "#3a3633", color: "#c8c0b5", fontFamily: "'Outfit', sans-serif" }}
+              className="flex-1 rounded-xl border text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5"
+              style={{
+                background: "#282523", borderColor: "#3a3633", color: "#c8c0b5",
+                fontFamily: "var(--font-nunito), sans-serif",
+                minHeight: "44px",
+                transition: "background 0.15s ease, border-color 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "#32302e";
+                (e.currentTarget as HTMLElement).style.borderColor = "#5a5550";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "#282523";
+                (e.currentTarget as HTMLElement).style.borderColor = "#3a3633";
+              }}
             >
-              🔄 New Game
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+              New Game
             </button>
             <button
               onClick={() => store.undo()}
               disabled={stateHistory.length < 2 || status !== "playing"}
-              className="flex-1 py-2.5 rounded-xl border text-xs font-bold cursor-pointer transition-colors disabled:opacity-35"
-              style={{ background: "#282523", borderColor: "#3a3633", color: "#c8c0b5", fontFamily: "'Outfit', sans-serif" }}
+              className="flex-1 rounded-xl border text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-35 disabled:cursor-not-allowed"
+              style={{
+                background: "#282523", borderColor: "#3a3633", color: "#c8c0b5",
+                fontFamily: "var(--font-nunito), sans-serif",
+                minHeight: "44px",
+                transition: "background 0.15s ease, border-color 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                if (!(e.currentTarget as HTMLButtonElement).disabled) {
+                  (e.currentTarget as HTMLElement).style.background = "#32302e";
+                  (e.currentTarget as HTMLElement).style.borderColor = "#5a5550";
+                }
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.background = "#282523";
+                (e.currentTarget as HTMLElement).style.borderColor = "#3a3633";
+              }}
             >
-              ↩️ Undo
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M9 14 4 9l5-5" />
+                <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11" />
+              </svg>
+              Undo
             </button>
           </div>
         </div>

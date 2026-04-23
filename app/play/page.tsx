@@ -116,11 +116,10 @@ export default function PlayPage() {
       requestCoaching(analysis);
     }
 
-    // Bot's turn
+    // Bot's turn — async so minimax yields between moves and UI stays responsive
     if (newChess.turn() === "b") {
       store.setBotThinking(true);
-      setTimeout(() => {
-        const botMove = findBestMove(newChess, difficulty);
+      findBestMove(newChess, difficulty).then((botMove) => {
         if (botMove) {
           const botSAN = moveToSAN(newChess, botMove);
           const afterBot = applyMove(newChess, botMove);
@@ -139,7 +138,7 @@ export default function PlayPage() {
           }
         }
         store.setBotThinking(false);
-      }, 350 + Math.random() * 500);
+      });
     }
   }, [chess, difficulty, playerName, store, requestCoaching]);
 

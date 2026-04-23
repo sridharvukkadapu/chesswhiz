@@ -8,7 +8,7 @@ function minimax(chess: Chess, depth: number, alpha: number, beta: number, maxim
   if (depth === 0 || moves.length === 0) {
     if (moves.length === 0) {
       if (chess.isCheckmate()) return maximizing ? -99999 : 99999;
-      return 0; // stalemate
+      return 0;
     }
     return evaluate(chess);
   }
@@ -32,11 +32,15 @@ function minimax(chess: Chess, depth: number, alpha: number, beta: number, maxim
   }
 }
 
-export function findBestMove(chess: Chess, difficulty: Difficulty): Move | null {
+// Yields to the browser event loop between root-level move evaluations,
+// keeping the UI responsive while the bot calculates.
+export async function findBestMove(chess: Chess, difficulty: Difficulty): Promise<Move | null> {
   const moves = getLegalMoves(chess);
   if (moves.length === 0) return null;
 
   if (difficulty === 1) {
+    // Easy: mostly random, occasionally captures
+    await yieldToBrowser();
     const captures = moves.filter((m) => {
       const clone = new Chess(chess.fen());
       const result = clone.move({ from: m.from, to: m.to });
@@ -54,6 +58,8 @@ export function findBestMove(chess: Chess, difficulty: Difficulty): Move | null 
   let bestMoves: Move[] = [];
 
   for (const move of moves) {
+    // Yield between each root move so the browser stays responsive
+    await yieldToBrowser();
     const score = minimax(applyMove(chess, move), depth - 1, -Infinity, Infinity, !isMax);
     if ((isMax && score > bestScore) || (!isMax && score < bestScore)) {
       bestScore = score;
@@ -67,5 +73,13 @@ export function findBestMove(chess: Chess, difficulty: Difficulty): Move | null 
     return moves[Math.floor(Math.random() * moves.length)];
   }
 
-  return bestMoves[Math.floor(Math.random() * bestMoves.length)];
+  return bestMoves[Math.floor(Math.random() * bestMoves.length)] ?? null;
+}
+
+// Use scheduler.yield() when available (Chrome 115+), fall back to setTimeout(0)
+function yieldToBrowser(): Promise<void> {
+  if (typeof (globalThis as any).scheduler?.yield === "function") {
+    return (globalThis as any).scheduler.yield();
+  }
+  return new Promise((resolve) => setTimeout(resolve, 0));
 }

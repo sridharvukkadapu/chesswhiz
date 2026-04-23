@@ -1,28 +1,112 @@
 @import "tailwindcss";
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
+/* ── Coach message entrance ──────────────────────── */
 @keyframes coach-fade {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(6px) translateX(-4px); }
+  to   { opacity: 1; transform: translateY(0) translateX(0); }
+}
+.coach-fade { animation: coach-fade 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ── Thinking dots ───────────────────────────────── */
+@keyframes dot-pulse {
+  0%, 80%, 100% { opacity: 0.2; transform: scale(0.7); }
+  40%            { opacity: 1;   transform: scale(1); }
+}
+.coach-dot {
+  display: inline-block;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #D97706;
+  animation: dot-pulse 1.4s infinite ease-in-out;
+  will-change: transform, opacity;
+}
+.coach-dot:nth-child(1) { animation-delay: 0s; }
+.coach-dot:nth-child(2) { animation-delay: 0.2s; }
+.coach-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Card entrance ───────────────────────────────── */
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(24px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.card-enter { animation: card-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ── Piece move flash ────────────────────────────── */
+@keyframes square-land {
+  0%   { filter: brightness(1.5); }
+  100% { filter: brightness(1); }
+}
+.square-land { animation: square-land 0.35s ease-out; }
+
+/* ── Active player pulse ─────────────────────────── */
+@keyframes player-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(217, 119, 6, 0); }
+}
+.player-active { animation: player-pulse 2s infinite ease-in-out; }
+
+/* ── Game over banner entrance ───────────────────── */
+@keyframes status-enter {
+  from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+.status-enter { animation: status-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-.coach-fade {
-  animation: coach-fade 0.35s ease-out;
+/* ── Button press feedback ───────────────────────── */
+.btn-press {
+  transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+  will-change: transform;
+}
+.btn-press:active:not(:disabled) { transform: scale(0.95); }
+.btn-press:hover:not(:disabled) { filter: brightness(1.08); }
+
+/* ── Focus rings (gold, WCAG AA) ─────────────────── */
+:focus-visible {
+  outline: 2px solid #D97706;
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
-@keyframes dot-pulse {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.2; }
+/* ── Board texture overlay ───────────────────────── */
+.board-square-light {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+}
+.board-square-dark {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
 }
 
-.coach-dots {
-  animation: dot-pulse 1.2s infinite;
+/* ── Reduced motion ──────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
+/* ── Scrollbar ───────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #3a3633; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #5a5550; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+
+/* ── Skip link (a11y) ────────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 8px;
+  padding: 8px 16px;
+  background: #D97706;
+  color: #000;
+  font-weight: 700;
+  border-radius: 0 0 8px 8px;
+  z-index: 9999;
+  transition: top 0.1s;
+}
+.skip-link:focus { top: 0; }

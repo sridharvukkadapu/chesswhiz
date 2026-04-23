@@ -18,25 +18,25 @@ export default function MoveHistory({ moves }: MoveHistoryProps) {
   }
 
   return (
-    <div className="rounded-xl border overflow-hidden" style={{ background: "#1e1c1a", borderColor: "#3a3633" }}>
-      <div className="px-3 py-2 border-b" style={{ borderColor: "#3a3633" }}>
-        <span className="text-xs font-semibold tracking-wider" style={{ color: "#8a8278", fontFamily: "var(--font-nunito), sans-serif" }}>
+    <div className="rounded-xl border overflow-hidden" style={{ background: "#192134", borderColor: "rgba(255,255,255,0.08)" }}>
+      <div className="px-3 py-2 border-b" style={{ borderColor: "rgba(255,255,255,0.08)" }}>
+        <span className="text-xs font-semibold tracking-widest uppercase" style={{ color: "#475569", fontFamily: "var(--font-nunito), sans-serif" }}>
           MOVES
         </span>
       </div>
       <div ref={ref} className="px-3 py-2 overflow-y-auto" style={{ maxHeight: 96 }}>
         {pairs.length === 0 ? (
-          <span className="text-xs italic" style={{ color: "#5a5550", fontFamily: "var(--font-nunito), sans-serif" }}>
+          <span className="text-xs italic" style={{ color: "#475569", fontFamily: "var(--font-nunito), sans-serif" }}>
             Your move first!
           </span>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "28px 1fr 1fr", gap: "2px 6px" }}>
             {pairs.map((p) => (
               <div key={p.num} style={{ display: "contents" }}>
-                <span className="text-right text-xs" style={{ color: "#5a5550", fontFamily: "'JetBrains Mono', monospace" }}>
+                <span className="text-right text-xs" style={{ color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>
                   {p.num}.
                 </span>
-                <span className="text-xs font-semibold" style={{ color: "#f5f0ea", fontFamily: "'JetBrains Mono', monospace" }}>
+                <span className="text-xs font-semibold" style={{ color: "#f1ede8", fontFamily: "'JetBrains Mono', monospace" }}>
                   {p.w}
                 </span>
                 <span className="text-xs" style={{ color: "#8a8278", fontFamily: "'JetBrains Mono', monospace" }}>

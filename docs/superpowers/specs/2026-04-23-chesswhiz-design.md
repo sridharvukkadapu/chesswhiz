@@ -190,11 +190,10 @@ Position: [current FEN]
 [trigger-specific instruction — e.g., "The kid played Nf3, a great move! Praise them and explain why developing a knight toward the center is strong."]
 ```
 
-**Anti-hallucination guard:** The trigger instruction always includes what the engine determined (played move, best move, eval delta). Claude is explicitly told what happened — it explains, never computes. Post-process: if the response contains an algebraic move notation not present in the prompt context, discard and use a fallback response.
+**Anti-hallucination guard:** The trigger instruction always includes what the engine determined (played move, best move, eval delta). Claude is explicitly told what happened — it explains, never computes. For v1: rely on the system prompt constraint ("never suggest moves") and log every coaching response to the console. Manually audit the first 100 responses to calibrate quality before adding automated filtering. Post-processing regex is deferred — SAN notation overlaps with natural text ("Be3", "a4") making it error-prone.
 
 **Model routing:**
-- Haiku: `GREAT_MOVE`, `OK_MOVE` (fast, cheap)
-- Sonnet: `INACCURACY`, `MISTAKE`, `BLUNDER`, game-end summaries (richer explanation)
+- Sonnet for everything in v1. Coaching quality is the product differentiator — validate that prompts work well before optimizing costs. Cost delta at low volume is negligible (~$5/mo). Downgrade specific triggers to Haiku post-launch once coaching quality is confirmed.
 
 **Offline fallbacks:** Hardcoded in `prompts.ts` — one array per trigger type, randomly selected. Used when the API call fails or times out.
 
@@ -228,7 +227,7 @@ Final: `data: [DONE]\n\n`
 **Implementation:**
 1. Validate request body (zod schema)
 2. Call `buildCoachPrompt()` from `lib/coaching/prompts.ts`
-3. Pick model (Haiku vs Sonnet) based on severity
+3. Use Sonnet for all coaching in v1
 4. Call `anthropic.messages.stream()` with `@anthropic-ai/sdk`
 5. Pipe chunks to `ReadableStream` response
 6. On error: return a JSON fallback response (not an SSE error) so the client can handle it gracefully
@@ -270,6 +269,8 @@ State shape:
 ```
 
 Actions: `setSettings`, `selectSquare`, `clearSelection`, `makeMove`, `showPromoModal`, `setBotThinking`, `addCoachMessage`, `setCoachLoading`, `resetGame`, `undo`
+
+**Undo behavior:** Pops 2 entries from `stateHistory` (player move + bot response). After undo, dispatches a coaching message: "Let's try that again! Think it through — what are all your options?" This makes undo feel like a coaching moment rather than a silent rewind.
 
 **Persistence:** Zustand state is in-memory for v1. Settings (name, age, difficulty) are lost on page refresh — the user returns to the onboarding screen. This is intentional; no localStorage persistence in v1.
 
@@ -320,8 +321,7 @@ The `lib/` directory is intentionally framework-agnostic to make the eventual Re
 4. **`stores/gameStore.ts`** — Zustand store wiring all state
 5. **`components/Board.tsx`** — board rendering and click handling
 6. **`components/CoachPanel.tsx`** + `MoveHistory.tsx` + `PlayerBar.tsx` + `GameStatus.tsx`
-7. **`components/Onboarding.tsx`** + `app/page.tsx`
-8. **`app/play/page.tsx`** — wires all components together
-9. **`app/api/coach/route.ts`** — Claude SSE endpoint
-10. **Integration** — connect coaching flow end-to-end, test with real API key
-11. **Polish** — animations, responsive layout, remove FEN debug display
+7. **`app/api/coach/route.ts`** — Claude SSE endpoint (before onboarding — coaching pipeline is critical path)
+8. **`app/play/page.tsx`** — wires all components together; test coaching flow end-to-end here
+9. **`components/Onboarding.tsx`** + `app/page.tsx` — onboarding is UI polish, not critical path
+10. **Polish** — animations, responsive layout, remove FEN debug display

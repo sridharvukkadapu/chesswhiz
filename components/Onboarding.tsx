@@ -37,22 +37,22 @@ export default function Onboarding({ onStart }: OnboardingProps) {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-5"
-      style={{ background: "radial-gradient(ellipse at 30% 20%, #1f1a14 0%, #151312 70%)" }}
+      style={{ background: "radial-gradient(ellipse at 30% 20%, #0f2744 0%, #0F172A 70%)" }}
     >
       <div
-        className="w-full rounded-3xl p-8 text-center border"
+        className="card-enter w-full rounded-3xl p-8 text-center border"
         style={{
-          background: "#1e1c1a",
-          borderColor: "#3a3633",
+          background: "#192134",
+          borderColor: "rgba(255,255,255,0.08)",
           maxWidth: 420,
           boxShadow: "0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)",
         }}
       >
         <div className="text-6xl mb-1" style={{ filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.3))", lineHeight: 1 }}>♟</div>
-        <h1 className="text-4xl font-bold mb-0.5 mt-2" style={{ color: "#5be882", fontFamily: "var(--font-baloo), sans-serif", letterSpacing: "-0.5px" }}>
+        <h1 className="text-4xl font-bold mb-0.5 mt-2" style={{ color: "#15803D", fontFamily: "var(--font-baloo), sans-serif", letterSpacing: "-0.5px" }}>
           ChessWhiz
         </h1>
-        <p className="text-sm mb-8" style={{ color: "#5a5550", fontFamily: "var(--font-nunito), sans-serif" }}>
+        <p className="text-sm mb-8" style={{ color: "#64748B", fontFamily: "var(--font-nunito), sans-serif" }}>
           Learn chess with your AI coach
         </p>
 
@@ -61,7 +61,7 @@ export default function Onboarding({ onStart }: OnboardingProps) {
           <label
             htmlFor="player-name"
             className="block text-xs font-semibold mb-1.5"
-            style={{ color: "#8a8278", fontFamily: "var(--font-nunito), sans-serif" }}
+            style={{ color: "#94A3B8", fontFamily: "var(--font-nunito), sans-serif" }}
           >
             Your name
           </label>
@@ -73,19 +73,19 @@ export default function Onboarding({ onStart }: OnboardingProps) {
             autoComplete="given-name"
             className="w-full px-4 rounded-xl border text-base outline-none"
             style={{
-              background: "#282523", borderColor: "#3a3633",
+              background: "#0F1F2B", borderColor: "rgba(255,255,255,0.08)",
               color: "#f5f0ea", fontFamily: "var(--font-nunito), sans-serif",
               height: "48px",
               transition: "border-color 0.15s ease",
             }}
-            onFocus={(e) => { e.target.style.borderColor = "rgba(91,232,130,0.5)"; }}
-            onBlur={(e) => { e.target.style.borderColor = "#3a3633"; }}
+            onFocus={(e) => { e.target.style.borderColor = "rgba(21,128,61,0.5)"; }}
+            onBlur={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.08)"; }}
           />
         </div>
 
         {/* Age group */}
         <div className="text-left mb-5">
-          <span className="block text-xs font-semibold mb-2" style={{ color: "#8a8278", fontFamily: "var(--font-nunito), sans-serif" }}>
+          <span className="block text-xs font-semibold mb-2" style={{ color: "#94A3B8", fontFamily: "var(--font-nunito), sans-serif" }}>
             Age group
           </span>
           <div className="flex gap-2" role="group" aria-label="Age group">
@@ -94,11 +94,11 @@ export default function Onboarding({ onStart }: OnboardingProps) {
                 key={opt.value}
                 onClick={() => setAge(opt.value)}
                 aria-pressed={age === opt.value}
-                className="flex-1 rounded-xl border text-sm font-bold cursor-pointer"
+                className="btn-press flex-1 rounded-xl border text-sm font-bold cursor-pointer"
                 style={{
-                  background: age === opt.value ? "rgba(91,232,130,0.1)" : "#282523",
-                  borderColor: age === opt.value ? "#5be882" : "#3a3633",
-                  color: age === opt.value ? "#5be882" : "#8a8278",
+                  background: age === opt.value ? "rgba(21,128,61,0.15)" : "#0F1F2B",
+                  borderColor: age === opt.value ? "#15803D" : "rgba(255,255,255,0.08)",
+                  color: age === opt.value ? "#22C55E" : "#94A3B8",
                   fontFamily: "var(--font-nunito), sans-serif",
                   height: "44px",
                   transition: "background 0.15s ease, border-color 0.15s ease, color 0.15s ease",
@@ -112,7 +112,7 @@ export default function Onboarding({ onStart }: OnboardingProps) {
 
         {/* Difficulty */}
         <div className="text-left mb-7">
-          <span className="block text-xs font-semibold mb-2" style={{ color: "#8a8278", fontFamily: "var(--font-nunito), sans-serif" }}>
+          <span className="block text-xs font-semibold mb-2" style={{ color: "#94A3B8", fontFamily: "var(--font-nunito), sans-serif" }}>
             Bot difficulty
           </span>
           <div className="flex gap-2" role="group" aria-label="Bot difficulty">
@@ -121,11 +121,11 @@ export default function Onboarding({ onStart }: OnboardingProps) {
                 key={opt.value}
                 onClick={() => setDifficulty(opt.value)}
                 aria-pressed={difficulty === opt.value}
-                className="flex-1 rounded-xl border cursor-pointer flex flex-col items-center justify-center gap-0.5"
+                className="btn-press flex-1 rounded-xl border cursor-pointer flex flex-col items-center justify-center gap-0.5"
                 style={{
-                  background: difficulty === opt.value ? "rgba(91,232,130,0.1)" : "#282523",
-                  borderColor: difficulty === opt.value ? "#5be882" : "#3a3633",
-                  color: difficulty === opt.value ? "#5be882" : "#8a8278",
+                  background: difficulty === opt.value ? "rgba(21,128,61,0.15)" : "#0F1F2B",
+                  borderColor: difficulty === opt.value ? "#15803D" : "rgba(255,255,255,0.08)",
+                  color: difficulty === opt.value ? "#22C55E" : "#94A3B8",
                   fontFamily: "var(--font-nunito), sans-serif",
                   height: "52px",
                   transition: "background 0.15s ease, border-color 0.15s ease, color 0.15s ease",
@@ -145,21 +145,14 @@ export default function Onboarding({ onStart }: OnboardingProps) {
           onClick={() => canStart && onStart(name.trim(), age, difficulty)}
           disabled={!canStart}
           aria-label="Start game"
-          className="w-full rounded-xl border-0 text-lg font-bold cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-press w-full rounded-xl border-0 text-lg font-bold cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
           style={{
-            background: canStart ? "#5be882" : "#282523",
-            color: canStart ? "#151312" : "#5a5550",
+            background: canStart ? "#15803D" : "#0F1F2B",
+            color: canStart ? "#ffffff" : "#94A3B8",
             fontFamily: "var(--font-baloo), sans-serif",
             letterSpacing: "0.3px",
             height: "52px",
-            boxShadow: canStart ? "0 4px 20px rgba(91,232,130,0.3)" : "none",
-            transition: "background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease",
-          }}
-          onMouseEnter={(e) => {
-            if (canStart) (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+            boxShadow: canStart ? "0 4px 24px rgba(21,128,61,0.4)" : "none",
           }}
         >
           Let&apos;s Play! ♟

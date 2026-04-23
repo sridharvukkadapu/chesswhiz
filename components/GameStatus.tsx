@@ -49,15 +49,16 @@ export default function GameStatusBar({ status, playerName, onReset }: GameStatu
   const isWin = status === "white_wins";
   const isDraw = status === "stalemate" || status === "draw";
 
-  const color = isWin ? "#c4e85b" : isDraw ? "#5bb8e8" : "#e8705b";
-  const bg = isWin ? "rgba(196,232,91,0.08)" : isDraw ? "rgba(91,184,232,0.08)" : "rgba(232,112,91,0.08)";
+  const color = isWin ? "#22C55E" : isDraw ? "#94A3B8" : "#e8705b";
+  const bg = isWin ? "rgba(34,197,94,0.1)" : isDraw ? "rgba(148,163,184,0.08)" : "rgba(232,112,91,0.08)";
+  const borderColor = isWin ? "rgba(34,197,94,0.2)" : isDraw ? "rgba(148,163,184,0.15)" : "rgba(232,112,91,0.3)";
   const label = isWin ? `${playerName} wins!` : isDraw ? "Draw!" : "Bot wins!";
   const Icon = isWin ? TrophyIcon : isDraw ? HandshakeIcon : BotWinIcon;
 
   return (
     <div
-      className="flex items-center justify-center gap-3 px-4 py-3 rounded-xl border"
-      style={{ background: bg, borderColor: `${color}30` }}
+      className="status-enter flex items-center justify-center gap-3 px-4 py-3 rounded-xl border"
+      style={{ background: bg, borderColor }}
     >
       <span style={{ color }} aria-hidden="true"><Icon /></span>
       <span className="text-base font-bold" style={{ color, fontFamily: "var(--font-baloo), sans-serif" }}>
@@ -65,22 +66,13 @@ export default function GameStatusBar({ status, playerName, onReset }: GameStatu
       </span>
       <button
         onClick={onReset}
-        className="px-4 py-2 rounded-lg text-xs font-bold border cursor-pointer"
+        className="btn-press px-4 py-2 rounded-lg text-xs font-bold border cursor-pointer"
         style={{
-          background: "#282523",
-          borderColor: "#3a3633",
+          background: "#0F1F2B",
+          borderColor: "rgba(255,255,255,0.08)",
           color: "#c8c0b5",
           fontFamily: "var(--font-nunito), sans-serif",
           minHeight: "44px",
-          transition: "background 0.15s ease, border-color 0.15s ease",
-        }}
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "#32302e";
-          (e.currentTarget as HTMLElement).style.borderColor = "#5a5550";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLElement).style.background = "#282523";
-          (e.currentTarget as HTMLElement).style.borderColor = "#3a3633";
         }}
       >
         Play Again

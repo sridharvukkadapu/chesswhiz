@@ -188,38 +188,34 @@ export default function PlayPage() {
   if (screen === "onboarding") return null;
 
   return (
-    <div className="min-h-screen" style={{ background: "#151312", color: "#f5f0ea" }}>
+    <div className="min-h-dvh" style={{ background: "#0F172A", color: "#e2ddd8" }}>
       {/* Header */}
       <header
-        className="flex items-center justify-between px-5 py-2 border-b"
-        style={{ background: "#1e1c1a", borderColor: "#3a3633" }}
+        className="flex items-center justify-between px-5 py-2 border-b sticky top-0 z-10"
+        style={{
+          background: "rgba(15,23,42,0.85)",
+          borderColor: "rgba(255,255,255,0.07)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}
       >
         <div className="flex items-center gap-2">
           <span className="text-xl" aria-hidden="true">♟</span>
-          <span className="text-lg font-bold" style={{ color: "#5be882", fontFamily: "var(--font-baloo), sans-serif" }}>
+          <span className="text-lg font-bold" style={{ color: "#22C55E", fontFamily: "var(--font-baloo), sans-serif" }}>
             ChessWhiz
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs" style={{ color: "#5a5550", fontFamily: "var(--font-nunito), sans-serif" }}>
+          <span className="text-xs" style={{ color: "#94A3B8", fontFamily: "var(--font-nunito), sans-serif" }}>
             {["Easy", "Medium", "Hard"][difficulty - 1]}
           </span>
           <button
             onClick={() => store.resetGame()}
-            className="px-3 rounded-lg border text-xs font-semibold cursor-pointer"
+            className="btn-press px-3 rounded-lg border text-xs font-semibold cursor-pointer"
             style={{
-              background: "#282523", borderColor: "#3a3633",
+              background: "#0F1F2B", borderColor: "rgba(255,255,255,0.08)",
               color: "#c8c0b5", fontFamily: "var(--font-nunito), sans-serif",
               height: "36px",
-              transition: "background 0.15s ease, border-color 0.15s ease",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "#32302e";
-              (e.currentTarget as HTMLElement).style.borderColor = "#5a5550";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.background = "#282523";
-              (e.currentTarget as HTMLElement).style.borderColor = "#3a3633";
             }}
           >
             New Game
@@ -228,7 +224,7 @@ export default function PlayPage() {
       </header>
 
       {/* Main layout */}
-      <main className="flex flex-wrap justify-center items-start gap-4 max-w-5xl mx-auto p-3 sm:p-4">
+      <main id="main-content" className="flex flex-wrap justify-center items-start gap-4 max-w-5xl mx-auto p-3 sm:p-4">
         {/* Left: Board */}
         <div className="flex flex-col gap-2 w-full" style={{ maxWidth: "min(calc(100vw - 24px), 480px)" }}>
           <PlayerBar
@@ -267,20 +263,11 @@ export default function PlayPage() {
           <div className="flex gap-2">
             <button
               onClick={() => store.resetGame()}
-              className="flex-1 rounded-xl border text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5"
+              className="btn-press flex-1 rounded-xl border text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5"
               style={{
-                background: "#282523", borderColor: "#3a3633", color: "#c8c0b5",
+                background: "#0F1F2B", borderColor: "rgba(255,255,255,0.08)", color: "#c8c0b5",
                 fontFamily: "var(--font-nunito), sans-serif",
                 minHeight: "44px",
-                transition: "background 0.15s ease, border-color 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "#32302e";
-                (e.currentTarget as HTMLElement).style.borderColor = "#5a5550";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "#282523";
-                (e.currentTarget as HTMLElement).style.borderColor = "#3a3633";
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -292,22 +279,11 @@ export default function PlayPage() {
             <button
               onClick={() => store.undo()}
               disabled={stateHistory.length < 2 || status !== "playing"}
-              className="flex-1 rounded-xl border text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-35 disabled:cursor-not-allowed"
+              className="btn-press flex-1 rounded-xl border text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-35 disabled:cursor-not-allowed"
               style={{
-                background: "#282523", borderColor: "#3a3633", color: "#c8c0b5",
+                background: "#0F1F2B", borderColor: "rgba(255,255,255,0.08)", color: "#c8c0b5",
                 fontFamily: "var(--font-nunito), sans-serif",
                 minHeight: "44px",
-                transition: "background 0.15s ease, border-color 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                if (!(e.currentTarget as HTMLButtonElement).disabled) {
-                  (e.currentTarget as HTMLElement).style.background = "#32302e";
-                  (e.currentTarget as HTMLElement).style.borderColor = "#5a5550";
-                }
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.background = "#282523";
-                (e.currentTarget as HTMLElement).style.borderColor = "#3a3633";
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { Chess } from "chess.js";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
@@ -25,11 +25,9 @@ export default function PlayPage() {
     coachMessages, coachLoading, showPromo, botThinking, screen,
   } = store;
 
-  // Redirect to onboarding if settings not set
-  if (screen === "onboarding") {
-    router.push("/");
-    return null;
-  }
+  useEffect(() => {
+    if (screen === "onboarding") router.push("/");
+  }, [screen, router]);
 
   const requestCoaching = useCallback(async (analysis: ReturnType<typeof analyzeMoveQuality>) => {
     if (!analysis) return;
@@ -186,6 +184,8 @@ export default function PlayPage() {
       executeMove({ ...showPromo, promotion: pieceType as any });
     }
   };
+
+  if (screen === "onboarding") return null;
 
   return (
     <div className="min-h-screen" style={{ background: "#151312", color: "#f5f0ea" }}>

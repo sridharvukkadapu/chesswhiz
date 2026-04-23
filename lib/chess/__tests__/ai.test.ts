@@ -1,8 +1,9 @@
 import { Chess } from "chess.js";
 import { findBestMove } from "../ai";
 
+jest.setTimeout(15000);
+
 describe("findBestMove", () => {
-  jest.setTimeout(15000); // generous timeout for depth-3 minimax
 
   it("returns null when there are no legal moves", () => {
     // Stalemate position: black king trapped, black to move

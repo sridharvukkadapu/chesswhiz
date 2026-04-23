@@ -40,8 +40,9 @@ export default function Board({
         className="grid overflow-hidden rounded-xl"
         style={{
           gridTemplateColumns: "repeat(8, 1fr)",
+          gridTemplateRows: "repeat(8, 1fr)",
           width: "min(calc(100vw - 32px), 480px)",
-          aspectRatio: "1",
+          height: "min(calc(100vw - 32px), 480px)",
           boxShadow: "0 12px 48px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.05)",
         }}
       >
@@ -109,7 +110,7 @@ export default function Board({
                 <span
                   className="relative z-10 leading-none"
                   style={{
-                    fontSize: "min(calc((100vw - 32px) / 11), 48px)",
+                    fontSize: "clamp(28px, min(calc((100vw - 32px) / 9), 52px), 52px)",
                     filter: piece.color === "b"
                       ? "drop-shadow(0 1px 3px rgba(0,0,0,0.5))"
                       : "drop-shadow(0 1px 2px rgba(0,0,0,0.25))",

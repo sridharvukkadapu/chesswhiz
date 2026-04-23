@@ -1,4 +1,4 @@
-import type { MoveAnalysis, CoachPrompt } from "@/lib/chess/types";
+import type { MoveAnalysis, CoachPrompt, TriggerType } from "@/lib/chess/types";
 
 function ageRules(age: number, name: string): string {
   if (age <= 7) {
@@ -38,7 +38,7 @@ RULES:
 - Celebrate good ideas even when execution wasn't perfect`;
 }
 
-const TRIGGER_INSTRUCTIONS: Record<string, (a: MoveAnalysis) => string> = {
+const TRIGGER_INSTRUCTIONS: Record<TriggerType, (a: MoveAnalysis) => string> = {
   GREAT_MOVE: (a) => `${a.san} is an excellent move! It was one of the best options available. Praise the player and briefly explain what makes this move strong.`,
   OK_MOVE: (a) => `${a.san} is a decent move. Give a brief positive comment and keep the energy up.`,
   INACCURACY: (a) => `The player played ${a.san}, but ${a.bestSAN} was a bit stronger (${a.diff} centipawn difference). Gently point out that there was a better option without being discouraging.`,
@@ -65,7 +65,7 @@ ${instruction}`;
   return { system, user };
 }
 
-export const FALLBACKS: Record<string, string[]> = {
+export const FALLBACKS: Record<TriggerType, string[]> = {
   GREAT_MOVE: [
     "Wow, amazing move! You're really thinking like a chess champion! ⭐",
     "That's a really strong move! Great job! 🎉",

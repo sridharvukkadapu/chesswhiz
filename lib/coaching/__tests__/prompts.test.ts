@@ -1,5 +1,5 @@
 import { buildCoachPrompt, FALLBACKS } from "../prompts";
-import type { MoveAnalysis } from "@/lib/chess/types";
+import type { MoveAnalysis, TriggerType } from "@/lib/chess/types";
 
 const analysis: MoveAnalysis = {
   trigger: "BLUNDER", severity: 4, san: "Bxf7", bestSAN: "Nf3",
@@ -37,7 +37,7 @@ describe("buildCoachPrompt", () => {
   });
 
   it("FALLBACKS has entries for all trigger types", () => {
-    const triggers = ["GREAT_MOVE", "OK_MOVE", "INACCURACY", "MISTAKE", "BLUNDER"];
+    const triggers: TriggerType[] = ["GREAT_MOVE", "OK_MOVE", "INACCURACY", "MISTAKE", "BLUNDER"];
     triggers.forEach((t) => {
       expect(FALLBACKS[t]).toBeDefined();
       expect(FALLBACKS[t].length).toBeGreaterThan(0);

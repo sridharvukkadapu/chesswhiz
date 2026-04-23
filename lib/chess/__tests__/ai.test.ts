@@ -2,6 +2,8 @@ import { Chess } from "chess.js";
 import { findBestMove } from "../ai";
 
 describe("findBestMove", () => {
+  jest.setTimeout(15000); // generous timeout for depth-3 minimax
+
   it("returns null when there are no legal moves", () => {
     // Stalemate position: black king trapped, black to move
     const chess = new Chess("k7/8/1Q6/8/8/8/8/7K b - - 0 1");
@@ -27,4 +29,4 @@ describe("findBestMove", () => {
     // Best move is Qh4# (the fool's mate)
     expect(move!.to).toBe("h4");
   });
-}, 15000); // generous timeout for depth-3 minimax
+});

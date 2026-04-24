@@ -57,6 +57,8 @@ export default function GameStatusBar({ status, playerName, onReset }: GameStatu
 
   return (
     <div
+      role="status"
+      aria-live="assertive"
       className="status-enter flex items-center justify-center gap-3 px-4 py-3 rounded-xl border"
       style={{ background: bg, borderColor }}
     >

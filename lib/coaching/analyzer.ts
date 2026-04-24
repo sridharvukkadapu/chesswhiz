@@ -3,22 +3,6 @@ import { evaluate } from "@/lib/chess/evaluation";
 import { getLegalMoves, moveToSAN } from "@/lib/chess/engine";
 import type { Move, MoveAnalysis, TriggerType, PieceType } from "@/lib/chess/types";
 
-// Synchronous fast evaluation: compare player move eval vs best static eval.
-// We avoid running a full minimax here — too slow on the main thread.
-// Instead we do a 1-ply quiescence: find the best single-move response for the
-// opponent and use that as the reference score.
-function fastBestEval(prev: Chess): number {
-  const moves = prev.moves({ verbose: true });
-  if (moves.length === 0) return evaluate(prev);
-  let best = -Infinity;
-  for (const m of moves) {
-    const next = new Chess(prev.fen());
-    next.move(m);
-    const s = evaluate(next);
-    if (s > best) best = s;
-  }
-  return best;
-}
 
 export function analyzeMoveQuality(
   prev: Chess,
@@ -32,9 +16,15 @@ export function analyzeMoveQuality(
   const capturedSquare = prevBoard[8 - parseInt(move.to[1])][move.to.charCodeAt(0) - 97];
 
   const newEval = evaluate(next);
-  // Use fast 1-ply reference instead of full depth-2 minimax
-  const bestEval = fastBestEval(prev);
-  const bestSAN = "";
+  // 1-ply reference: pick the move that yields the best eval for the side to move
+  let bestEval = -Infinity;
+  let bestSAN = "";
+  for (const m of prev.moves({ verbose: true })) {
+    const clone = new Chess(prev.fen());
+    clone.move(m);
+    const s = evaluate(clone);
+    if (s > bestEval) { bestEval = s; bestSAN = m.san; }
+  }
   const san = moveToSAN(prev, move);
 
   const diff = Math.abs(bestEval - newEval);

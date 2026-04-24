@@ -83,7 +83,7 @@ export default function Board({
               <div
                 key={i}
                 onClick={() => onSquareClick(r, c)}
-                className={`flex items-center justify-center relative select-none ${isLight ? "board-square-light" : "board-square-dark"}`}
+                className={`flex items-center justify-center relative select-none ${isLight ? "board-square-light" : "board-square-dark"} ${isLastTo ? "square-land" : ""}`}
                 style={{
                   background: bgBase,
                   cursor: clickable ? "pointer" : "default",

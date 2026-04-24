@@ -68,7 +68,7 @@ export default function CoachPanel({ messages, loading }: CoachPanelProps) {
       </div>
 
       {/* Messages */}
-      <div ref={ref} className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+      <div ref={ref} className="flex-1 overflow-y-auto p-3 flex flex-col gap-2" aria-live="polite" aria-label="Coach messages">
         {messages.map((msg) => {
           const s = MSG_STYLES[msg.type] ?? MSG_STYLES.tip;
           return (

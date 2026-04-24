@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Baloo_2, Caveat, Comic_Neue, Playfair_Display } from "next/font/google";
+import { Baloo_2, Caveat, Cinzel, Comic_Neue, Playfair_Display, Quicksand } from "next/font/google";
 import "./globals.css";
 
 const baloo = Baloo_2({
@@ -31,6 +31,20 @@ const playfair = Playfair_Display({
   display: "swap",
 });
 
+const cinzel = Cinzel({
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "900"],
+  variable: "--font-cinzel",
+  display: "swap",
+});
+
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-quicksand",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "ChessWhiz — AI Chess Coach for Kids",
   description: "Learn chess with your personal AI coach. Play, make mistakes, and grow!",
@@ -38,7 +52,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${baloo.variable} ${comicNeue.variable} ${playfair.variable} ${caveat.variable}`}>
+    <html lang="en" className={`${baloo.variable} ${comicNeue.variable} ${playfair.variable} ${caveat.variable} ${cinzel.variable} ${quicksand.variable}`}>
       <body style={{ margin: 0, background: "#0F172A" }}>
         <a href="#main-content" className="skip-link">Skip to content</a>
         {children}

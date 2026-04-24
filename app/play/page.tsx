@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSpeech } from "@/lib/speech";
 import { getRankByXP, getNextRank, RANKS } from "@/lib/progression/data";
+import AhaCelebration from "@/components/AhaCelebration";
 import { Chess } from "chess.js";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
@@ -109,6 +110,44 @@ function XPToast({ gain, onDone }: { gain: { amount: number; source: string; tim
   );
 }
 
+// ── Mission banner ──
+function MissionBanner({ mission }: { mission: import("@/lib/progression/types").Mission }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10,
+      padding: "10px 14px", borderRadius: 14,
+      background: `linear-gradient(135deg, ${P.goldPale} 0%, ${P.emeraldPale} 100%)`,
+      border: `1.5px solid ${P.gold}60`,
+      boxShadow: `0 2px 10px ${P.gold}30`,
+    }}>
+      <div style={{
+        width: 32, height: 32, borderRadius: 10,
+        background: "white", border: `1.5px solid ${P.gold}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0,
+        color: P.gold,
+      }}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <circle cx="12" cy="12" r="6" />
+          <circle cx="12" cy="12" r="2" fill="currentColor" />
+        </svg>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0, flex: 1 }}>
+        <span style={{
+          fontSize: 10, fontWeight: 800, color: P.gold, letterSpacing: 1.2,
+          textTransform: "uppercase", fontFamily: "var(--font-nunito), sans-serif",
+        }}>Battle Test</span>
+        <span style={{
+          fontSize: 13, fontWeight: 700, color: P.ink,
+          fontFamily: "var(--font-nunito), sans-serif",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        }}>{mission.description}</span>
+      </div>
+    </div>
+  );
+}
+
 // ── Rank-up toast ──
 function RankUpToast({ rankId, onDone }: { rankId: import("@/lib/progression/types").RankId; onDone: () => void }) {
   const rank = RANKS.find((r) => r.id === rankId)!;
@@ -150,7 +189,7 @@ export default function PlayPage() {
     chess, selected, legalHighlights, lastMove, moveHistory,
     stateHistory, status, playerName, playerAge, difficulty,
     coachMessages, coachLoading, showPromo, botThinking, screen,
-    progression, lastXPGain, justRankedUp,
+    progression, lastXPGain, justRankedUp, ahaCelebration,
   } = store;
 
   useEffect(() => {
@@ -264,9 +303,17 @@ export default function PlayPage() {
       }
     }
 
+    // Check detected tactics against the active mission
+    if (analysis?.tactics && analysis.tactics.length > 0) {
+      for (const t of analysis.tactics) {
+        store.handleTacticDetected(t);
+      }
+    }
+
     if (newChess.turn() === "b") {
       store.setBotThinking(true);
-      findBestMove(newChess, difficulty).then((botMove) => {
+      const tacticPref = progression.activeMission?.targetTactic;
+      findBestMove(newChess, difficulty, tacticPref).then((botMove) => {
         if (botMove) {
           const botSAN = moveToSAN(newChess, botMove);
           const afterBot = applyMove(newChess, botMove);
@@ -337,6 +384,13 @@ export default function PlayPage() {
 
   return (
     <div style={{ minHeight: "100dvh", background: P.cream, color: P.ink, position: "relative" }}>
+      {/* Aha! celebration — highest-priority overlay */}
+      <AhaCelebration
+        celebration={ahaCelebration}
+        onDismiss={() => store.dismissAha()}
+        playerName={playerName}
+      />
+
       {/* XP + rank-up toasts */}
       {lastXPGain && <XPToast gain={lastXPGain} onDone={() => store.clearXPGain()} />}
       {justRankedUp && <RankUpToast rankId={justRankedUp} onDone={() => store.clearRankUp()} />}
@@ -493,6 +547,9 @@ export default function PlayPage() {
 
         {/* Right: Coach + moves + actions */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: "1 1 280px", maxWidth: 480 }}>
+          {progression.activeMission && (
+            <MissionBanner mission={progression.activeMission} />
+          )}
           <CoachPanel messages={coachMessages} loading={coachLoading} />
           <MoveHistory moves={moveHistory} />
 

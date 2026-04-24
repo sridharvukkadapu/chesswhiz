@@ -2,6 +2,8 @@ import { Chess } from "chess.js";
 import { evaluate } from "./evaluation";
 import { getLegalMoves, applyMove } from "./engine";
 import type { Move, Difficulty } from "./types";
+import type { TacticType } from "@/lib/progression/types";
+import { tacticOpportunityBonus } from "@/lib/progression/bot-tuning";
 
 function minimax(chess: Chess, depth: number, alpha: number, beta: number, maximizing: boolean): number {
   const moves = getLegalMoves(chess);
@@ -34,7 +36,14 @@ function minimax(chess: Chess, depth: number, alpha: number, beta: number, maxim
 
 // Yields to the browser event loop between root-level move evaluations,
 // keeping the UI responsive while the bot calculates.
-export async function findBestMove(chess: Chess, difficulty: Difficulty): Promise<Move | null> {
+// When `tacticPreference` is provided, the bot gets a soft (20-50cp) bonus
+// for moves that leave positions where the player could execute that tactic.
+// This creates teaching moments without making the bot play badly.
+export async function findBestMove(
+  chess: Chess,
+  difficulty: Difficulty,
+  tacticPreference?: TacticType
+): Promise<Move | null> {
   const moves = getLegalMoves(chess);
   if (moves.length === 0) return null;
 
@@ -60,7 +69,21 @@ export async function findBestMove(chess: Chess, difficulty: Difficulty): Promis
   for (const move of moves) {
     // Yield between each root move so the browser stays responsive
     await yieldToBrowser();
-    const score = minimax(applyMove(chess, move), depth - 1, -Infinity, Infinity, !isMax);
+    const afterBot = applyMove(chess, move);
+    let score = minimax(afterBot, depth - 1, -Infinity, Infinity, !isMax);
+
+    // Soft tactic-opportunity bonus for missions. The student (the other
+    // side) should get tactic-friendly setups. Scores are from white's POV
+    // (higher=better for white); bot is typically black (minimizer). We
+    // nudge the bot to PICK tactic-friendly moves by making those moves
+    // look slightly better for it (lower score when bot is minimizer,
+    // higher when bot is maximizer). 20-50cp is subtle enough that the bot
+    // still plays real chess.
+    if (tacticPreference) {
+      const bonus = tacticOpportunityBonus(afterBot, tacticPreference);
+      score = isMax ? score + bonus : score - bonus;
+    }
+
     if ((isMax && score > bestScore) || (!isMax && score < bestScore)) {
       bestScore = score;
       bestMoves = [move];

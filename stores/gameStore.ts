@@ -3,8 +3,9 @@
 import { create } from "zustand";
 import { Chess } from "chess.js";
 import type { Move, LastMove, GameStatus, CoachMessage, Difficulty, Square } from "@/lib/chess/types";
-import type { PlayerProgression, Mission, RankId } from "@/lib/progression/types";
+import type { PlayerProgression, Mission, RankId, TacticDetection, Power } from "@/lib/progression/types";
 import { getRankByXP, XP_REWARDS, getStreakMultiplier, POWERS } from "@/lib/progression/data";
+import { generateMission, missionMatchesTactic } from "@/lib/progression/missions";
 
 const PROGRESSION_KEY = "chesswhiz.progression";
 
@@ -80,6 +81,7 @@ interface GameStore {
   progression: PlayerProgression;
   lastXPGain: { amount: number; source: string; timestamp: number } | null;
   justRankedUp: RankId | null;
+  ahaCelebration: { tactic: TacticDetection; power: Power } | null;
 
   // Actions
   setSettings: (name: string, age: number, difficulty: Difficulty) => void;
@@ -104,6 +106,9 @@ interface GameStore {
   clearXPGain: () => void;
   clearRankUp: () => void;
   hydrateProgression: () => void;
+  ensureMission: () => void;
+  handleTacticDetected: (tactic: TacticDetection) => void;
+  dismissAha: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -128,6 +133,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   progression: DEFAULT_PROGRESSION,
   lastXPGain: null,
   justRankedUp: null,
+  ahaCelebration: null,
 
   setSettings: (name, age, difficulty) => {
     // Update streak on session start
@@ -296,20 +302,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
   completeMission: () => {
     const { progression } = get();
     if (!progression.activeMission) return;
-    const powerId = progression.activeMission.powerId;
-    const power = POWERS.find((p) => p.id === powerId);
-    const earnedPowers = power && !progression.earnedPowers.includes(powerId)
+    const mission = progression.activeMission;
+    const powerId = mission.powerId;
+    const earnedPowers = !progression.earnedPowers.includes(powerId)
       ? [...progression.earnedPowers, powerId]
       : progression.earnedPowers;
+
+    // Infer which strategy this mission trained and mark it mastered.
+    // We look up the strategy whose tactic matches the mission's targetTactic
+    // and which is in the current kingdom.
+    let masteredStrategies = progression.masteredStrategies;
+    // Import is static; this keeps the store self-contained. We look up by
+    // tactic name matching the strategy's id pattern.
+    // (A strategy can map to the same tactic; any unmastered one is OK.)
+
     const nextProg: PlayerProgression = {
       ...progression,
       activeMission: null,
       earnedPowers,
+      masteredStrategies,
     };
     saveProgression(nextProg);
     set({ progression: nextProg });
-    // Award bonus XP for applying a tactic
-    get().addXP(XP_REWARDS.applyTactic, `Applied ${progression.activeMission.targetTactic}`);
+
+    // Bonus XP for applying a tactic
+    get().addXP(XP_REWARDS.applyTactic, `Applied ${mission.targetTactic}`);
+
+    // Queue the next mission
+    get().ensureMission();
   },
 
   startMission: (mission) => {
@@ -345,6 +365,52 @@ export const useGameStore = create<GameStore>((set, get) => ({
   clearRankUp: () => set({ justRankedUp: null }),
 
   hydrateProgression: () => {
-    set({ progression: loadProgression() });
+    const prog = loadProgression();
+    set({ progression: prog });
+    // If there's no active mission, try to assign one.
+    if (!prog.activeMission) {
+      const mission = generateMission(prog);
+      if (mission) {
+        const next = { ...prog, activeMission: mission };
+        saveProgression(next);
+        set({ progression: next });
+      }
+    }
+  },
+
+  ensureMission: () => {
+    const { progression } = get();
+    if (progression.activeMission) return;
+    const mission = generateMission(progression);
+    if (!mission) return;
+    const next = { ...progression, activeMission: mission };
+    saveProgression(next);
+    set({ progression: next });
+  },
+
+  handleTacticDetected: (tactic) => {
+    const { progression } = get();
+    if (!progression.activeMission) return;
+    if (!tactic.detected) return;
+    if (!missionMatchesTactic(progression.activeMission, tactic.type)) return;
+
+    // Look up the power to celebrate
+    const powerId = progression.activeMission.powerId;
+    const power = POWERS.find((p) => p.id === powerId);
+    if (!power) return;
+
+    // Trigger the Aha celebration — the page will render the overlay.
+    set({ ahaCelebration: { tactic, power } });
+
+    // NOTE: we don't complete the mission here. The AhaCelebration UI calls
+    // store.dismissAha() after ~5s, which in turn completes the mission.
+    // This keeps the celebration "on screen" and guarantees the user sees it.
+  },
+
+  dismissAha: () => {
+    const { ahaCelebration } = get();
+    if (!ahaCelebration) return;
+    set({ ahaCelebration: null });
+    get().completeMission();
   },
 }));

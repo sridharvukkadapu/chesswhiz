@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useSpeech } from "@/lib/speech";
 import { Chess } from "chess.js";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
@@ -42,6 +43,17 @@ export default function PlayPage() {
   useEffect(() => {
     if (screen === "onboarding") router.push("/");
   }, [screen, router]);
+
+  // ── Voice: speak each new coach message when enabled ──
+  const speech = useSpeech();
+  const spokenCount = useRef(0);
+  useEffect(() => {
+    if (coachMessages.length > spokenCount.current) {
+      const latest = coachMessages[coachMessages.length - 1];
+      if (latest) speech.speak(latest.text);
+      spokenCount.current = coachMessages.length;
+    }
+  }, [coachMessages, speech]);
 
   const requestCoaching = useCallback(async (analysis: ReturnType<typeof analyzeMoveQuality>) => {
     if (!analysis) return;
@@ -237,6 +249,46 @@ export default function PlayPage() {
             borderRadius: 8, padding: "4px 10px",
             letterSpacing: 0.3,
           }}>{diffLabel}</span>
+
+          {/* Voice toggle */}
+          {speech.supported && (
+            <button
+              onClick={speech.toggle}
+              aria-label={speech.enabled ? "Turn off coach voice" : "Turn on coach voice"}
+              aria-pressed={speech.enabled}
+              title={speech.enabled ? "Coach voice: on" : "Coach voice: off"}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center",
+                width: 36, height: 36, borderRadius: 10,
+                background: speech.enabled ? P.emeraldPale : "white",
+                border: `1.5px solid ${speech.enabled ? P.emerald : P.inkGhost}`,
+                color: speech.enabled ? P.emerald : P.inkLight,
+                cursor: "pointer",
+                transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+                boxShadow: speech.enabled
+                  ? `0 2px 10px rgba(27,115,64,0.15)`
+                  : `0 2px 6px rgba(26,18,16,0.05)`,
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+              onMouseDown={e => { (e.currentTarget as HTMLElement).style.transform = "scale(0.94)"; }}
+              onMouseUp={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
+            >
+              {speech.enabled ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+              )}
+            </button>
+          )}
 
           {/* New Game */}
           <button

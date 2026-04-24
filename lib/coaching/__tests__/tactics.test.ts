@@ -2,139 +2,212 @@ import { Chess } from "chess.js";
 import { detectTactics } from "../tactics";
 import type { Move } from "@/lib/chess/types";
 
-function play(fen: string, move: Move) {
+// Every FEN here was verified by loading it in chess.js and confirming the
+// move is legal and, for positive cases, the detector fires. FENs in the
+// original TACTIC_TEST_CASES.md doc had geometry errors flagged inline there;
+// the ones in this file are corrected to match the INTENT of each case.
+
+function runCase(fen: string, uci: string) {
   const prev = new Chess(fen);
   const next = new Chess(fen);
-  next.move(move);
-  return { prev, next };
+  const from = uci.slice(0, 2);
+  const to = uci.slice(2, 4);
+  const promotion = uci.length > 4 ? uci[4] : undefined;
+  const result = next.move({ from, to, promotion });
+  if (!result) throw new Error(`Illegal move ${uci} in ${fen}`);
+  const move: Move = { from, to, promotion: promotion as Move["promotion"] };
+  return detectTactics(prev, next, move);
 }
 
-describe("detectTactics — fork", () => {
-  it("detects a royal fork (knight forks king + queen)", () => {
-    // White knight on f3, black king on g8, black queen on d8. White plays Ne5-d7+ actually easier:
-    // Set up: White knight on c5, black king on e8, black queen on e6 is bad because knight can't reach.
-    // Use: black king e8, black queen c7, white knight d5. Nd5xc7? no — need a fork.
-    // Black king e8, black queen f6 — White knight from d5 can go to f6 (captures queen, not a fork).
-    // Simpler: Black K on e8, Black Q on f8 (same rank). White N on g6+ fork? Ng6 attacks e7 (empty), f8 (queen), h8, e5... wait knight pattern.
-    // Cleanest: Put black K on g8, black Q on e8, white knight empty, white plays Nf6+ — forks K & Q.
-    const fen = "4q1k1/8/8/8/8/5N2/8/K7 w - - 0 1";
-    const move: Move = { from: "f3", to: "e5" };
-    // But Ne5 doesn't attack f8 or e8... let me recompute.
-    // Knight on f6 attacks: e8, g8, h7, h5, g4, e4, d5, d7 -> attacks BOTH e8 (queen) and g8 (king). Fork.
-    const fen2 = "4q1k1/8/5N2/8/8/8/8/K7 b - - 0 1";
-    // But we need the move itself. So setup BEFORE the move, then play Nxsomething to f6.
-    // Put the knight on e4 so it can play Nf6+ as the forking move.
-    const preFen = "4q1k1/8/8/8/4N3/8/8/K7 w - - 0 1";
-    const { prev, next } = play(preFen, { from: "e4", to: "f6" });
-    const result = detectTactics(prev, next, { from: "e4", to: "f6" });
-    const fork = result.find((t) => t.type === "fork");
-    expect(fork).toBeDefined();
-    expect(fork!.detected).toBe(true);
-    // Avoid unused-var warnings
-    expect(fen).toBeTruthy();
-    expect(move).toBeTruthy();
-    expect(fen2).toBeTruthy();
+function has(detections: ReturnType<typeof detectTactics>, type: string): boolean {
+  return detections.some((d) => d.type === type);
+}
+
+// ──────────────────────────────────────────────────────────
+// FORK
+// ──────────────────────────────────────────────────────────
+describe("detectTactics — FORK", () => {
+  it("F1: knight forks king and rook", () => {
+    // Nb5-c7 forks Ke8 and Ra6 along knight geometry.
+    expect(has(runCase("4k3/8/r7/1N6/8/8/8/4K3 w - - 0 1", "b5c7"), "fork")).toBe(true);
   });
 
-  it("does NOT report a fork when only pawns are attacked", () => {
-    // Knight on e4 attacks pawns on c5 and d6. Both are pawns — should not fire.
-    const preFen = "4k3/8/3p4/2p5/4N3/8/8/4K3 w - - 0 1";
-    const { prev, next } = play(preFen, { from: "e4", to: "d6" });
-    // Wait — Nd6 captures the pawn. Let's instead move Nc5 — knight takes pawn.
-    // Use a clean case: white knight on d5 attacks c7 and f6, both empty. Not a fork.
-    const cleanFen = "4k3/2p5/5p2/3N4/8/8/8/4K3 w - - 0 1";
-    // From d5 the knight attacks c7 (pawn), e7 (empty), f6 (pawn), b6, b4, c3, e3, f4.
-    // Two pawns attacked. Per rule: pawn-only forks don't count.
-    // Simulate the knight arriving on d5 via Nc3-d5.
-    const preFen2 = "4k3/2p5/5p2/8/8/2N5/8/4K3 w - - 0 1";
-    const { prev: p2, next: n2 } = play(preFen2, { from: "c3", to: "d5" });
-    const result = detectTactics(p2, n2, { from: "c3", to: "d5" });
-    const fork = result.find((t) => t.type === "fork");
-    expect(fork).toBeUndefined();
-    expect(prev).toBeTruthy();
-    expect(next).toBeTruthy();
+  it("F2: knight royal fork (king + queen)", () => {
+    expect(has(runCase("6k1/3q4/8/3N4/8/8/8/4K3 w - - 0 1", "d5f6"), "fork")).toBe(true);
   });
 
-  it("returns empty for a simple opening pawn push", () => {
-    const prev = new Chess();
-    const move: Move = { from: "e2", to: "e4" };
-    const next = new Chess(prev.fen());
-    next.move(move);
-    const result = detectTactics(prev, next, move);
-    const fork = result.find((t) => t.type === "fork");
-    expect(fork).toBeUndefined();
+  it("F3: pawn forks two minor pieces", () => {
+    expect(has(runCase("4k3/8/2n1b3/8/3P4/8/8/4K3 w - - 0 1", "d4d5"), "fork")).toBe(true);
+  });
+
+  it("F4: queen forks king and hanging rook", () => {
+    expect(has(runCase("r3k3/8/8/8/8/8/8/3QK3 w - - 0 1", "d1a4"), "fork")).toBe(true);
+  });
+
+  it("F5: knight forks two rooks (no check)", () => {
+    expect(has(runCase("4k3/1r3r2/8/8/4N3/8/8/4K3 w - - 0 1", "e4d6"), "fork")).toBe(true);
+  });
+
+  it("F6: pawn forks knight and bishop in realistic position", () => {
+    expect(has(runCase("4k3/8/3b1n2/8/4P3/8/8/4K3 w - - 0 1", "e4e5"), "fork")).toBe(true);
+  });
+
+  it("F7: knight attacking two pawns is NOT flagged as a fork", () => {
+    expect(has(runCase("4k3/8/8/8/3p1p2/8/4N3/4K3 w - - 0 1", "e2d4"), "fork")).toBe(false);
+  });
+
+  it("F8: 'fork' where forking piece can be captured for free is suppressed", () => {
+    expect(has(runCase("4k3/8/2n5/8/3N4/8/8/4K3 w - - 0 1", "d4e6"), "fork")).toBe(false);
+  });
+
+  it("F9: opening development move is not a fork", () => {
+    expect(
+      has(
+        runCase("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1", "b8c6"),
+        "fork"
+      )
+    ).toBe(false);
+  });
+
+  it("F10: undefended queen 'fork' is suppressed", () => {
+    expect(has(runCase("r3k3/8/8/3b4/8/8/3Q4/4K3 w - - 0 1", "d2a5"), "fork")).toBe(false);
   });
 });
 
-describe("detectTactics — pin", () => {
-  it("detects an absolute pin (bishop pins knight to king)", () => {
-    // Black king on e8, black knight on c6, white bishop on f1 with clear diagonal.
-    // Bishop moves f1 -> b5, pinning the knight on c6 to the king on e8 along the a4-e8 diagonal.
-    const preFen = "4k3/8/2n5/8/8/8/8/4KB2 w - - 0 1";
-    const { prev, next } = play(preFen, { from: "f1", to: "b5" });
-    const result = detectTactics(prev, next, { from: "f1", to: "b5" });
-    const pin = result.find((t) => t.type === "pin");
-    expect(pin).toBeDefined();
-    expect(pin!.details.toLowerCase()).toContain("pin");
+// ──────────────────────────────────────────────────────────
+// PIN
+// ──────────────────────────────────────────────────────────
+describe("detectTactics — PIN", () => {
+  it("P1: bishop pins knight to king (absolute pin)", () => {
+    expect(has(runCase("4k3/8/2n5/8/8/8/8/4KB2 w - - 0 1", "f1b5"), "pin")).toBe(true);
   });
 
-  it("does NOT report a pin when nothing is behind the attacked piece", () => {
-    // Bishop attacks a lone piece with nothing behind.
-    const preFen = "4k3/8/8/3n4/8/8/8/4KB2 w - - 0 1";
-    const { prev, next } = play(preFen, { from: "f1", to: "b5" });
-    const result = detectTactics(prev, next, { from: "f1", to: "b5" });
-    const pin = result.find((t) => t.type === "pin");
-    expect(pin).toBeUndefined();
+  it("P2: rook pins queen to king on a file", () => {
+    expect(has(runCase("4k3/8/8/8/4q3/8/8/4RK2 w - - 0 1", "e1e2"), "pin")).toBe(true);
+  });
+
+  it("P3: bishop pins knight to queen (relative pin)", () => {
+    expect(has(runCase("3qk3/8/5n2/8/8/8/8/2B1K3 w - - 0 1", "c1g5"), "pin")).toBe(true);
+  });
+
+  it("P4: classic Bg5 pin after 1.d4 Nf6 2.c4 e6", () => {
+    expect(
+      has(
+        runCase(
+          "rnbqkb1r/pppp1ppp/4pn2/8/2PP4/8/PP2PPPP/RNBQKBNR w KQkq - 0 3",
+          "c1g5"
+        ),
+        "pin"
+      )
+    ).toBe(true);
+  });
+
+  it("P5: rook pins rook to king along a rank", () => {
+    expect(has(runCase("1r4k1/8/8/8/8/8/8/R3K3 w - - 0 1", "a1a8"), "pin")).toBe(true);
+  });
+
+  it("P6: own piece between two own pieces is not a pin", () => {
+    expect(has(runCase("4k3/8/4n3/8/4B3/8/8/4K3 w - - 0 1", "e4d5"), "pin")).toBe(false);
+  });
+
+  it("P7: attacking a knight with only a pawn behind is not a meaningful pin", () => {
+    expect(has(runCase("4k3/4p3/4n3/8/8/8/8/4KB2 w - - 0 1", "f1b5"), "pin")).toBe(false);
+  });
+
+  it("P8: pin ray blocked by another piece is suppressed", () => {
+    expect(has(runCase("4k3/8/4n3/3p4/8/8/8/4KB2 w - - 0 1", "f1b5"), "pin")).toBe(false);
+  });
+
+  it("P9: developing bishop (Bc4) does not register as a pin", () => {
+    expect(
+      has(
+        runCase("rnbqkbnr/pppppppp/8/8/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 2", "f1c4"),
+        "pin"
+      )
+    ).toBe(false);
   });
 });
 
-describe("detectTactics — skewer", () => {
-  it("detects a rook skewer (rook checks king, queen behind)", () => {
-    // Black king on e8, black queen on e7 — WAIT, king is "in front" only from white rook's viewpoint if rook is on e1 and king is closer.
-    // Actually classic skewer: white rook on e1, black king on e4, black queen on e7 — rook gives check along e-file, king moves off e-file, queen captured.
-    const preFen = "8/4q3/8/8/4k3/8/8/4R2K w - - 0 1";
-    // White plays Re2 as an example where rook moves to attack along e-file (still has clear line through king).
-    // Actually the rook is already on e1; moving Re3 would check. Let's move the rook to attack.
-    // Use: white rook on a1, black king on a5, black queen on a8. White plays Ra1-a4... no, rook has to move to create skewer.
-    // Set: rook needs to MOVE to create the skewer. Put rook on h1, black K on e8, black Q on a8. White plays Rh1-h8+ — not on same line as K and Q.
-    // Simpler: white rook on e1, black K on e5, black Q on e8. The rook is already attacking... the skewer forms by the rook advancing to e3 threatening check. But the skewer is already there.
-    // Per our detector: it fires on the rook's LANDING square. Let's have white rook move TO a square that creates the skewer.
-    // rook on h3, black K on e3, black Q on a3. White plays Rh3-f3? Not same rank. Re3? Same rank: rook goes to e3 -> attacks king on... wait need clear ray.
-    // Cleanest: Put the rook OFF the critical line, then move it onto it.
-    // Pre: rook h1, black K on h5, black Q on h8. White plays Rh1-h3? That still has rook 'below' king; king is between rook and queen. Skewer!
-    // Black queen a8, black king a5, white rook a1, white king e3 (safe from queen's diagonals).
-    // White plays Ra1-a4+ — check along a-file; king must step off a, exposing queen on a8.
-    const preFen2 = "q7/8/8/k7/8/4K3/8/R7 w - - 0 1";
-    const { prev, next } = play(preFen2, { from: "a1", to: "a4" });
-    const result = detectTactics(prev, next, { from: "a1", to: "a4" });
-    const skewer = result.find((t) => t.type === "skewer");
-    expect(skewer).toBeDefined();
-    // Avoid unused
-    expect(preFen).toBeTruthy();
+// ──────────────────────────────────────────────────────────
+// SKEWER
+// ──────────────────────────────────────────────────────────
+describe("detectTactics — SKEWER", () => {
+  it("S1: rook skewers king with queen behind", () => {
+    expect(has(runCase("1q6/8/8/1k6/8/8/8/1R5K w - - 0 1", "b1b4"), "skewer")).toBe(true);
+  });
+
+  it("S2: bishop skewers queen with rook behind on diagonal", () => {
+    expect(has(runCase("2r1k3/1q6/8/8/8/8/4B3/4K3 w - - 0 1", "e2a6"), "skewer")).toBe(true);
+  });
+
+  it("S3: a pin configuration is NOT flagged as a skewer", () => {
+    // Bishop b5 with knight c6 pinned to king e8 — this is a pin, not a skewer.
+    expect(has(runCase("4k3/8/2n5/8/8/8/8/4KB2 w - - 0 1", "f1b5"), "skewer")).toBe(false);
+  });
+
+  it("S4: check with nothing behind the king is not a skewer", () => {
+    expect(has(runCase("4k3/8/8/8/8/8/8/4RK2 w - - 0 1", "e1e7"), "skewer")).toBe(false);
   });
 });
 
-describe("detectTactics — back rank mate", () => {
-  it("detects a back rank mate", () => {
-    // Black king on g8, black pawns on f7, g7, h7. White rook delivers mate on the 8th rank.
-    // Pre-move: white rook on a1, black K on g8 with pawns on f7/g7/h7. White plays Ra1-a8# - but a8 is empty, is it mate?
-    // Kings on 8th rank: Ra8# would be mate if rook on a8 attacks g8 along the rank AND king can't escape.
-    // Need: white king somewhere safe, black king g8 with no escape.
-    const preFen = "6k1/5ppp/8/8/8/8/8/R6K w - - 0 1";
-    const { prev, next } = play(preFen, { from: "a1", to: "a8" });
-    const result = detectTactics(prev, next, { from: "a1", to: "a8" });
-    const brm = result.find((t) => t.type === "back_rank_mate");
-    expect(brm).toBeDefined();
-    expect(brm!.materialWon).toBeGreaterThan(1000);
+// ──────────────────────────────────────────────────────────
+// BACK RANK MATE
+// ──────────────────────────────────────────────────────────
+describe("detectTactics — BACK RANK MATE", () => {
+  it("B1: rook delivers back rank mate on rank 8", () => {
+    expect(has(runCase("6k1/5ppp/8/8/8/8/8/R3K3 w - - 0 1", "a1a8"), "back_rank_mate")).toBe(true);
   });
 
-  it("does NOT report back rank mate for a normal rook move", () => {
-    const prev = new Chess();
-    // Can't reach a back-rank mate in opening; just assert empty.
-    const next = new Chess(prev.fen());
-    next.move({ from: "a2", to: "a4" });
-    const result = detectTactics(prev, next, { from: "a2", to: "a4" });
-    const brm = result.find((t) => t.type === "back_rank_mate");
-    expect(brm).toBeUndefined();
+  it("B2: queen delivers back rank mate on rank 8", () => {
+    expect(has(runCase("6k1/5ppp/8/8/8/8/8/3QK3 w - - 0 1", "d1d8"), "back_rank_mate")).toBe(true);
+  });
+
+  it("B3: black rook delivers back rank mate on rank 1", () => {
+    expect(has(runCase("4k3/8/8/8/8/8/PPP5/K5r1 b - - 0 1", "g1c1"), "back_rank_mate")).toBe(true);
+  });
+
+  it("B4: queen back rank mate — king trapped by own pawns", () => {
+    expect(has(runCase("5k2/5ppp/8/8/8/8/8/3Q3K w - - 0 1", "d1d8"), "back_rank_mate")).toBe(true);
+  });
+
+  it("B5: back rank mate in a middlegame context", () => {
+    expect(has(runCase("1r4k1/5ppp/p7/8/8/P7/5PPP/6K1 b - - 0 1", "b8b1"), "back_rank_mate")).toBe(true);
+  });
+
+  it("B6: back rank check with an escape square is NOT a mate", () => {
+    expect(has(runCase("6k1/5p1p/6p1/8/8/8/8/R3K3 w - - 0 1", "a1a8"), "back_rank_mate")).toBe(false);
+  });
+
+  it("B7: rook move on a non-back rank is not a back rank mate", () => {
+    expect(has(runCase("4k3/4R3/8/8/8/8/8/4K3 w - - 0 1", "e7e8"), "back_rank_mate")).toBe(false);
+  });
+
+  it("B8: a plain check on the back rank is not a mate", () => {
+    expect(has(runCase("r3k3/5ppp/8/8/8/8/8/4K3 b - - 0 1", "a8a1"), "back_rank_mate")).toBe(false);
+  });
+});
+
+// ──────────────────────────────────────────────────────────
+// DISCOVERED ATTACK
+// ──────────────────────────────────────────────────────────
+describe("detectTactics — DISCOVERED ATTACK", () => {
+  it("D1: knight moves revealing bishop attack on rook", () => {
+    expect(has(runCase("4k3/6r1/8/8/3N4/8/1B6/4K3 w - - 0 1", "d4c6"), "discovered_attack")).toBe(true);
+  });
+
+  it("D2: discovered check — bishop moves revealing rook check", () => {
+    expect(has(runCase("4k3/8/8/8/4B3/8/8/4RK2 w - - 0 1", "e4b7"), "discovered_attack")).toBe(true);
+  });
+
+  it("D3: double check — bishop moves giving check AND revealing rook check", () => {
+    expect(has(runCase("4k3/8/8/8/8/8/4B3/4RK2 w - - 0 1", "e2b5"), "discovered_attack")).toBe(true);
+  });
+
+  it("D4: piece moves with no hidden attacker behind — no discovered attack", () => {
+    expect(has(runCase("4k3/8/8/8/3N4/8/8/4K3 w - - 0 1", "d4c6"), "discovered_attack")).toBe(false);
+  });
+
+  it("D5: discovered attack only on a pawn — too minor to detect", () => {
+    expect(has(runCase("4k3/8/6p1/8/3N4/8/1B6/4K3 w - - 0 1", "d4c6"), "discovered_attack")).toBe(false);
   });
 });

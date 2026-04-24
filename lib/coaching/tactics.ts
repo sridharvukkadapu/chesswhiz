@@ -116,9 +116,10 @@ function detectFork(chess: Chess, move: Move): TacticDetection | null {
   const sorted = [...attacks].sort((a, b) => b.value - a.value);
   const hasKing = sorted.some((t) => t.type === "k");
 
-  // Count targets worth at least a minor piece (3+). Pawn-only "forks" are noisy.
+  // Count targets worth at least a minor piece (3+) OR the king.
+  // A real fork needs two valuable targets — a "fork" on king + one pawn is just a check.
   const valuableTargets = sorted.filter((t) => t.value >= 300 || t.type === "k");
-  if (valuableTargets.length < 2 && !hasKing) return null;
+  if (valuableTargets.length < 2) return null;
 
   // Is the forking piece itself defended, or can it be captured for free?
   const forker = chess.get(move.to as never);
@@ -212,6 +213,7 @@ function detectPin(chess: Chess, move: Move): TacticDetection | null {
             const backValue = cv(p.type as PieceType);
             const isKingBehind = p.type === "k";
             if (isKingBehind) {
+              // Absolute pin — always meaningful, even if pinning a pawn
               return {
                 type: "pin",
                 detected: true,
@@ -219,7 +221,9 @@ function detectPin(chess: Chess, move: Move): TacticDetection | null {
                 materialWon: pinnedValue,
               };
             }
-            if (backValue > pinnedValue) {
+            // Relative pin — require the PINNED piece to be worth ≥3 (minor piece or higher).
+            // Pinning a pawn to a minor piece is noise (pawn wasn't going anywhere).
+            if (backValue > pinnedValue && pinnedValue >= 300) {
               return {
                 type: "pin",
                 detected: true,
@@ -269,17 +273,16 @@ function detectSkewer(chess: Chess, move: Move): TacticDetection | null {
             const frontValue = cv(firstPiece.type);
             const backValue = cv(p.type as PieceType);
             const isKingFront = firstPiece.type === "k";
-            // Skewer: front piece is MORE valuable (or king) than back piece
-            if ((isKingFront || frontValue > backValue) && !isKingFront === false && backValue > 0) {
-              // king-front OR front > back
-              if (isKingFront || frontValue > backValue) {
-                return {
-                  type: "skewer",
-                  detected: true,
-                  details: `Skewer! Your ${pieceName(attacker.type as PieceType)} on ${move.to} forces the ${pieceName(firstPiece.type)} to move, exposing the ${pieceName(p.type as PieceType)} behind it.`,
-                  materialWon: backValue,
-                };
-              }
+            // Skewer: front piece is MORE valuable (or king) than back piece,
+            // and back piece is worth at least a minor piece (don't celebrate skewering to pawns).
+            const meaningful = backValue >= 300;
+            if ((isKingFront || frontValue > backValue) && meaningful) {
+              return {
+                type: "skewer",
+                detected: true,
+                details: `Skewer! Your ${pieceName(attacker.type as PieceType)} on ${move.to} forces the ${pieceName(firstPiece.type)} to move, exposing the ${pieceName(p.type as PieceType)} behind it.`,
+                materialWon: backValue,
+              };
             }
           }
           break;
@@ -290,6 +293,111 @@ function detectSkewer(chess: Chess, move: Move): TacticDetection | null {
     }
   }
   return null;
+}
+
+// ── Discovered attack detection ────────────────────────
+//
+// After the player moves a piece off a ray, check whether a friendly
+// sliding piece (B/R/Q) BEHIND the "from" square now attacks something
+// valuable (≥3) along that freshly-opened line.
+//
+// Sub-types:
+//   - "discovered_check" — the revealed attack hits the opponent king
+//   - "double_check"     — BOTH the moving piece and the revealed piece
+//                          give check
+
+function detectDiscoveredAttack(
+  chess: Chess,
+  move: Move
+): TacticDetection | null {
+  const mover = chess.get(move.to as never);
+  if (!mover) return null;
+
+  const from = sqToRC(move.from);
+  const board = chess.board();
+  const myColor = mover.color as Color;
+  const oppColor = opposite(myColor);
+
+  // For each of the 8 possible sliding directions, see if our piece moving
+  // off "from" revealed a friendly B/R/Q attacking an opponent piece.
+  const allDirs: { dir: Dir; kind: "diag" | "ortho" }[] = [
+    ...BISHOP_DIRS.map((d) => ({ dir: d, kind: "diag" as const })),
+    ...ROOK_DIRS.map((d) => ({ dir: d, kind: "ortho" as const })),
+  ];
+
+  for (const { dir, kind } of allDirs) {
+    // Walk "backward" from `from` in the opposite direction to find the
+    // friendly slider that was hidden behind us.
+    let r = from.r - dir.dr;
+    let c = from.c - dir.dc;
+    let revealer: { sq: string; type: PieceType } | null = null;
+    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+      const p = board[r][c];
+      if (p) {
+        if (p.color === myColor) {
+          const isDiagSlider = p.type === "b" || p.type === "q";
+          const isOrthoSlider = p.type === "r" || p.type === "q";
+          if ((kind === "diag" && isDiagSlider) || (kind === "ortho" && isOrthoSlider)) {
+            revealer = { sq: rcToSq(r, c), type: p.type as PieceType };
+          }
+        }
+        break;
+      }
+      r -= dir.dr;
+      c -= dir.dc;
+    }
+    if (!revealer) continue;
+
+    // Now walk FORWARD from `from` in the original direction to find the
+    // first piece the revealer is now attacking.
+    r = from.r + dir.dr;
+    c = from.c + dir.dc;
+    while (r >= 0 && r < 8 && c >= 0 && c < 8) {
+      const p = board[r][c];
+      if (p) {
+        if (p.color === oppColor) {
+          const targetValue = cv(p.type as PieceType);
+          const isKing = p.type === "k";
+          // Only fire on targets worth ≥3 or the king.
+          if (isKing || targetValue >= 300) {
+            // Double check? — the moving piece ALSO gives check.
+            const moverGivesCheck = chess.isCheck() && moverAttacksKing(chess, move.to, oppColor);
+            const revealedIsCheck = isKing;
+            const sub = revealedIsCheck && moverGivesCheck ? "double check" : revealedIsCheck ? "discovered check" : "discovered attack";
+            return {
+              type: "discovered_attack",
+              detected: true,
+              details: `${sub[0].toUpperCase() + sub.slice(1)}! Your ${pieceName(mover.type as PieceType)} moved off the line, revealing your ${pieceName(revealer.type)} on ${revealer.sq} attacking the ${pieceName(p.type as PieceType)} on ${rcToSq(r, c)}.`,
+              materialWon: isKing ? 10000 : targetValue,
+            };
+          }
+        }
+        break;
+      }
+      r += dir.dr;
+      c += dir.dc;
+    }
+  }
+
+  return null;
+}
+
+// Helper: does the piece on `sq` attack the opponent king?
+function moverAttacksKing(chess: Chess, sq: string, oppColor: Color): boolean {
+  const board = chess.board();
+  let kingSq: string | null = null;
+  for (let r = 0; r < 8; r++) {
+    for (let c = 0; c < 8; c++) {
+      const p = board[r][c];
+      if (p && p.type === "k" && p.color === oppColor) {
+        kingSq = rcToSq(r, c);
+        break;
+      }
+    }
+    if (kingSq) break;
+  }
+  if (!kingSq) return false;
+  return squaresAttackedBy(chess.fen(), sq).includes(kingSq);
 }
 
 // ── Back rank mate detection ──────────────────────────
@@ -360,6 +468,9 @@ export function detectTactics(
 
   const skewer = detectSkewer(newState, move);
   if (skewer) results.push(skewer);
+
+  const discovered = detectDiscoveredAttack(newState, move);
+  if (discovered) results.push(discovered);
 
   return results;
 }

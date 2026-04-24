@@ -3,6 +3,52 @@
 import { create } from "zustand";
 import { Chess } from "chess.js";
 import type { Move, LastMove, GameStatus, CoachMessage, Difficulty, Square } from "@/lib/chess/types";
+import type { PlayerProgression, Mission, RankId } from "@/lib/progression/types";
+import { getRankByXP, XP_REWARDS, getStreakMultiplier, POWERS } from "@/lib/progression/data";
+
+const PROGRESSION_KEY = "chesswhiz.progression";
+
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function daysBetween(a: string, b: string): number {
+  const da = new Date(a).getTime();
+  const db = new Date(b).getTime();
+  return Math.round((db - da) / (1000 * 60 * 60 * 24));
+}
+
+const DEFAULT_PROGRESSION: PlayerProgression = {
+  rank: "pawn",
+  xp: 0,
+  currentKingdom: "village",
+  completedKingdoms: [],
+  defeatedBosses: [],
+  masteredStrategies: [],
+  earnedPowers: [],
+  activeMission: null,
+  streak: 0,
+  lastPlayedDate: "",
+};
+
+function loadProgression(): PlayerProgression {
+  if (typeof window === "undefined") return DEFAULT_PROGRESSION;
+  try {
+    const raw = localStorage.getItem(PROGRESSION_KEY);
+    if (!raw) return DEFAULT_PROGRESSION;
+    const parsed = JSON.parse(raw) as Partial<PlayerProgression>;
+    return { ...DEFAULT_PROGRESSION, ...parsed };
+  } catch {
+    return DEFAULT_PROGRESSION;
+  }
+}
+
+function saveProgression(prog: PlayerProgression): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(PROGRESSION_KEY, JSON.stringify(prog));
+  } catch {}
+}
 
 interface GameStore {
   // Chess state
@@ -30,6 +76,11 @@ interface GameStore {
   showPromo: Move | null;
   botThinking: boolean;
 
+  // Progression state
+  progression: PlayerProgression;
+  lastXPGain: { amount: number; source: string; timestamp: number } | null;
+  justRankedUp: RankId | null;
+
   // Actions
   setSettings: (name: string, age: number, difficulty: Difficulty) => void;
   selectSquare: (square: Square, moves: Move[]) => void;
@@ -42,6 +93,17 @@ interface GameStore {
   setCoachLoading: (val: boolean) => void;
   resetGame: () => void;
   undo: () => void;
+
+  // Progression actions
+  addXP: (amount: number, source: string) => void;
+  completeMission: () => void;
+  startMission: (mission: Mission) => void;
+  defeatBoss: (bossName: string) => void;
+  masterStrategy: (strategyId: string) => void;
+  grantGameEndXP: (status: GameStatus) => void;
+  clearXPGain: () => void;
+  clearRankUp: () => void;
+  hydrateProgression: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -63,7 +125,34 @@ export const useGameStore = create<GameStore>((set, get) => ({
   showPromo: null,
   botThinking: false,
 
-  setSettings: (name, age, difficulty) =>
+  progression: DEFAULT_PROGRESSION,
+  lastXPGain: null,
+  justRankedUp: null,
+
+  setSettings: (name, age, difficulty) => {
+    // Update streak on session start
+    const prog = get().progression;
+    const today = todayISO();
+    let nextStreak = prog.streak;
+    if (prog.lastPlayedDate) {
+      const diff = daysBetween(prog.lastPlayedDate, today);
+      if (diff === 0) {
+        // same day, no change
+      } else if (diff === 1) {
+        nextStreak = prog.streak + 1;
+      } else {
+        nextStreak = 1;
+      }
+    } else {
+      nextStreak = 1;
+    }
+    const nextProg: PlayerProgression = {
+      ...prog,
+      streak: nextStreak,
+      lastPlayedDate: today,
+    };
+    saveProgression(nextProg);
+
     set({
       playerName: name,
       playerAge: age,
@@ -76,6 +165,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       lastMove: null,
       moveCount: 0,
       lastCoachMove: -3,
+      progression: nextProg,
       coachMessages: [
         {
           id: crypto.randomUUID(),
@@ -83,7 +173,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
           text: `Hey ${name}! I'm Coach Pawn 🐾 — let's play some chess! You're White, so you go first. Try moving a center pawn to start!`,
         },
       ],
-    }),
+    });
+  },
 
   selectSquare: (square, moves) =>
     set({ selected: square, legalHighlights: moves }),
@@ -156,7 +247,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       selected: null,
       legalHighlights: [],
     });
-    // Add coaching message for undo
     set((state) => ({
       coachMessages: [
         ...state.coachMessages,
@@ -167,5 +257,94 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
       ],
     }));
+  },
+
+  // ───── Progression actions ─────
+  addXP: (amount, source) => {
+    const { progression } = get();
+    const multiplier = getStreakMultiplier(progression.streak);
+    const finalAmount = Math.round(amount * multiplier);
+    const newXP = progression.xp + finalAmount;
+    const newRank = getRankByXP(newXP);
+    const rankedUp = newRank.id !== progression.rank;
+
+    const nextProg: PlayerProgression = {
+      ...progression,
+      xp: newXP,
+      rank: newRank.id,
+    };
+    saveProgression(nextProg);
+
+    set({
+      progression: nextProg,
+      lastXPGain: { amount: finalAmount, source, timestamp: Date.now() },
+      justRankedUp: rankedUp ? newRank.id : null,
+    });
+  },
+
+  grantGameEndXP: (status) => {
+    const { difficulty } = get();
+    if (status === "white_wins") {
+      get().addXP(XP_REWARDS.winGame[difficulty], `Won a ${["Easy","Medium","Hard"][difficulty-1]} game`);
+    } else if (status === "stalemate" || status === "draw") {
+      get().addXP(XP_REWARDS.drawGame[difficulty], "Drew a game");
+    } else if (status === "black_wins") {
+      get().addXP(XP_REWARDS.loseGame, "Completed a game");
+    }
+  },
+
+  completeMission: () => {
+    const { progression } = get();
+    if (!progression.activeMission) return;
+    const powerId = progression.activeMission.powerId;
+    const power = POWERS.find((p) => p.id === powerId);
+    const earnedPowers = power && !progression.earnedPowers.includes(powerId)
+      ? [...progression.earnedPowers, powerId]
+      : progression.earnedPowers;
+    const nextProg: PlayerProgression = {
+      ...progression,
+      activeMission: null,
+      earnedPowers,
+    };
+    saveProgression(nextProg);
+    set({ progression: nextProg });
+    // Award bonus XP for applying a tactic
+    get().addXP(XP_REWARDS.applyTactic, `Applied ${progression.activeMission.targetTactic}`);
+  },
+
+  startMission: (mission) => {
+    const { progression } = get();
+    const nextProg: PlayerProgression = { ...progression, activeMission: mission };
+    saveProgression(nextProg);
+    set({ progression: nextProg });
+  },
+
+  defeatBoss: (bossName) => {
+    const { progression } = get();
+    if (progression.defeatedBosses.includes(bossName)) return;
+    const nextProg: PlayerProgression = {
+      ...progression,
+      defeatedBosses: [...progression.defeatedBosses, bossName],
+    };
+    saveProgression(nextProg);
+    set({ progression: nextProg });
+  },
+
+  masterStrategy: (strategyId) => {
+    const { progression } = get();
+    if (progression.masteredStrategies.includes(strategyId)) return;
+    const nextProg: PlayerProgression = {
+      ...progression,
+      masteredStrategies: [...progression.masteredStrategies, strategyId],
+    };
+    saveProgression(nextProg);
+    set({ progression: nextProg });
+  },
+
+  clearXPGain: () => set({ lastXPGain: null }),
+  clearRankUp: () => set({ justRankedUp: null }),
+
+  hydrateProgression: () => {
+    set({ progression: loadProgression() });
   },
 }));

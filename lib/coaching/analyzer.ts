@@ -1,6 +1,7 @@
 import { Chess } from "chess.js";
 import { evaluate } from "@/lib/chess/evaluation";
 import { getLegalMoves, moveToSAN } from "@/lib/chess/engine";
+import { detectTactics } from "@/lib/coaching/tactics";
 import type { Move, MoveAnalysis, TriggerType, PieceType } from "@/lib/chess/types";
 
 
@@ -41,6 +42,8 @@ export function analyzeMoveQuality(
   const oppMoves = getLegalMoves(next);
   const isHanging = oppMoves.some((m) => m.to === move.to);
 
+  const tactics = detectTactics(prev, next, move);
+
   return {
     trigger,
     severity,
@@ -51,5 +54,6 @@ export function analyzeMoveQuality(
     captured: capturedSquare ? (capturedSquare.type as PieceType) : null,
     isHanging,
     eval: newEval,
+    tactics,
   };
 }

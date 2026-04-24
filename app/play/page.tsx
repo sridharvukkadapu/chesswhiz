@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useSpeech } from "@/lib/speech";
+import { getRankByXP, getNextRank, RANKS } from "@/lib/progression/data";
 import { Chess } from "chess.js";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
@@ -29,7 +31,117 @@ const P = {
   emerald: "#1B7340",
   emeraldPale: "#E6F4EC",
   gold: "#C7940A",
+  goldPale: "#FDF6E3",
 };
+
+// ── Rank badge with XP progress ──
+function RankBadge({ progression }: { progression: import("@/lib/progression/types").PlayerProgression }) {
+  const rank = getRankByXP(progression.xp);
+  const next = getNextRank(rank.id);
+  const floor = rank.xpRequired;
+  const ceil = next ? next.xpRequired : rank.xpRequired + 1;
+  const pct = next ? Math.min(100, Math.max(0, ((progression.xp - floor) / (ceil - floor)) * 100)) : 100;
+
+  return (
+    <Link href="/kingdom" style={{
+      display: "flex", alignItems: "center", gap: 8,
+      padding: "4px 12px 4px 8px", borderRadius: 10,
+      background: "white", border: `1.5px solid ${P.inkGhost}`,
+      textDecoration: "none",
+      transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+      boxShadow: `0 1px 4px rgba(26,18,16,0.05)`,
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = rank.color; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = P.inkGhost; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+      aria-label={`Rank: ${rank.name}. ${progression.xp} XP. ${next ? `${ceil - progression.xp} XP to ${next.name}.` : "Max rank."}`}
+    >
+      <span style={{ fontSize: 20, color: rank.color, lineHeight: 1 }}>{rank.icon}</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <span style={{ fontSize: 11, fontWeight: 800, color: rank.color, fontFamily: "var(--font-nunito), sans-serif", letterSpacing: 0.3, lineHeight: 1 }}>
+          {rank.name.toUpperCase()}
+        </span>
+        <div style={{ width: 80, height: 4, borderRadius: 2, background: P.parchment, overflow: "hidden" }}>
+          <div style={{
+            width: `${pct}%`, height: "100%",
+            background: `linear-gradient(90deg, ${rank.color}, ${next?.color ?? rank.color})`,
+            transition: "width 0.5s ease-out",
+          }} />
+        </div>
+      </div>
+      <span style={{ fontSize: 10, color: P.inkLight, fontFamily: "var(--font-nunito), sans-serif", fontWeight: 600 }}>
+        {progression.xp}
+      </span>
+    </Link>
+  );
+}
+
+// ── Floating +XP toast ──
+function XPToast({ gain, onDone }: { gain: { amount: number; source: string; timestamp: number }; onDone: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2200);
+    return () => clearTimeout(t);
+  }, [gain.timestamp, onDone]);
+  return (
+    <div style={{
+      position: "fixed", top: 72, left: "50%",
+      transform: "translateX(-50%)",
+      zIndex: 50, pointerEvents: "none",
+      display: "flex", alignItems: "center", gap: 8,
+      padding: "10px 20px", borderRadius: 14,
+      background: P.emerald, color: "white",
+      fontFamily: "var(--font-nunito), sans-serif",
+      fontWeight: 800, fontSize: 15,
+      boxShadow: `0 10px 32px rgba(27,115,64,0.3), 0 2px 8px rgba(27,115,64,0.2)`,
+      animation: "xpToast 2.2s cubic-bezier(0.34,1.56,0.64,1) forwards",
+    }}>
+      <span style={{ fontSize: 18 }}>✦</span>
+      <span>+{gain.amount} XP</span>
+      <span style={{ opacity: 0.85, fontWeight: 600, fontSize: 13 }}>· {gain.source}</span>
+      <style>{`
+        @keyframes xpToast {
+          0%   { opacity: 0; transform: translateX(-50%) translateY(-12px) scale(0.9); }
+          15%  { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+          85%  { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+          100% { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(0.95); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+// ── Rank-up toast ──
+function RankUpToast({ rankId, onDone }: { rankId: import("@/lib/progression/types").RankId; onDone: () => void }) {
+  const rank = RANKS.find((r) => r.id === rankId)!;
+  useEffect(() => {
+    const t = setTimeout(onDone, 4000);
+    return () => clearTimeout(t);
+  }, [rankId, onDone]);
+  return (
+    <div style={{
+      position: "fixed", top: "50%", left: "50%",
+      transform: "translate(-50%, -50%)",
+      zIndex: 60, pointerEvents: "none",
+      display: "flex", flexDirection: "column", alignItems: "center",
+      padding: "28px 44px", borderRadius: 24,
+      background: "white", border: `2px solid ${rank.color}`,
+      boxShadow: `0 0 0 6px rgba(255,255,255,0.8), 0 24px 64px rgba(26,18,16,0.25), 0 0 40px ${rank.color}50`,
+      animation: "rankUp 4s cubic-bezier(0.34,1.56,0.64,1) forwards",
+    }}>
+      <span style={{ fontSize: 11, fontWeight: 800, color: P.inkLight, letterSpacing: 2, fontFamily: "var(--font-nunito), sans-serif" }}>RANK UP!</span>
+      <span style={{ fontSize: 64, lineHeight: 1, margin: "8px 0", color: rank.color, filter: `drop-shadow(0 4px 12px ${rank.color}60)` }}>{rank.icon}</span>
+      <span style={{ fontSize: 24, fontWeight: 900, color: P.ink, fontFamily: "var(--font-playfair), serif", letterSpacing: -0.5 }}>{rank.name}</span>
+      <style>{`
+        @keyframes rankUp {
+          0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+          12%  { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+          18%  { transform: translate(-50%, -50%) scale(1); }
+          85%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+        }
+      `}</style>
+    </div>
+  );
+}
 
 export default function PlayPage() {
   const router = useRouter();
@@ -38,11 +150,18 @@ export default function PlayPage() {
     chess, selected, legalHighlights, lastMove, moveHistory,
     stateHistory, status, playerName, playerAge, difficulty,
     coachMessages, coachLoading, showPromo, botThinking, screen,
+    progression, lastXPGain, justRankedUp,
   } = store;
 
   useEffect(() => {
     if (screen === "onboarding") router.push("/");
   }, [screen, router]);
+
+  // Hydrate progression from localStorage on mount
+  useEffect(() => {
+    store.hydrateProgression();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Voice: speak each new coach message when enabled ──
   const speech = useSpeech();
@@ -133,12 +252,16 @@ export default function PlayPage() {
         type: newStatus === "white_wins" ? "celebration" : newStatus === "black_wins" ? "correction" : "tip",
         text,
       });
+      store.grantGameEndXP(newStatus);
       return;
     }
 
     const analysis = analyzeMoveQuality(prevChess, newChess, move);
     if (analysis && shouldCoach(analysis, store.moveCount, store.lastCoachMove)) {
       requestCoaching(analysis);
+      if (analysis.severity === 0) {
+        store.addXP(5, "Great move!");
+      }
     }
 
     if (newChess.turn() === "b") {
@@ -159,6 +282,7 @@ export default function PlayPage() {
               type: botStatus === "black_wins" ? "correction" : "tip",
               text,
             });
+            store.grantGameEndXP(botStatus);
           }
         }
         store.setBotThinking(false);
@@ -213,6 +337,10 @@ export default function PlayPage() {
 
   return (
     <div style={{ minHeight: "100dvh", background: P.cream, color: P.ink, position: "relative" }}>
+      {/* XP + rank-up toasts */}
+      {lastXPGain && <XPToast gain={lastXPGain} onDone={() => store.clearXPGain()} />}
+      {justRankedUp && <RankUpToast rankId={justRankedUp} onDone={() => store.clearRankUp()} />}
+
       {/* Paper grain */}
       <div style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
@@ -240,6 +368,9 @@ export default function PlayPage() {
 
         {/* Right controls */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Rank + XP badge */}
+          <RankBadge progression={progression} />
+
           {/* Difficulty badge */}
           <span style={{
             fontSize: 12, fontWeight: 700, color: P.inkLight,

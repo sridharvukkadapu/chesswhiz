@@ -35,6 +35,7 @@ export interface MoveAnalysis {
   captured: PieceType | null;
   isHanging: boolean;
   eval: number;
+  tactics?: import("@/lib/progression/types").TacticDetection[];
 }
 
 export interface CoachMessage {

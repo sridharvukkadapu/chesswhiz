@@ -25,6 +25,7 @@ const P = {
   creamDeep: "#F5EFE4",
   parchment: "#F0E8D8",
   ink: "#1A1210",
+  inkSoft: "#2E2620",
   inkMed: "#5C544A",
   inkLight: "#8A8278",
   inkFaint: "#B0A898",
@@ -32,8 +33,121 @@ const P = {
   emerald: "#1B7340",
   emeraldPale: "#E6F4EC",
   gold: "#C7940A",
+  goldLight: "#F0D060",
   goldPale: "#FDF6E3",
 };
+
+// ── Floating chess pieces atmosphere (matches landing + onboarding) ──
+function ChessAtmosphere() {
+  const syms = ["♔","♕","♖","♗","♘","♙","♚","♛","♜","♝","♞","♟"];
+  return (
+    <div aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+      {Array.from({ length: 14 }, (_, i) => (
+        <span key={i} style={{
+          position: "absolute",
+          left: `${(i * 7.3) % 95}%`,
+          top: `${(i * 9.1) % 95}%`,
+          fontSize: 20 + (i * 2.1) % 26,
+          opacity: 0.016 + (i * 0.0015) % 0.022,
+          color: P.ink,
+          transform: `rotate(${-18 + (i * 4.1) % 36}deg)`,
+          animation: `drift ${20 + (i * 1.3) % 18}s ease-in-out ${(i * 0.7) % 8}s infinite alternate`,
+        }}>{syms[i % syms.length]}</span>
+      ))}
+    </div>
+  );
+}
+
+// ── Captured pieces + material advantage strip ──
+function CapturedStrip({ chess, perspective }: { chess: Chess; perspective: "w" | "b" }) {
+  // Start counts = 8 pawns, 2 knights, 2 bishops, 2 rooks, 1 queen per side.
+  const start: Record<string, number> = { p: 8, n: 2, b: 2, r: 2, q: 1 };
+  const alive = { w: { ...start }, b: { ...start } } as Record<"w" | "b", Record<string, number>>;
+  for (const row of chess.board()) {
+    for (const sq of row) {
+      if (sq && sq.type !== "k") alive[sq.color][sq.type] -= 1;
+    }
+  }
+  // Pieces `perspective` has captured = pieces missing from the OTHER side.
+  const opp: "w" | "b" = perspective === "w" ? "b" : "w";
+  const captured: Array<{ type: string; count: number }> = [];
+  const values: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+  const icons: Record<"w" | "b", Record<string, string>> = {
+    w: { p: "♙", n: "♘", b: "♗", r: "♖", q: "♕" },
+    b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛" },
+  };
+  let ownMaterial = 0;
+  let oppMaterial = 0;
+  for (const t of ["q", "r", "b", "n", "p"]) {
+    const c = start[t] - alive[opp][t];
+    if (c > 0) captured.push({ type: t, count: c });
+    ownMaterial += alive[perspective][t] * values[t];
+    oppMaterial += alive[opp][t] * values[t];
+  }
+  const diff = ownMaterial - oppMaterial;
+
+  if (captured.length === 0 && diff === 0) {
+    return (
+      <div style={{
+        minHeight: 24, display: "flex", alignItems: "center",
+        fontSize: 11, color: P.inkFaint, fontStyle: "italic",
+        fontFamily: "var(--font-nunito), sans-serif",
+        paddingLeft: 4,
+      }}>no captures yet</div>
+    );
+  }
+
+  return (
+    <div style={{
+      minHeight: 24, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+      paddingLeft: 4,
+    }}>
+      {captured.map((c, i) => (
+        <span key={i} style={{
+          display: "inline-flex", alignItems: "center", gap: 1,
+          fontSize: 16, lineHeight: 1,
+          color: opp === "w" ? "#C9BCA0" : P.inkSoft,
+          filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.08))",
+        }}>
+          {Array.from({ length: c.count }, (_, j) => (
+            <span key={j} style={{ marginLeft: j === 0 ? 0 : -6 }}>{icons[opp][c.type]}</span>
+          ))}
+        </span>
+      ))}
+      {diff !== 0 && (
+        <span style={{
+          fontSize: 11, fontWeight: 800,
+          color: diff > 0 ? P.emerald : "#B45309",
+          fontFamily: "var(--font-nunito), sans-serif",
+          background: diff > 0 ? P.emeraldPale : "#FEF3C7",
+          border: `1px solid ${diff > 0 ? P.emerald : "#B45309"}30`,
+          padding: "2px 6px", borderRadius: 6,
+          marginLeft: "auto",
+          letterSpacing: 0.3,
+        }}>{diff > 0 ? `+${diff}` : diff}</span>
+      )}
+    </div>
+  );
+}
+
+// ── Section label (matches kingdom page's small-caps headers) ──
+function SectionLabel({ num, text, accent }: { num: string; text: string; accent?: boolean }) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "2px 4px 6px" }}>
+      <span style={{
+        fontFamily: "var(--font-playfair), serif",
+        fontSize: 12, fontWeight: 900,
+        color: accent ? P.gold : P.inkLight,
+        letterSpacing: 0.3,
+      }}>{num}</span>
+      <span style={{
+        fontSize: 10, fontWeight: 800,
+        color: accent ? P.gold : P.inkLight,
+        letterSpacing: 1.6, textTransform: "uppercase",
+      }}>{text}</span>
+    </div>
+  );
+}
 
 // ── Rank badge with XP progress ──
 function RankBadge({ progression }: { progression: import("@/lib/progression/types").PlayerProgression }) {
@@ -403,10 +517,19 @@ export default function PlayPage() {
       {justRankedUp && <RankUpToast rankId={justRankedUp} onDone={() => store.clearRankUp()} />}
 
       {/* Paper grain */}
-      <div style={{
+      <div aria-hidden style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.022'/%3E%3C/svg%3E")`,
       }} />
+
+      {/* Warm vignette — ties back to onboarding */}
+      <div aria-hidden style={{
+        position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+        background: `radial-gradient(ellipse at 20% 10%, ${P.parchment} 0%, ${P.cream} 65%)`,
+      }} />
+
+      {/* Floating chess atmosphere */}
+      <ChessAtmosphere />
 
       {/* Header */}
       <header style={{
@@ -524,6 +647,28 @@ export default function PlayPage() {
           display: "flex", flexDirection: "column", gap: 8,
           width: "100%", maxWidth: "min(calc(100vw - 24px), 480px)",
         }}>
+          {/* Hand-lettered overline — same device as landing/onboarding */}
+          <div style={{
+            display: "flex", alignItems: "baseline", justifyContent: "space-between",
+            padding: "0 4px 2px",
+          }}>
+            <span style={{
+              fontFamily: "'Caveat', cursive", fontSize: 17, color: P.gold,
+              transform: "rotate(-2deg)", display: "inline-block",
+            }}>your game →</span>
+            <span style={{
+              fontSize: 10, fontWeight: 800, color: P.inkLight,
+              letterSpacing: 1.4, textTransform: "uppercase",
+              fontFamily: "var(--font-nunito), sans-serif",
+            }}>
+              Move <span style={{
+                fontFamily: "var(--font-playfair), serif",
+                fontSize: 13, color: P.ink, fontWeight: 900,
+                letterSpacing: 0, marginLeft: 2,
+              }}>{Math.ceil((moveHistory.length + 1) / 2)}</span>
+            </span>
+          </div>
+
           <PlayerBar
             name="ChessBot"
             colorLabel="Black"
@@ -531,6 +676,9 @@ export default function PlayPage() {
             isBotThinking={botThinking}
             isBot={true}
           />
+          {/* What the bot has captured from you */}
+          <CapturedStrip chess={chess} perspective="b" />
+
           <Board
             chess={chess}
             selected={selected}
@@ -542,6 +690,9 @@ export default function PlayPage() {
             onSquareClick={handleSquareClick}
             onPromo={handlePromo}
           />
+
+          {/* What you have captured from the bot */}
+          <CapturedStrip chess={chess} perspective="w" />
           <PlayerBar
             name={playerName}
             colorLabel="White"
@@ -557,8 +708,14 @@ export default function PlayPage() {
           {progression.activeMission && (
             <MissionBanner mission={progression.activeMission} />
           )}
-          <CoachPanel messages={coachMessages} loading={coachLoading} />
-          <MoveHistory moves={moveHistory} />
+          <div>
+            <SectionLabel num="01" text="Coach Pawn" accent />
+            <CoachPanel messages={coachMessages} loading={coachLoading} />
+          </div>
+          <div>
+            <SectionLabel num="02" text={`Move history · ${moveHistory.length} ply`} />
+            <MoveHistory moves={moveHistory} />
+          </div>
 
           {/* Action buttons */}
           <div style={{ display: "flex", gap: 8 }}>
@@ -611,6 +768,13 @@ export default function PlayPage() {
           </div>
         </div>
       </main>
+
+      <style>{`
+        @keyframes drift {
+          0%   { transform: translateY(0px) rotate(0deg); }
+          100% { transform: translateY(-36px) rotate(8deg); }
+        }
+      `}</style>
     </div>
   );
 }

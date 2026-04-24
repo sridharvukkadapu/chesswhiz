@@ -1,14 +1,14 @@
-import type { Rank, Kingdom, Power } from "./types";
+import type { Rank, Kingdom, Power, Strategy } from "./types";
 
 // ───────── RANKS ─────────
-// Thresholds from CLAUDE_CODE_INSTRUCTIONS.md
+
 export const RANKS: Rank[] = [
-  { id: "pawn",   name: "Pawn",   icon: "♟", level: 1, xpRequired: 0,     color: "#8A8278" },
-  { id: "knight", name: "Knight", icon: "♞", level: 2, xpRequired: 500,   color: "#1B7340" },
-  { id: "bishop", name: "Bishop", icon: "♝", level: 3, xpRequired: 1500,  color: "#3B82F6" },
-  { id: "rook",   name: "Rook",   icon: "♜", level: 4, xpRequired: 3500,  color: "#C7940A" },
-  { id: "queen",  name: "Queen",  icon: "♛", level: 5, xpRequired: 7000,  color: "#9333EA" },
-  { id: "king",   name: "King",   icon: "♚", level: 6, xpRequired: 12000, color: "#DC2626" },
+  { id: "pawn", name: "Pawn", icon: "♟", level: 1, xpRequired: 0, color: "#8B7355" },
+  { id: "knight", name: "Knight", icon: "♞", level: 2, xpRequired: 500, color: "#22C55E" },
+  { id: "bishop", name: "Bishop", icon: "♝", level: 3, xpRequired: 1500, color: "#3B82F6" },
+  { id: "rook", name: "Rook", icon: "♜", level: 4, xpRequired: 3500, color: "#EF4444" },
+  { id: "queen", name: "Queen", icon: "♛", level: 5, xpRequired: 7000, color: "#A855F7" },
+  { id: "king", name: "King", icon: "♚", level: 6, xpRequired: 12000, color: "#EAB308" },
 ];
 
 export function getRankByXP(xp: number): Rank {
@@ -26,24 +26,73 @@ export function getNextRank(currentRankId: string): Rank | null {
   return RANKS[idx + 1];
 }
 
-// ───────── KINGDOMS (placeholder content — matches the Instruction spec) ─────────
-// NOTE: kingdom names/bosses/strategies will be replaced verbatim with the
-// chesswhiz-kingdom.jsx artifact content when that's provided. For now these
-// are plausible placeholders that satisfy the type contract.
+// ───────── KINGDOMS ─────────
 
 export const KINGDOMS: Kingdom[] = [
   {
     id: "village",
     name: "Pawn Village",
-    subtitle: "Where every grandmaster's journey begins",
+    subtitle: "Where every journey begins",
     level: 1,
-    color: "#8A8278",
-    description: "A peaceful village where pawns learn their first steps. No bosses here — just the basics: how each piece moves, captures, and works together.",
+    color: "#8B7355",
+    description:
+      "A humble village where young chess players learn the basics. The Village Elder teaches board setup, piece movement, and the sacred rules of chess. There is no boss here — only warmth, patience, and the first sparks of understanding.",
     boss: null,
     strategies: [
-      { id: "piece_movement", name: "How Pieces Move", description: "Master the movement of each piece.", coachExplanation: "Every piece has its own personality! The knight jumps, the bishop slides on diagonals, the rook rules the ranks and files.", kingdom: "village", prerequisites: [], xpReward: 30 },
-      { id: "basic_captures", name: "Captures & Trades", description: "Learn when to trade pieces and when to hold.", coachExplanation: "Not every capture is a good one! Sometimes you give up a pawn to gain a much bigger prize.", kingdom: "village", prerequisites: ["piece_movement"], xpReward: 40 },
-      { id: "check_checkmate", name: "Check & Checkmate", description: "Understand the goal of chess.", coachExplanation: "Check means your king is in danger! Checkmate means game over — protect your king at all costs.", kingdom: "village", prerequisites: ["piece_movement"], xpReward: 50 },
+      {
+        id: "board_setup",
+        name: "The Board",
+        description: "Ranks, files, diagonals, and square names (a1–h8). The foundation of everything.",
+        coachExplanation:
+          "Think of the board like a city map — every square has an address! a1 is the corner, e4 is the center of town.",
+        kingdom: "village",
+        prerequisites: [],
+        xpReward: 25,
+      },
+      {
+        id: "piece_movement",
+        name: "Piece Movement",
+        description:
+          "How each piece moves: pawns march forward, knights jump in an L, bishops slide diagonally, rooks drive straight, the queen goes anywhere, and the king takes one careful step at a time.",
+        coachExplanation:
+          "Every piece is a character with their own superpower! The knight is the horse that jumps over everyone. The bishop is the sneaky diagonal slider. Learn how they ALL move and you unlock the whole game!",
+        kingdom: "village",
+        prerequisites: ["board_setup"],
+        xpReward: 50,
+      },
+      {
+        id: "captures_values",
+        name: "Captures & Values",
+        description:
+          "Taking opponent pieces and understanding their worth: Pawn = 1, Knight = 3, Bishop = 3, Rook = 5, Queen = 9. Trading a knight for a rook is winning material!",
+        coachExplanation:
+          "Imagine each piece has a price tag. Would you trade your $3 knight for their $5 rook? YES! Always try to get more than you give.",
+        kingdom: "village",
+        prerequisites: ["piece_movement"],
+        xpReward: 50,
+      },
+      {
+        id: "check_checkmate",
+        name: "Check & Checkmate",
+        description:
+          "Check means the king is under attack. Checkmate means the king is under attack AND cannot escape — game over! Also learn stalemate (no legal moves but NOT in check = draw).",
+        coachExplanation:
+          "Check is like saying 'watch out, your king is in danger!' Checkmate is like saying 'game over — your king has NOWHERE to run!' That's how you WIN!",
+        kingdom: "village",
+        prerequisites: ["captures_values"],
+        xpReward: 75,
+      },
+      {
+        id: "special_moves",
+        name: "Special Moves",
+        description:
+          "Three special rules: Castling (king + rook swap to safety), en passant (sneaky pawn capture), and promotion (pawn reaches the end and becomes a queen!).",
+        coachExplanation:
+          "These are the SECRET MOVES of chess! Castling is like building a fortress for your king. Promotion is like a little pawn growing up to become a QUEEN! And en passant... that's the trickiest one. Even some adults don't know it!",
+        kingdom: "village",
+        prerequisites: ["piece_movement"],
+        xpReward: 75,
+      },
     ],
   },
   {
@@ -51,164 +100,487 @@ export const KINGDOMS: Kingdom[] = [
     name: "The Fork Forest",
     subtitle: "Where the Knight Twins ambush travelers",
     level: 2,
-    color: "#1B7340",
-    description: "A dense forest where knights leap from trees, attacking two things at once. To survive, you must learn to see the double threat before it strikes.",
+    color: "#22C55E",
+    description:
+      "A dark, twisting forest where two mischievous Knight Twins attack travelers from both sides at once. They leap over bushes and fences, always landing between two valuable targets. To pass through the forest, you must learn their trick — and use it against them.",
     boss: {
       name: "The Knight Twins",
       emoji: "♞♞",
-      personality: "Mischievous, playful, always grinning. They talk as one voice, finishing each other's sentences. They taunt you for playing slow.",
-      signature: "Double knight assault — always trying to create forks with both knights working together.",
+      personality:
+        "Playful tricksters who never stop giggling. They finish each other's sentences and always attack two things at once.",
+      signature:
+        "Every single move is a fork. They never attack just one piece — always two. Their knights dance across the board in coordinated L-shaped ambushes.",
       dialogue: [
-        "Oho! A visitor! Let us show you how the forest really works...",
-        "Did you see that one coming? Neither did your queen!",
-        "Well played, traveler. You've earned the Fork Power. Use it wisely!",
+        "Hehe! We got your rook AND your queen! Didn't see us coming, did you?",
+        "You'll never catch us — we jump over EVERYTHING! Try to block THAT!",
+        "Wait... did YOU just fork US?! That's... that's OUR move! No fair! ...Okay, fine. You earned it.",
       ],
     },
     strategies: [
-      { id: "knight_forks", name: "Knight Forks", description: "The knight attacks two pieces at once.", coachExplanation: "A fork is like a kid with two hands in the cookie jar — your knight grabs two things at once, and the opponent can only save one!", kingdom: "fork_forest", prerequisites: [], xpReward: 80 },
-      { id: "royal_fork", name: "The Royal Fork", description: "Forking king + queen for massive material gain.", coachExplanation: "The king MUST move out of check. So if you fork the king and queen — the queen is yours!", kingdom: "fork_forest", prerequisites: ["knight_forks"], xpReward: 100 },
-      { id: "pawn_forks", name: "Pawn Forks", description: "Pawns can fork too!", coachExplanation: "Never underestimate a pawn — a single pawn push can threaten two pieces at once.", kingdom: "fork_forest", prerequisites: ["knight_forks"], xpReward: 60 },
+      {
+        id: "hanging_pieces",
+        name: "Hanging Pieces",
+        description:
+          "A hanging piece is an unprotected piece — one that nobody is defending. Before every move, scan the board: are any of YOUR pieces hanging? Are any of THEIRS? Free captures win games!",
+        coachExplanation:
+          "Before you move, always ask: 'Is anything free?' If your opponent left a piece without a bodyguard, go grab it! And make sure YOUR pieces all have friends protecting them.",
+        kingdom: "fork_forest",
+        prerequisites: ["captures_values"],
+        xpReward: 60,
+      },
+      {
+        id: "knight_forks",
+        name: "Knight Forks",
+        description:
+          "The knight is the best forking piece because it jumps in an L-shape and can't be blocked. Look for squares where your knight attacks two valuable pieces at once — especially king + another piece (the king MUST move, so you win the other piece for free!).",
+        coachExplanation:
+          "The knight is like a sneaky ninja — it hops over everyone and attacks TWO things at once! Like eating from two plates at a buffet! The best fork is when you check the king AND attack something else. The king HAS to move, and you grab the other piece! 🐴",
+        kingdom: "fork_forest",
+        prerequisites: ["hanging_pieces"],
+        xpReward: 80,
+      },
+      {
+        id: "pawn_forks",
+        name: "Pawn Forks",
+        description:
+          "Even the humble pawn can fork! By advancing a pawn, it attacks diagonally left AND right. If two enemy pieces are on those diagonal squares, the pawn forks them. Since pawns are only worth 1 point, forking two pieces worth 3+ is always a great trade.",
+        coachExplanation:
+          "Don't underestimate the little pawn! It can attack two big pieces at once by moving forward. And since it's the cheapest piece on the board, your opponent HATES losing a knight or bishop to a tiny pawn! 🤏",
+        kingdom: "fork_forest",
+        prerequisites: ["knight_forks"],
+        xpReward: 60,
+      },
+      {
+        id: "queen_forks",
+        name: "Queen Forks",
+        description:
+          "The queen can fork along ranks, files, and diagonals — she has more forking potential than any other piece. But be careful: if your queen forks two pieces but is also attacked, you might lose the queen!",
+        coachExplanation:
+          "The queen is the ULTIMATE forker because she moves in EVERY direction. But she's also your most valuable piece — so don't put her in danger just for a fork. Make sure she's SAFE while she attacks! 👑",
+        kingdom: "fork_forest",
+        prerequisites: ["knight_forks"],
+        xpReward: 80,
+      },
     ],
   },
   {
     id: "pin_palace",
     name: "The Pin Palace",
-    subtitle: "Halls guarded by the Shadow Bishop",
+    subtitle: "Where the Shadow Bishop holds pieces hostage",
     level: 3,
     color: "#3B82F6",
-    description: "A vast palace of long corridors where bishops hold their targets frozen in place. Learn to pin pieces to their king — and punish those who try to escape.",
+    description:
+      "A grand palace of mirrors and shifting shadows where the Shadow Bishop rules with a patient, calculating gaze. Pieces that can see the king behind them dare not move — they are paralyzed by the bishop's diagonal stare. The hallways are lined with geometric traps, and every corridor leads to a pin.",
     boss: {
       name: "The Shadow Bishop",
       emoji: "♝",
-      personality: "Calm, patient, speaks in whispers. Never rushes. Believes position matters more than material.",
-      signature: "Long diagonal pins that freeze your pieces, then slowly wins them one by one.",
+      personality:
+        "Patient, calculating, speaks in riddles. Never rushes. Waits for pieces to line up on the same diagonal, then strikes with devastating precision.",
+      signature:
+        "Pins your strongest pieces to your king — you can see the threat coming but you can't escape. Every move creates a new diagonal trap.",
       dialogue: [
-        "I see you... from a distance. You cannot hide from the long diagonals.",
-        "Your knight is pinned. It cannot move. It is... mine now.",
-        "You have learned patience. The diagonals are yours to command.",
+        "Your knight wants to move... but dare it abandon its king? I think not.",
+        "In my palace, every piece is a prisoner of its own loyalty. The more you protect, the less you can move.",
+        "Interesting. You've learned to break my pins. Perhaps you are worthy of leaving this palace... alive.",
       ],
     },
     strategies: [
-      { id: "absolute_pin", name: "Absolute Pin", description: "Pin a piece to its king — it can't move.", coachExplanation: "When a piece is pinned to the king, it's frozen! The pinned piece LITERALLY can't move because it would leave the king in check.", kingdom: "pin_palace", prerequisites: [], xpReward: 100 },
-      { id: "relative_pin", name: "Relative Pin", description: "Pin a piece to a more valuable piece.", coachExplanation: "Even without the king, a pin works if the piece behind is worth more — moving the pinned piece loses the big one.", kingdom: "pin_palace", prerequisites: ["absolute_pin"], xpReward: 90 },
-      { id: "pin_exploitation", name: "Exploiting the Pin", description: "Pile on the pinned piece to win it.", coachExplanation: "A pinned piece can't defend itself. Attack it again with a pawn or another piece — and it's yours.", kingdom: "pin_palace", prerequisites: ["absolute_pin"], xpReward: 110 },
+      {
+        id: "absolute_pins",
+        name: "Absolute Pins",
+        description:
+          "An absolute pin targets a piece that has the KING directly behind it. The pinned piece CANNOT legally move — moving it would expose the king to check, which is illegal. This is the strongest type of pin.",
+        coachExplanation:
+          "When a piece is pinned to the king, it's FROZEN. It literally can't move — the rules won't let it! It's like pinning someone's cape to the wall. They can see you coming but they can't get out of the way! 📌",
+        kingdom: "pin_palace",
+        prerequisites: ["knight_forks"],
+        xpReward: 80,
+      },
+      {
+        id: "relative_pins",
+        name: "Relative Pins",
+        description:
+          "A relative pin targets a piece with a valuable (but not king) piece behind it. The pinned piece CAN legally move, but doing so loses the more valuable piece behind it. Most players won't move the pinned piece — but sometimes they have to!",
+        coachExplanation:
+          "A relative pin is like saying 'you CAN move... but it'll cost you your queen!' Most of the time, the opponent just leaves the pinned piece stuck. Then you pile on — attack it with pawns and win it!",
+        kingdom: "pin_palace",
+        prerequisites: ["absolute_pins"],
+        xpReward: 80,
+      },
+      {
+        id: "pin_pile_on",
+        name: "Pin & Pile On",
+        description:
+          "Once a piece is pinned, it can't run away. So attack it again — and again! Move a pawn toward it, aim another piece at it. The pinned piece is a sitting duck. This is one of the most effective strategies in chess.",
+        coachExplanation:
+          "Step 1: Pin the piece. Step 2: Attack the pinned piece with EVERYTHING. It can't move, so just pile on! It's like tag when someone is stuck — everyone gets to tag them! 🕷️",
+        kingdom: "pin_palace",
+        prerequisites: ["absolute_pins"],
+        xpReward: 100,
+      },
+      {
+        id: "breaking_pins",
+        name: "Breaking Pins",
+        description:
+          "When YOUR piece gets pinned, you need to know how to escape. Options: (1) block the pin with another piece, (2) attack the pinning piece, (3) move the piece behind (if it's not the king), (4) just capture the pinning piece. Knowing how to break pins is as important as knowing how to create them.",
+        coachExplanation:
+          "Getting pinned is scary — but you're NOT helpless! Can you put something in the way? Can you chase the pinning piece away? Can you move the big piece behind? Always look for a way out! 🔓",
+        kingdom: "pin_palace",
+        prerequisites: ["relative_pins"],
+        xpReward: 80,
+      },
     ],
   },
   {
     id: "skewer_spire",
-    name: "Skewer Spire",
-    subtitle: "Home of the Iron Rook",
+    name: "The Skewer Spire",
+    subtitle: "Where the Rook Queen strikes through the line",
     level: 3,
-    color: "#F97316",
-    description: "A tower where valuable pieces are impaled on long lines. The skewer is the pin's aggressive cousin — the big piece moves first, leaving the small one behind to capture.",
+    color: "#EF4444",
+    description:
+      "A towering crystal spire rising from the mountains where the Rook Queen commands long, straight corridors with absolute authority. She attacks the most valuable piece first — and when it flees in panic, she captures whatever was hiding behind it. Nothing escapes her line of sight.",
     boss: {
-      name: "The Iron Rook",
+      name: "The Rook Queen",
       emoji: "♜",
-      personality: "Gruff, direct, respects strength. Speaks in short sentences. Doesn't waste words or moves.",
-      signature: "Rook skewers on open files — forces your king to move, then takes whatever's behind.",
+      personality:
+        "Regal, direct, and devastatingly efficient. Never wastes a move. Speaks with the confidence of someone who controls every open file on the board.",
+      signature:
+        "Skewers your king on open files and ranks, forcing it to flee, then captures the queen or rook that was hiding behind. Her corridors are death traps.",
       dialogue: [
-        "No tricks in my tower. Just force. Let's see yours.",
-        "Your king moves. Your rook falls. That's how it works.",
-        "Strong move. The Spire respects you now.",
+        "Your king flees, but your rook stays. How generous of you to leave it for me.",
+        "Never stand behind your king on an open file. I am always watching. Always.",
+        "You skewered ME? I... I must admit, I respect that. The student becomes the master.",
       ],
     },
     strategies: [
-      { id: "rook_skewer", name: "Rook Skewer", description: "Attack a valuable piece with a less valuable one behind.", coachExplanation: "A skewer is like a fork in reverse — the big piece has to move, and the small one gets captured!", kingdom: "skewer_spire", prerequisites: [], xpReward: 110 },
-      { id: "king_skewer", name: "King Skewer", description: "Force the king to move, win the piece behind.", coachExplanation: "When you check the king with a skewer, the king MUST move — and whatever's behind it is yours!", kingdom: "skewer_spire", prerequisites: ["rook_skewer"], xpReward: 130 },
+      {
+        id: "king_skewers",
+        name: "King Skewers",
+        description:
+          "Attack the king with a rook, bishop, or queen. The king MUST move (it's in check). Whatever piece was behind the king on the same line gets captured. The most common skewer pattern.",
+        coachExplanation:
+          "A skewer is like a pin in REVERSE! Instead of trapping the small piece, you attack the BIG piece first. The king runs away, and you grab whatever was hiding behind it! Like a kebab — push the stick through the big piece first! 🍢",
+        kingdom: "skewer_spire",
+        prerequisites: ["absolute_pins"],
+        xpReward: 80,
+      },
+      {
+        id: "queen_skewers",
+        name: "Queen Skewers",
+        description:
+          "Attack the enemy queen with a bishop or rook. The queen must move (it's too valuable to lose). Behind the queen? A rook, a bishop, or even an undefended piece. Queen moves, you capture.",
+        coachExplanation:
+          "The queen is powerful but she's also a TARGET. If you attack her with a less valuable piece, she HAS to move. And whatever she was protecting behind her? Now it's yours! 👸➡️🏨",
+        kingdom: "skewer_spire",
+        prerequisites: ["king_skewers"],
+        xpReward: 80,
+      },
+      {
+        id: "back_rank_threats",
+        name: "Back Rank Threats",
+        description:
+          "The back rank (rank 1 for white, rank 8 for black) is the most dangerous corridor in chess. If the king is trapped there by its own pawns with no escape square, a single rook or queen on the back rank is CHECKMATE. Always give your king 'luft' (push h3 or a3 to create an escape). And always look for back rank weaknesses in your opponent!",
+        coachExplanation:
+          "The back rank is like a dead-end alley — if your king is stuck there, one rook slam is game over! Always give your king a window to escape by pushing one pawn. And check if your OPPONENT forgot to do the same... 😈",
+        kingdom: "skewer_spire",
+        prerequisites: ["king_skewers"],
+        xpReward: 100,
+      },
     ],
   },
   {
     id: "discovery_depths",
-    name: "Discovery Depths",
-    subtitle: "The caverns of the Hidden Dragon",
+    name: "The Discovery Depths",
+    subtitle: "Where the Hidden Army strikes from shadows",
     level: 4,
-    color: "#9333EA",
-    description: "Dark caves where pieces hide behind each other. Move one — and a hidden attack erupts from behind. Double checks are the most devastating move in chess.",
+    color: "#F97316",
+    description:
+      "Deep underground caverns lit by flickering torchlight where the Phantom General commands an invisible army. One piece moves aside to reveal a devastating attack from the piece behind it — you never see it coming until it's too late. In these depths, the most dangerous move is the one you DON'T see.",
     boss: {
-      name: "The Hidden Dragon",
-      emoji: "🐉",
-      personality: "Ancient, wise, cryptic. Speaks in riddles. Rewards cleverness over force.",
-      signature: "Discovered attacks — moves one piece to reveal a devastating attack from another.",
+      name: "The Phantom General",
+      emoji: "👻",
+      personality:
+        "Mysterious and ethereal. Speaks in whispers. Appears from nowhere. Every move has a hidden purpose — the real threat is always the one you can't see.",
+      signature:
+        "Every move reveals a hidden attacker. Discovered attacks, discovered checks, and the devastating double check — two pieces attacking your king at once, leaving no defense except to run.",
       dialogue: [
-        "What you see is not all there is. Look behind the curtain...",
-        "One move. Two attacks. Can you handle both?",
-        "You see with the eyes of a master now. Go, use this sight.",
+        "*whisper* I moved my bishop... but it's the rook behind it you should fear. Look again.",
+        "Two attackers. One move. Your king has nowhere to hide and nothing can save it. Welcome to the depths.",
+        "You've learned to see the invisible. Not many survive these caverns with that wisdom. The depths have taught you well.",
       ],
     },
     strategies: [
-      { id: "discovered_attack", name: "Discovered Attack", description: "Move one piece, reveal an attack from another.", coachExplanation: "It's a two-for-one! Your piece moves AND another piece behind it suddenly attacks. Sneaky!", kingdom: "discovery_depths", prerequisites: [], xpReward: 150 },
-      { id: "discovered_check", name: "Discovered Check", description: "Move one piece, reveal a check from another.", coachExplanation: "The moving piece can go anywhere — even grab something — because the opponent HAS to deal with the check first!", kingdom: "discovery_depths", prerequisites: ["discovered_attack"], xpReward: 160 },
-      { id: "double_check", name: "Double Check", description: "Two pieces check the king at once — king MUST move.", coachExplanation: "Double check is the most powerful weapon in chess. The king can't block or capture — it MUST run!", kingdom: "discovery_depths", prerequisites: ["discovered_check"], xpReward: 200 },
+      {
+        id: "discovered_attacks",
+        name: "Discovered Attacks",
+        description:
+          "Move one piece out of the way to reveal an attack from a different piece behind it. Now your opponent faces TWO problems: the piece you moved AND the piece you revealed. They can only deal with one!",
+        coachExplanation:
+          "It's like a magician's trick — your opponent watches the piece you moved, but the REAL danger was the one hiding behind it all along! One move, two threats! 🎩✨",
+        kingdom: "discovery_depths",
+        prerequisites: ["absolute_pins", "king_skewers"],
+        xpReward: 100,
+      },
+      {
+        id: "discovered_check",
+        name: "Discovered Check",
+        description:
+          "A discovered attack where the revealed piece gives CHECK to the king. The king MUST deal with the check, which means the moving piece gets a FREE move — it can capture anything, go anywhere. The opponent can't stop it because they're busy saving their king!",
+        coachExplanation:
+          "Discovered check is like a free turn! You reveal check with one piece, and while the opponent deals with THAT, your other piece can go ANYWHERE — capture a queen, take a rook, do whatever it wants! 🎯",
+        kingdom: "discovery_depths",
+        prerequisites: ["discovered_attacks"],
+        xpReward: 100,
+      },
+      {
+        id: "double_check",
+        name: "Double Check",
+        description:
+          "The ultimate discovered attack: BOTH the moving piece AND the revealed piece give check simultaneously. The king is attacked by two pieces at once. You can't block two checks. You can't capture two pieces. The king MUST move. This is the most forcing move in chess.",
+        coachExplanation:
+          "DOUBLE CHECK is the most POWERFUL move in all of chess! Two pieces checking the king at the same time. There's NO block. There's NO capture. The king HAS to run. And wherever it runs... you're probably ready. ⚡⚡",
+        kingdom: "discovery_depths",
+        prerequisites: ["discovered_check"],
+        xpReward: 120,
+      },
     ],
   },
   {
     id: "strategy_summit",
-    name: "Strategy Summit",
-    subtitle: "The mountain of the Old Master",
+    name: "The Strategy Summit",
+    subtitle: "Where the Grand Strategist sees the whole board",
     level: 5,
-    color: "#C7940A",
-    description: "A peak where battles are won by plans, not tricks. Sacrifice material for position. Control the center. Think ten moves ahead.",
+    color: "#A855F7",
+    description:
+      "The windswept mountain peak above the clouds where chess becomes more than tricks and traps. The Grand Strategist sees patterns that take 10, 20, 30 moves to unfold. Pawn structures, piece coordination, space control — this is where chess transforms from a game of tactics into an art of long-term planning.",
     boss: {
-      name: "The Old Master",
+      name: "The Grand Strategist",
       emoji: "🧙",
-      personality: "Wise, slow-moving, thoughtful. Has seen it all. Teaches as much as he fights.",
-      signature: "Positional sacrifices — gives up a pawn or piece to build an unstoppable position.",
+      personality:
+        "Ancient, wise, infinitely patient. Never rushes. Wins without flashy tactics — just relentless, suffocating improvement. Every move makes a position slightly better until you can't breathe.",
+      signature:
+        "No sacrifices, no flashy forks. Just slowly improving every piece, creating weaknesses in your pawn structure, and squeezing you until you crack. Wins by making you WANT to resign.",
       dialogue: [
-        "A young challenger. Come. Show me your plan, not your tricks.",
-        "You took my pawn. But look where MY pieces are now...",
-        "You see the whole board at last. The Summit bows to you.",
+        "You captured my pawn. Congratulations. But now your pawn structure is ruined... forever.",
+        "Every move I make improves my worst piece. Tell me — what does YOUR move improve?",
+        "Tactics win battles. Strategy wins wars. You have climbed the summit. Now you see the whole board. Welcome.",
       ],
     },
     strategies: [
-      { id: "positional_sacrifice", name: "Positional Sacrifice", description: "Give up material to improve your position.", coachExplanation: "Sometimes losing a pawn is the BEST move — if it gives you a huge advantage in position or king safety!", kingdom: "strategy_summit", prerequisites: [], xpReward: 200 },
-      { id: "center_control", name: "Center Control", description: "Dominate the center squares.", coachExplanation: "The center is chess real estate — whoever controls it, controls the game.", kingdom: "strategy_summit", prerequisites: [], xpReward: 150 },
-      { id: "deflection", name: "Deflection", description: "Force a defender to move away from its job.", coachExplanation: "If a piece is guarding something important, give it a reason to leave — then strike!", kingdom: "strategy_summit", prerequisites: ["positional_sacrifice"], xpReward: 180 },
+      {
+        id: "pawn_structure",
+        name: "Pawn Structure",
+        description:
+          "Pawns can't go backwards — every pawn move permanently changes the position. Doubled pawns (two on the same file) are weak. Isolated pawns (no friends on adjacent files) need constant protection. Backward pawns (can't advance safely) are targets. And passed pawns (no enemy pawn can stop them) are gold — escort them to promotion!",
+        coachExplanation:
+          "Pawns are like the skeleton of your position — they hold everything together. But they can NEVER go backwards! So think carefully before you push one. A ruined pawn structure is like a cracked foundation — everything eventually falls apart. 🧱",
+        kingdom: "strategy_summit",
+        prerequisites: ["special_moves"],
+        xpReward: 120,
+      },
+      {
+        id: "piece_activity",
+        name: "Piece Activity",
+        description:
+          "Every move, look at ALL your pieces and ask: which one is doing the LEAST? A knight stuck on the edge? A bishop blocked by its own pawns? A rook with no open file? Find your laziest piece and give it a better job. A coordinated army beats scattered forces every time.",
+        coachExplanation:
+          "Imagine your pieces are a band. If the drummer stopped playing, the whole song sounds wrong. Find your laziest piece — the one just sitting around doing nothing — and put it to WORK! Every piece should be jamming! 🎸",
+        kingdom: "strategy_summit",
+        prerequisites: ["pawn_structure"],
+        xpReward: 80,
+      },
+      {
+        id: "open_files",
+        name: "Open Files",
+        description:
+          "An open file is a file (column) with no pawns on it. Rooks are POWERFUL on open files because they can slide all the way up and down without obstruction. If you have an open file, put a rook on it. If you can double rooks on an open file, even better!",
+        coachExplanation:
+          "Open files are like highways for your rooks! No pawns in the way = your rook can zoom from one end to the other. Put your rook on the highway FIRST, before your opponent does! 🛣️",
+        kingdom: "strategy_summit",
+        prerequisites: ["pawn_structure"],
+        xpReward: 80,
+      },
+      {
+        id: "outposts",
+        name: "Outposts",
+        description:
+          "An outpost is a square that can't be attacked by enemy pawns — usually because the adjacent pawns have already advanced past it. Place a knight on an outpost and it becomes a fortress. The knight controls tons of squares and the opponent can't chase it away with pawns.",
+        coachExplanation:
+          "An outpost is like a castle on a hilltop — once your knight sits there, nobody can kick it off! No enemy pawns can attack it. The knight just sits there, controlling everything, driving your opponent CRAZY. 🏰",
+        kingdom: "strategy_summit",
+        prerequisites: ["pawn_structure", "piece_activity"],
+        xpReward: 100,
+      },
+      {
+        id: "planning",
+        name: "Making a Plan",
+        description:
+          "The most important strategic skill: HOW TO THINK. Step 1: Find a weakness in your opponent's position. Step 2: Choose it as your TARGET. Step 3: CONCENTRATE your forces toward it. Step 4: ATTACK. Without a plan, you're just making random moves. With a plan, every move has purpose.",
+        coachExplanation:
+          "Here's the secret that separates good players from great ones: HAVE A PLAN. Don't just move pieces randomly — find something WRONG in your opponent's position, aim ALL your pieces at it, and ATTACK. Think like a general, not a soldier! 🎯",
+        kingdom: "strategy_summit",
+        prerequisites: ["piece_activity", "open_files"],
+        xpReward: 150,
+      },
     ],
   },
   {
     id: "endgame_throne",
     name: "The Endgame Throne",
-    subtitle: "Where the Crown Jester rules the final squares",
+    subtitle: "Where the Immortal King awaits",
     level: 6,
-    color: "#DC2626",
-    description: "The final kingdom. Few pieces left on the board. Every move matters. Precision beats power — master the endgame and you master chess.",
+    color: "#EAB308",
+    description:
+      "The final throne room at the heart of the Chess Kingdom, bathed in golden light. The Immortal King has played a thousand games and never lost an endgame. He sits motionless, watching, waiting. To claim the throne, you must master the art of converting advantages when few pieces remain — the most precise, demanding phase of chess.",
     boss: {
-      name: "The Crown Jester",
-      emoji: "🃏",
-      personality: "Theatrical, unpredictable, plays for style. Loves tricky endgame studies. Always smiling.",
-      signature: "Back-rank mates and king-and-pawn endgames that look lost until the final move.",
+      name: "The Immortal King",
+      emoji: "♔",
+      personality:
+        "Ancient beyond measure. Speaks rarely, and every word carries weight. Moves with absolute precision. Has never lost an endgame in a thousand years. Respects only those who earn his respect through perfect technique.",
+      signature:
+        "Perfect endgame technique. Opposition, passed pawns, king activity, rook endgame mastery. Converts the smallest advantage into a win with the patience of a glacier and the precision of a surgeon.",
       dialogue: [
-        "Ahhh! The final challenger! Let's put on a SHOW!",
-        "Did you see THAT coming? Oh, the DRAMA!",
-        "A worthy jester. The throne is yours — for now.",
+        "In the endgame, I am no longer hiding behind my army. I am the army. Watch me fight.",
+        "One pawn. One king. That is all I need to defeat you. Do you understand now?",
+        "You have reached the throne. The kingdom is yours. But hear me, young champion: the learning... it never ends. Every game teaches something new. Go, and teach others what the Kingdom taught you.",
       ],
     },
     strategies: [
-      { id: "back_rank_mate", name: "Back Rank Mate", description: "Deliver checkmate on the opponent's back rank.", coachExplanation: "A trapped king on the back rank is a dead king — a single rook or queen can end the game!", kingdom: "endgame_throne", prerequisites: [], xpReward: 180 },
-      { id: "king_pawn_endgame", name: "King & Pawn Endgames", description: "The king becomes an attacker in the endgame.", coachExplanation: "In the endgame, your king is a fighter! Bring it forward to help your pawns promote.", kingdom: "endgame_throne", prerequisites: [], xpReward: 220 },
-      { id: "opposition", name: "Opposition", description: "Master the concept of king opposition.", coachExplanation: "Two kings face to face? The one who moves LAST wins the square war — learn to force your opponent to move first!", kingdom: "endgame_throne", prerequisites: ["king_pawn_endgame"], xpReward: 240 },
+      {
+        id: "king_activation",
+        name: "King Activation",
+        description:
+          "In the opening and middlegame, the king hides. In the endgame, the king FIGHTS. With fewer pieces on the board, the king is safe to march to the center and join the battle. An active king in the endgame is worth almost as much as a minor piece. Bring it forward!",
+        coachExplanation:
+          "In the endgame, your king takes off his crown, rolls up his sleeves, and marches into battle! He's not hiding anymore — he's FIGHTING. Bring that king to the center and use him! He's worth almost as much as a knight in the endgame! 👑⚔️",
+        kingdom: "endgame_throne",
+        prerequisites: ["check_checkmate"],
+        xpReward: 80,
+      },
+      {
+        id: "opposition",
+        name: "Opposition",
+        description:
+          "When two kings face each other with one square between them, whoever does NOT have to move has the 'opposition.' This is crucial in king and pawn endgames — having the opposition often means the difference between winning and drawing. Learn to count tempi and gain the opposition.",
+        coachExplanation:
+          "Opposition is like a staring contest between the two kings. The one who has to blink (move) first LOSES because they have to step aside. It sounds simple but it decides THOUSANDS of endgames! 👁️👁️",
+        kingdom: "endgame_throne",
+        prerequisites: ["king_activation"],
+        xpReward: 120,
+      },
+      {
+        id: "passed_pawns",
+        name: "Passed Pawns",
+        description:
+          "A passed pawn is a pawn with no enemy pawns in front of it OR on adjacent files that could block it. It has a clear path to promotion! Passed pawns are incredibly dangerous in the endgame. Escort them forward with your king, clear the path, and promote to a queen.",
+        coachExplanation:
+          "A passed pawn is like a runner with no one left to block them — it's heading straight for the end zone! Your job: protect it, escort it, clear the path, and turn that little pawn into a QUEEN! 🏃‍♂️🏆",
+        kingdom: "endgame_throne",
+        prerequisites: ["pawn_structure", "king_activation"],
+        xpReward: 100,
+      },
+      {
+        id: "rook_endgames",
+        name: "Rook Endgames",
+        description:
+          "Rook endings are the most common endgame type — they occur in roughly half of all games that reach an endgame. Key concepts: rooks belong BEHIND passed pawns (yours or your opponent's), the Lucena position (building a bridge to promote), and the Philidor position (the drawing technique of defending from behind).",
+        coachExplanation:
+          "Rook endgames happen in SO many games that learning them is like a cheat code. Two big rules: put your rook BEHIND the passed pawn (not in front!), and learn the 'bridge' technique to promote. These two things will win you games for the rest of your life! 📚",
+        kingdom: "endgame_throne",
+        prerequisites: ["opposition", "passed_pawns"],
+        xpReward: 150,
+      },
     ],
   },
 ];
 
 // ───────── POWERS ─────────
+
 export const POWERS: Power[] = [
-  // Fork Forest
-  { id: "fork_master",    name: "Fork Master",    icon: "⚔",  tactic: "Knight Forks",   kingdom: "fork_forest",     howToEarn: "Execute a knight fork winning material in a real game", coachCelebration: "YES! You forked two pieces! That's EXACTLY how the Knight Twins do it!", rarity: "common" },
-  { id: "royal_forker",   name: "Royal Forker",   icon: "👑", tactic: "Royal Fork",     kingdom: "fork_forest",     howToEarn: "Fork a king and queen in a real game",                  coachCelebration: "A ROYAL FORK! The king had to move — and the queen is YOURS!", rarity: "rare" },
-  // Pin Palace
-  { id: "pin_weaver",     name: "Pin Weaver",     icon: "📌", tactic: "Absolute Pin",   kingdom: "pin_palace",      howToEarn: "Pin an enemy piece to its king",                         coachCelebration: "PINNED to the king! That piece is frozen solid. The Shadow Bishop approves!", rarity: "common" },
-  { id: "pin_exploiter",  name: "Pin Exploiter",  icon: "🎯", tactic: "Pin Exploitation", kingdom: "pin_palace",    howToEarn: "Win a pinned piece by piling attackers on it",           coachCelebration: "You pinned it — then PILED on! That's masterclass pin play.", rarity: "rare" },
-  // Skewer Spire
-  { id: "skewer_striker", name: "Skewer Striker", icon: "🏹", tactic: "Rook Skewer",    kingdom: "skewer_spire",    howToEarn: "Skewer a valuable piece with a rook or queen",           coachCelebration: "SKEWER! The big piece had to move, and the little one FELL. The Iron Rook nods.", rarity: "common" },
-  // Discovery Depths
-  { id: "sight_unseen",   name: "Sight Unseen",   icon: "👁",  tactic: "Discovered Attack", kingdom: "discovery_depths", howToEarn: "Land a discovered attack",                          coachCelebration: "A DISCOVERED ATTACK! One move — two threats. The Hidden Dragon is impressed!", rarity: "rare" },
-  { id: "double_trouble", name: "Double Trouble", icon: "💥", tactic: "Double Check",   kingdom: "discovery_depths", howToEarn: "Deliver a double check",                              coachCelebration: "DOUBLE CHECK! The king HAS to run — no blocks, no captures. LEGENDARY!", rarity: "legendary" },
-  // Strategy Summit
-  { id: "positional_sage", name: "Positional Sage", icon: "🧘", tactic: "Positional Sacrifice", kingdom: "strategy_summit", howToEarn: "Sacrifice material for a winning position",    coachCelebration: "A SACRIFICE! You gave up material for something bigger — that's grandmaster thinking!", rarity: "epic" },
-  // Endgame Throne
-  { id: "back_rank_boss", name: "Back Rank Boss", icon: "♔",  tactic: "Back Rank Mate", kingdom: "endgame_throne",  howToEarn: "Deliver a back rank checkmate",                         coachCelebration: "BACK RANK MATE! The king had nowhere to run. Pure endgame poetry.", rarity: "epic" },
+  // Bronze (Pawn Village)
+  { id: "board_master", name: "Board Master", icon: "📐", tactic: "Board Setup", kingdom: "village", howToEarn: "Complete the board setup tutorial and name 10 squares correctly", coachCelebration: "You know every square on the board! That's the foundation of EVERYTHING! 📐", rarity: "common" },
+  { id: "first_blood", name: "First Blood", icon: "⚔️", tactic: "Captures", kingdom: "village", howToEarn: "Win material (capture a piece worth more than what you lost) in a real game", coachCelebration: "You traded up! Getting more than you give — that's SMART chess! ⚔️", rarity: "common" },
+  { id: "check_hunter", name: "Check Hunter", icon: "🎯", tactic: "Check", kingdom: "village", howToEarn: "Deliver check 3 times in a single game", coachCelebration: "Three checks in one game! You're keeping that king on his TOES! 🎯", rarity: "common" },
+  { id: "castle_keeper", name: "Castle Keeper", icon: "🏰", tactic: "Castling", kingdom: "village", howToEarn: "Castle before move 10 in 3 consecutive games", coachCelebration: "Three games in a row with early castling! Your king is ALWAYS safe with you! 🏰", rarity: "common" },
+  { id: "pawn_star", name: "Pawn Star", icon: "⭐", tactic: "Promotion", kingdom: "village", howToEarn: "Promote a pawn to a queen in a real game", coachCelebration: "Your little pawn made it ALL the way! From zero to QUEEN! That's a champion's journey! ⭐", rarity: "common" },
+
+  // Silver (Fork Forest)
+  { id: "fork_master", name: "Fork Master", icon: "🍴", tactic: "Knight Forks", kingdom: "fork_forest", howToEarn: "Execute a knight fork that wins material in a real game", coachCelebration: "DOUBLE ATTACK! Your knight just ate from TWO plates at once! The Knight Twins would be proud! 🍴🐴", rarity: "rare" },
+  { id: "pawn_forker", name: "Pawn Forker", icon: "♙", tactic: "Pawn Forks", kingdom: "fork_forest", howToEarn: "Execute a pawn fork that wins material in a real game", coachCelebration: "The mighty little pawn strikes TWICE! Never underestimate the smallest piece on the board! ♙💥", rarity: "common" },
+  { id: "royal_forker", name: "Royal Forker", icon: "👑", tactic: "Royal Fork", kingdom: "fork_forest", howToEarn: "Fork the king and queen with a knight (the most devastating fork!)", coachCelebration: "THE ROYAL FORK! Knight checks the king AND attacks the queen! The queen is LOST! This is LEGENDARY! 👑🐴⚡", rarity: "epic" },
+
+  // Silver (Pin Palace)
+  { id: "pin_wizard", name: "Pin Wizard", icon: "📍", tactic: "Pins", kingdom: "pin_palace", howToEarn: "Pin an opponent's piece to their king or queen in a real game", coachCelebration: "PINNED! They can see the danger but they CAN'T ESCAPE! The Shadow Bishop smiles upon you! 📍✨", rarity: "rare" },
+  { id: "pin_crusher", name: "Pin Crusher", icon: "🔨", tactic: "Pin & Pile On", kingdom: "pin_palace", howToEarn: "Pin a piece and then win it by attacking it with a second piece", coachCelebration: "PIN and PILE ON! You pinned the piece, then attacked it again — it couldn't run and it couldn't hide! DEVASTATING! 🔨💎", rarity: "rare" },
+
+  // Silver (Skewer Spire)
+  { id: "skewer_king", name: "Skewer King", icon: "🗡️", tactic: "Skewers", kingdom: "skewer_spire", howToEarn: "Execute a skewer that wins material in a real game", coachCelebration: "SKEWERED! You attacked the big piece, it ran, and you grabbed what was hiding behind it! The Rook Queen nods in respect! 🗡️👑", rarity: "rare" },
+  { id: "back_rank_hero", name: "Back Rank Hero", icon: "🏁", tactic: "Back Rank Mate", kingdom: "skewer_spire", howToEarn: "Deliver a back rank checkmate in a real game", coachCelebration: "BACK RANK MATE! The king had NOWHERE to run! Trapped by its own pawns! That is DEVASTATING and BEAUTIFUL! 🏁💥", rarity: "epic" },
+
+  // Gold (Discovery Depths)
+  { id: "discovery_agent", name: "Discovery Agent", icon: "🕵️", tactic: "Discovered Attacks", kingdom: "discovery_depths", howToEarn: "Execute a discovered attack that wins material in a real game", coachCelebration: "DISCOVERED ATTACK! You moved one piece and REVEALED a secret weapon behind it! The Phantom General's favorite trick! 🕵️💥", rarity: "rare" },
+  { id: "double_trouble", name: "Double Trouble", icon: "⚡", tactic: "Double Check", kingdom: "discovery_depths", howToEarn: "Deliver a double check in a real game", coachCelebration: "DOUBLE CHECK! TWO pieces attacking the king at once — there's NO block, NO capture, they MUST RUN! This is ELITE! ⚡⚡👑", rarity: "legendary" },
+
+  // Gold (Strategy Summit)
+  { id: "structure_master", name: "Structure Master", icon: "🧱", tactic: "Pawn Structure", kingdom: "strategy_summit", howToEarn: "Create a passed pawn and promote it to win a game", coachCelebration: "You created a passed pawn, escorted it home, and it became a QUEEN! That is master-level endgame play! The Grand Strategist approves! 🧱👑", rarity: "rare" },
+  { id: "positional_genius", name: "Positional Genius", icon: "🧠", tactic: "Positional Play", kingdom: "strategy_summit", howToEarn: "Win a game without losing any material — pure outmaneuvering", coachCelebration: "You won WITHOUT losing a single piece! Pure positional DOMINATION! You didn't just beat them — you SUFFOCATED them! The Grand Strategist has a new student! 🧠🏆", rarity: "legendary" },
+
+  // Diamond (Endgame Throne)
+  { id: "endgame_warrior", name: "Endgame Warrior", icon: "⚔️", tactic: "King Activation", kingdom: "endgame_throne", howToEarn: "Use your king as an active fighting piece in the endgame to win a game", coachCelebration: "Your king marched into battle and helped WIN THE WAR! In the endgame, the king is a WARRIOR, not a coward! The Immortal King recognizes a kindred spirit! 👑⚔️", rarity: "rare" },
+  { id: "opposition_master", name: "Opposition Master", icon: "👁️", tactic: "Opposition", kingdom: "endgame_throne", howToEarn: "Use opposition to promote a pawn in a king+pawn endgame", coachCelebration: "You SEIZED the opposition and marched your pawn to glory! That is the Immortal King's own technique! He bows to you! 👁️👑", rarity: "epic" },
+  { id: "throne_claimer", name: "Throne Claimer", icon: "🏆", tactic: "Mastery", kingdom: "endgame_throne", howToEarn: "Defeat the Immortal King (hard bot) in an endgame that goes past move 40", coachCelebration: "You have DEFEATED the Immortal King! The throne is YOURS! A thousand years he waited for a worthy challenger, and YOU are the one. The Chess Kingdom will remember your name! 🏆👑🎆", rarity: "legendary" },
 ];
+
+// ───────── OPENING STRATEGIES (taught contextually, not part of kingdoms) ─────────
+
+export const OPENING_STRATEGIES: Strategy[] = [
+  {
+    id: "center_control",
+    name: "Control the Center",
+    description:
+      "The center (d4, d5, e4, e5) is the most important area of the board. Pieces in the center control more squares and have more options. Start by pushing e4 or d4 to stake your claim!",
+    coachExplanation:
+      "Think of the center like the playground at recess — whoever controls the MIDDLE has the most friends to play with! Push a pawn to e4 or d4 on your first move! 🎯",
+    kingdom: "fork_forest",
+    prerequisites: ["piece_movement"],
+    xpReward: 60,
+  },
+  {
+    id: "develop_pieces",
+    name: "Develop Your Pieces",
+    description:
+      "In the opening, bring out your knights and bishops before doing anything else. Don't move the same piece twice. Don't bring the queen out early (she'll just get chased). Knights before bishops, castle before move 10.",
+    coachExplanation:
+      "Imagine going to battle with only ONE soldier while the rest of your army is still sleeping in the barracks! Wake them ALL up first! Knights, bishops, castle — THEN think about attacking! 🛴",
+    kingdom: "fork_forest",
+    prerequisites: ["center_control"],
+    xpReward: 60,
+  },
+  {
+    id: "castle_early",
+    name: "Castle Early",
+    description:
+      "Castling does two things at once: tucks your king behind a wall of pawns for safety, AND brings your rook toward the center for action. Try to castle before move 10. Don't move the pawns in front of your castled king unless you absolutely have to — they're your king's bodyguards!",
+    coachExplanation:
+      "Your king is like a precious gem — put it in a vault (behind your pawns!) before the battle gets wild. Castling is like hiring three bodyguards in one move! 🏰🛡",
+    kingdom: "fork_forest",
+    prerequisites: ["special_moves", "develop_pieces"],
+    xpReward: 50,
+  },
+  {
+    id: "dont_queen_early",
+    name: "Don't Bring the Queen Out Early",
+    description:
+      "The queen is your most powerful piece — but in the opening, she's a TARGET. If you bring her out early, your opponent will develop their pieces while chasing your queen around. You lose time (tempo) and they get a better position. Develop minor pieces first!",
+    coachExplanation:
+      "I know the queen is exciting — she's the MOST powerful piece! But bringing her out early is like sending your BEST player onto the field before the rest of the team is ready. She'll just get chased around while everyone else gets into position! 🏃‍♀️",
+    kingdom: "fork_forest",
+    prerequisites: ["develop_pieces"],
+    xpReward: 40,
+  },
+];
+
+// ───────── Helpers ─────────
 
 export function getPowersForKingdom(kingdomId: string): Power[] {
   return POWERS.filter((p) => p.kingdom === kingdomId);

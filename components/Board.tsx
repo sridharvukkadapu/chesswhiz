@@ -191,43 +191,44 @@ export default function Board({
       {showPromo && (
         <div
           className="absolute inset-0 flex items-center justify-center z-20 rounded-xl"
-          style={{ background: "rgba(0,0,0,0.82)", backdropFilter: "blur(8px)" }}
+          style={{ background: "rgba(251,247,240,0.88)", backdropFilter: "blur(12px)" }}
         >
           <div
-            className="card-enter flex flex-col items-center gap-4 p-6 rounded-2xl border"
             style={{
-              background: "#192134",
-              borderColor: "rgba(255,255,255,0.1)",
-              boxShadow: "0 24px 48px rgba(0,0,0,0.6)",
+              display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
+              padding: "24px", borderRadius: 20,
+              background: "white",
+              border: "1px solid #D0C8BC",
+              boxShadow: "0 0 0 4px #F0E8D8, 0 24px 48px rgba(26,18,16,0.15)",
+              animation: "promoAppear 0.4s cubic-bezier(0.34,1.56,0.64,1) both",
             }}
           >
-            <span
-              className="text-sm font-bold uppercase tracking-widest"
-              style={{ color: "#94A3B8", fontFamily: "var(--font-nunito), sans-serif" }}
-            >
-              Promote pawn
-            </span>
-            <div className="flex gap-3">
+            <span style={{
+              fontSize: 12, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase",
+              color: "#8A8278", fontFamily: "var(--font-nunito), sans-serif",
+            }}>Promote pawn</span>
+            <div style={{ display: "flex", gap: 10 }}>
               {["q", "r", "b", "n"].map((p) => (
                 <button
                   key={p}
                   onClick={() => onPromo(p)}
-                  className="btn-press flex items-center justify-center rounded-xl border cursor-pointer"
                   style={{
-                    background: "#0F1F2B",
-                    borderColor: "rgba(255,255,255,0.08)",
-                    width: "60px",
-                    height: "60px",
-                    fontSize: "36px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 60, height: 60, borderRadius: 14,
+                    background: "#F5EFE4", border: "1.5px solid #D0C8BC",
+                    fontSize: 34, cursor: "pointer",
+                    transition: "all 0.18s cubic-bezier(0.34,1.56,0.64,1)",
                   }}
                   aria-label={`Promote to ${{ q: "queen", r: "rook", b: "bishop", n: "knight" }[p]}`}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "#D97706";
-                    (e.currentTarget as HTMLElement).style.background = "rgba(217,119,6,0.12)";
+                    (e.currentTarget as HTMLElement).style.borderColor = "#1B7340";
+                    (e.currentTarget as HTMLElement).style.background = "#E6F4EC";
+                    (e.currentTarget as HTMLElement).style.transform = "scale(1.08)";
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.08)";
-                    (e.currentTarget as HTMLElement).style.background = "#0F1F2B";
+                    (e.currentTarget as HTMLElement).style.borderColor = "#D0C8BC";
+                    (e.currentTarget as HTMLElement).style.background = "#F5EFE4";
+                    (e.currentTarget as HTMLElement).style.transform = "scale(1)";
                   }}
                 >
                   {PIECE_CHARS["w" + p.toUpperCase()]}
@@ -235,6 +236,12 @@ export default function Board({
               ))}
             </div>
           </div>
+          <style>{`
+            @keyframes promoAppear {
+              from { opacity: 0; transform: scale(0.9); }
+              to   { opacity: 1; transform: scale(1); }
+            }
+          `}</style>
         </div>
       )}
     </div>

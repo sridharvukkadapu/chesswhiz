@@ -1,8 +1,21 @@
 "use client";
 
+const P = {
+  cream: "#FBF7F0",
+  parchment: "#F0E8D8",
+  ink: "#1A1210",
+  inkMed: "#5C544A",
+  inkLight: "#8A8278",
+  inkFaint: "#B0A898",
+  inkGhost: "#D0C8BC",
+  emerald: "#1B7340",
+  emeraldPale: "#E6F4EC",
+  gold: "#C7940A",
+};
+
 function BotIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="3" y="11" width="18" height="10" rx="2" />
       <circle cx="12" cy="5" r="2" />
       <path d="M12 7v4" />
@@ -15,7 +28,7 @@ function BotIcon() {
 
 function PlayerIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
     </svg>
@@ -32,54 +45,77 @@ interface PlayerBarProps {
 
 export default function PlayerBar({ name, colorLabel, isActive, isBotThinking, isBot = false }: PlayerBarProps) {
   return (
-    <div
-      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border"
-      style={{
-        background: "#192134",
-        borderColor: isActive ? "rgba(217,119,6,0.45)" : "rgba(255,255,255,0.07)",
-        transition: "border-color 0.2s ease",
-        boxShadow: isActive ? "0 0 0 1px rgba(217,119,6,0.15), 0 2px 12px rgba(0,0,0,0.3)" : "0 2px 8px rgba(0,0,0,0.2)",
-      }}
-    >
-      <span
-        className="flex items-center justify-center flex-shrink-0"
-        style={{ color: isActive ? "#D97706" : "#475569", transition: "color 0.2s ease" }}
-      >
+    <div style={{
+      display: "flex", alignItems: "center", gap: 10,
+      padding: "10px 14px", borderRadius: 12,
+      background: isActive ? P.emeraldPale : "white",
+      border: `1.5px solid ${isActive ? P.emerald : P.inkGhost}`,
+      boxShadow: isActive
+        ? `0 0 0 3px rgba(27,115,64,0.08), 0 2px 12px rgba(26,18,16,0.06)`
+        : `0 2px 8px rgba(26,18,16,0.05)`,
+      transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+    }}>
+      {/* Icon */}
+      <span style={{
+        display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+        color: isActive ? P.emerald : P.inkFaint,
+        transition: "color 0.2s ease",
+      }}>
         {isBot ? <BotIcon /> : <PlayerIcon />}
       </span>
-      <span
-        className="text-sm font-bold truncate"
-        style={{
-          color: isActive ? "#f1ede8" : "#94A3B8",
-          fontFamily: "var(--font-nunito), sans-serif",
-          transition: "color 0.2s ease",
-        }}
-      >
-        {name}
-      </span>
-      <span className="text-xs flex-shrink-0" style={{ color: "#475569", fontFamily: "var(--font-nunito), sans-serif" }}>
-        {colorLabel}
-      </span>
 
-      {/* Active indicator */}
+      {/* Name */}
+      <span style={{
+        fontSize: 14, fontWeight: 700,
+        color: isActive ? P.ink : P.inkLight,
+        fontFamily: "var(--font-nunito), sans-serif",
+        transition: "color 0.2s ease",
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+      }}>{name}</span>
+
+      {/* Color label */}
+      <span style={{
+        fontSize: 11, color: P.inkFaint, flexShrink: 0,
+        fontFamily: "var(--font-nunito), sans-serif",
+        textTransform: "uppercase", letterSpacing: 0.4, fontWeight: 600,
+      }}>{colorLabel}</span>
+
+      {/* Active pulse dot */}
       {isActive && !isBotThinking && (
-        <div
-          className="ml-auto player-active w-2 h-2 rounded-full flex-shrink-0"
-          style={{
-            background: "#D97706",
-            boxShadow: "0 0 6px rgba(217,119,6,0.8)",
-          }}
-        />
+        <div className="ml-auto player-active" style={{
+          marginLeft: "auto", flexShrink: 0,
+          width: 8, height: 8, borderRadius: "50%",
+          background: P.emerald,
+          boxShadow: `0 0 6px ${P.emerald}80`,
+        }} />
       )}
 
       {/* Bot thinking dots */}
       {isBotThinking && (
-        <span className="ml-auto flex items-center gap-1 flex-shrink-0" aria-label="Bot is thinking">
-          <span className="coach-dot" />
-          <span className="coach-dot" />
-          <span className="coach-dot" />
+        <span style={{ marginLeft: "auto", flexShrink: 0, display: "flex", alignItems: "center", gap: 3 }} aria-label="Bot is thinking">
+          {[0, 1, 2].map(i => (
+            <span key={i} style={{
+              display: "inline-block", width: 5, height: 5, borderRadius: "50%",
+              background: P.gold,
+              animation: `dotPulse 1.4s infinite ease-in-out ${i * 0.2}s`,
+            }} />
+          ))}
         </span>
       )}
+
+      <style>{`
+        @keyframes dotPulse {
+          0%, 80%, 100% { opacity: 0.2; transform: scale(0.7); }
+          40% { opacity: 1; transform: scale(1); }
+        }
+        .player-active {
+          animation: playerPulse 2s infinite ease-in-out;
+        }
+        @keyframes playerPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(27,115,64,0.4); }
+          50% { box-shadow: 0 0 0 5px rgba(27,115,64,0); }
+        }
+      `}</style>
     </div>
   );
 }

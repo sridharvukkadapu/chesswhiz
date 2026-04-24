@@ -3,27 +3,41 @@
 import { useEffect, useRef } from "react";
 import type { CoachMessage } from "@/lib/chess/types";
 
-interface CoachPanelProps {
-  messages: CoachMessage[];
-  loading: boolean;
-}
+const P = {
+  cream: "#FBF7F0",
+  parchment: "#F0E8D8",
+  ink: "#1A1210",
+  inkSoft: "#2E2620",
+  inkMed: "#5C544A",
+  inkLight: "#8A8278",
+  inkFaint: "#B0A898",
+  inkGhost: "#D0C8BC",
+  emerald: "#1B7340",
+  emeraldPale: "#E6F4EC",
+  gold: "#C7940A",
+  goldPale: "#FDF6E3",
+};
 
 const MSG_STYLES: Record<CoachMessage["type"], { bg: string; border: string; labelColor: string }> = {
-  intro:       { bg: "rgba(217,119,6,0.07)",   border: "#D97706", labelColor: "#D97706" },
-  praise:      { bg: "rgba(34,197,94,0.07)",   border: "#22C55E", labelColor: "#22C55E" },
-  tip:         { bg: "rgba(148,163,184,0.07)", border: "#64748B", labelColor: "#94A3B8" },
-  correction:  { bg: "rgba(220,38,38,0.07)",   border: "#DC2626", labelColor: "#f87171" },
-  celebration: { bg: "rgba(217,119,6,0.1)",    border: "#D97706", labelColor: "#D97706" },
+  intro:       { bg: P.goldPale,    border: P.gold,    labelColor: P.gold },
+  praise:      { bg: P.emeraldPale, border: P.emerald, labelColor: P.emerald },
+  tip:         { bg: "white",       border: P.inkGhost, labelColor: P.inkMed },
+  correction:  { bg: "#FFF5EB",     border: "#FDBA74", labelColor: "#9A3412" },
+  celebration: { bg: P.goldPale,    border: P.gold,    labelColor: P.gold },
 };
 
 function CoachIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2z" />
       <path d="M12 12c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z" />
-      <path d="M9 7l1.5 1.5L13 6" strokeWidth="2" />
     </svg>
   );
+}
+
+interface CoachPanelProps {
+  messages: CoachMessage[];
+  loading: boolean;
 }
 
 export default function CoachPanel({ messages, loading }: CoachPanelProps) {
@@ -33,72 +47,108 @@ export default function CoachPanel({ messages, loading }: CoachPanelProps) {
   }, [messages]);
 
   return (
-    <div
-      className="flex flex-col rounded-xl border overflow-hidden"
-      style={{
-        background: "#192134",
-        borderColor: "rgba(255,255,255,0.08)",
-        flex: "1 1 0",
-        minHeight: 240,
-        maxHeight: 380,
-        boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-      }}
-    >
+    <div style={{
+      display: "flex", flexDirection: "column",
+      borderRadius: 16, overflow: "hidden",
+      background: "white",
+      border: `1px solid ${P.inkGhost}`,
+      boxShadow: `0 4px 20px rgba(26,18,16,0.06)`,
+      flex: "1 1 0", minHeight: 240, maxHeight: 380,
+    }}>
       {/* Header */}
-      <div
-        className="flex items-center gap-2 px-4 py-2.5 border-b"
-        style={{ borderColor: "rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}
-      >
-        <span className="flex items-center" style={{ color: "#D97706" }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "10px 16px",
+        borderBottom: `1px solid ${P.parchment}`,
+        background: P.cream,
+      }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: "50%",
+          background: P.emeraldPale, display: "flex", alignItems: "center", justifyContent: "center",
+          border: `1.5px solid ${P.emerald}30`,
+          color: P.emerald, flexShrink: 0,
+        }}>
           <CoachIcon />
-        </span>
-        <span
-          className="text-sm font-bold tracking-wide"
-          style={{ color: "#D97706", fontFamily: "var(--font-baloo), sans-serif" }}
-        >
-          Coach Pawn
-        </span>
+        </div>
+        <span style={{
+          fontSize: 14, fontWeight: 800, color: P.ink,
+          fontFamily: "var(--font-playfair), serif",
+          letterSpacing: -0.2,
+        }}>Coach Pawn</span>
+
+        {/* Online indicator */}
+        <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 4 }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: P.emerald }} />
+          <span style={{ fontSize: 10, color: P.emerald, fontFamily: "var(--font-nunito), sans-serif", fontWeight: 600 }}>Online</span>
+        </div>
+
+        {/* Thinking dots */}
         {loading && (
-          <span className="ml-auto flex items-center gap-1" aria-label="Coach is thinking">
-            <span className="coach-dot" />
-            <span className="coach-dot" />
-            <span className="coach-dot" />
+          <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 3 }} aria-label="Coach is thinking">
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                display: "inline-block", width: 5, height: 5, borderRadius: "50%",
+                background: P.gold,
+                animation: `dotPulse 1.4s infinite ease-in-out ${i * 0.2}s`,
+              }} />
+            ))}
           </span>
         )}
       </div>
 
       {/* Messages */}
-      <div ref={ref} className="flex-1 overflow-y-auto p-3 flex flex-col gap-2" aria-live="polite" aria-label="Coach messages">
+      <div
+        ref={ref}
+        style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 8 }}
+        aria-live="polite"
+        aria-label="Coach messages"
+      >
         {messages.map((msg) => {
           const s = MSG_STYLES[msg.type] ?? MSG_STYLES.tip;
           return (
             <div
               key={msg.id}
-              className="px-3 py-2.5 coach-fade"
+              className="coach-fade"
               style={{
+                padding: "10px 14px",
                 background: s.bg,
                 borderLeft: `3px solid ${s.border}`,
-                borderRadius: "2px 10px 10px 10px",
+                borderRadius: "2px 12px 12px 12px",
+                border: `1px solid ${s.border}30`,
+                borderLeftWidth: 3,
               }}
             >
-              <p
-                className="text-sm leading-relaxed m-0"
-                style={{ color: "#e2ddd8", fontFamily: "var(--font-nunito), sans-serif" }}
-              >
-                {msg.text}
-              </p>
+              <p style={{
+                margin: 0, fontSize: 13.5, lineHeight: 1.7,
+                color: P.inkSoft,
+                fontFamily: "var(--font-nunito), sans-serif",
+              }}>{msg.text}</p>
             </div>
           );
         })}
+
         {messages.length === 0 && !loading && (
-          <p
-            className="text-xs italic text-center mt-4"
-            style={{ color: "#4a5568", fontFamily: "var(--font-nunito), sans-serif" }}
-          >
-            Make your first move to get coaching!
-          </p>
+          <p style={{
+            fontSize: 13, color: P.inkFaint, textAlign: "center",
+            marginTop: 16, fontStyle: "italic",
+            fontFamily: "var(--font-nunito), sans-serif",
+          }}>Make your first move to get coaching!</p>
         )}
       </div>
+
+      <style>{`
+        @keyframes dotPulse {
+          0%, 80%, 100% { opacity: 0.2; transform: scale(0.7); }
+          40% { opacity: 1; transform: scale(1); }
+        }
+        .coach-fade {
+          animation: coachFadeIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        @keyframes coachFadeIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

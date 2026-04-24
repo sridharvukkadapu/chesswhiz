@@ -16,6 +16,20 @@ import PlayerBar from "@/components/PlayerBar";
 import GameStatusBar from "@/components/GameStatus";
 import type { Move } from "@/lib/chess/types";
 
+const P = {
+  cream: "#FBF7F0",
+  creamDeep: "#F5EFE4",
+  parchment: "#F0E8D8",
+  ink: "#1A1210",
+  inkMed: "#5C544A",
+  inkLight: "#8A8278",
+  inkFaint: "#B0A898",
+  inkGhost: "#D0C8BC",
+  emerald: "#1B7340",
+  emeraldPale: "#E6F4EC",
+  gold: "#C7940A",
+};
+
 export default function PlayPage() {
   const router = useRouter();
   const store = useGameStore();
@@ -110,13 +124,11 @@ export default function PlayPage() {
       return;
     }
 
-    // Analyze player move and maybe coach
     const analysis = analyzeMoveQuality(prevChess, newChess, move);
     if (analysis && shouldCoach(analysis, store.moveCount, store.lastCoachMove)) {
       requestCoaching(analysis);
     }
 
-    // Bot's turn — async so minimax yields between moves and UI stays responsive
     if (newChess.turn() === "b") {
       store.setBotThinking(true);
       findBestMove(newChess, difficulty).then((botMove) => {
@@ -153,7 +165,6 @@ export default function PlayPage() {
     if (selected) {
       const move = legalHighlights.find((m) => m.to === sq);
       if (move) {
-        // Check if pawn promotion needed: look at the piece on the selected square
         const selectedPiece = board[selected.r][selected.c];
         if (selectedPiece?.type === "p" && (r === 0 || r === 7)) {
           store.showPromoModal(move);
@@ -180,52 +191,95 @@ export default function PlayPage() {
   const handlePromo = (pieceType: string) => {
     if (showPromo) {
       store.hidePromoModal();
-      executeMove({ ...showPromo, promotion: pieceType as any });
+      executeMove({ ...showPromo, promotion: pieceType as "q" | "r" | "b" | "n" });
     }
   };
 
   if (screen === "onboarding") return null;
 
+  const diffLabel = ["Easy", "Medium", "Hard"][difficulty - 1];
+
   return (
-    <div className="min-h-dvh" style={{ background: "#0F172A", color: "#e2ddd8" }}>
+    <div style={{ minHeight: "100dvh", background: P.cream, color: P.ink, position: "relative" }}>
+      {/* Paper grain */}
+      <div style={{
+        position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.022'/%3E%3C/svg%3E")`,
+      }} />
+
       {/* Header */}
-      <header
-        className="flex items-center justify-between px-5 py-2 border-b sticky top-0 z-10"
-        style={{
-          background: "rgba(15,23,42,0.85)",
-          borderColor: "rgba(255,255,255,0.07)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <span className="text-xl" aria-hidden="true">♟</span>
-          <span className="text-lg font-bold" style={{ color: "#22C55E", fontFamily: "var(--font-baloo), sans-serif" }}>
-            ChessWhiz
-          </span>
+      <header style={{
+        position: "sticky", top: 0, zIndex: 10,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "10px 20px",
+        background: "rgba(251,247,240,0.88)",
+        backdropFilter: "blur(20px) saturate(1.2)",
+        WebkitBackdropFilter: "blur(20px) saturate(1.2)",
+        borderBottom: `1px solid ${P.inkGhost}40`,
+      }}>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 22 }}>♟</span>
+          <span style={{
+            fontSize: 18, fontWeight: 900, color: P.ink,
+            fontFamily: "var(--font-playfair), serif", letterSpacing: -0.4,
+          }}>ChessWhiz</span>
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-xs" style={{ color: "#94A3B8", fontFamily: "var(--font-nunito), sans-serif" }}>
-            {["Easy", "Medium", "Hard"][difficulty - 1]}
-          </span>
+
+        {/* Right controls */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {/* Difficulty badge */}
+          <span style={{
+            fontSize: 12, fontWeight: 700, color: P.inkLight,
+            fontFamily: "var(--font-nunito), sans-serif",
+            background: P.parchment,
+            border: `1px solid ${P.inkGhost}`,
+            borderRadius: 8, padding: "4px 10px",
+            letterSpacing: 0.3,
+          }}>{diffLabel}</span>
+
+          {/* New Game */}
           <button
             onClick={() => store.resetGame()}
-            className="btn-press px-3 rounded-lg border text-xs font-semibold cursor-pointer"
             style={{
-              background: "#0F1F2B", borderColor: "rgba(255,255,255,0.08)",
-              color: "#c8c0b5", fontFamily: "var(--font-nunito), sans-serif",
-              height: "36px",
+              display: "flex", alignItems: "center", gap: 6,
+              background: P.ink, color: P.cream, border: "none",
+              borderRadius: 10, padding: "8px 16px",
+              fontSize: 13, fontWeight: 700, cursor: "pointer",
+              fontFamily: "var(--font-nunito), sans-serif",
+              boxShadow: "0 2px 8px rgba(26,18,16,0.12)",
+              transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
             }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 14px rgba(26,18,16,0.18)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 2px 8px rgba(26,18,16,0.12)"; }}
+            onMouseDown={e => { (e.currentTarget as HTMLElement).style.transform = "scale(0.96)"; }}
+            onMouseUp={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
           >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
             New Game
           </button>
         </div>
       </header>
 
       {/* Main layout */}
-      <main id="main-content" className="flex flex-wrap justify-center items-start gap-4 max-w-5xl mx-auto p-3 sm:p-4">
-        {/* Left: Board */}
-        <div className="flex flex-col gap-2 w-full" style={{ maxWidth: "min(calc(100vw - 24px), 480px)" }}>
+      <main
+        id="main-content"
+        style={{
+          display: "flex", flexWrap: "wrap", justifyContent: "center",
+          alignItems: "flex-start", gap: 16,
+          maxWidth: 1000, margin: "0 auto",
+          padding: "16px 12px",
+          position: "relative", zIndex: 1,
+        }}
+      >
+        {/* Left: Board column */}
+        <div style={{
+          display: "flex", flexDirection: "column", gap: 8,
+          width: "100%", maxWidth: "min(calc(100vw - 24px), 480px)",
+        }}>
           <PlayerBar
             name="ChessBot"
             colorLabel="Black"
@@ -255,19 +309,27 @@ export default function PlayPage() {
         </div>
 
         {/* Right: Coach + moves + actions */}
-        <div className="flex flex-col gap-3 w-full" style={{ flex: "1 1 280px", maxWidth: 480 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, flex: "1 1 280px", maxWidth: 480 }}>
           <CoachPanel messages={coachMessages} loading={coachLoading} />
           <MoveHistory moves={moveHistory} />
 
-          <div className="flex gap-2">
+          {/* Action buttons */}
+          <div style={{ display: "flex", gap: 8 }}>
             <button
               onClick={() => store.resetGame()}
-              className="btn-press flex-1 rounded-xl border text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5"
               style={{
-                background: "#0F1F2B", borderColor: "rgba(255,255,255,0.08)", color: "#c8c0b5",
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                background: "white", border: `1.5px solid ${P.inkGhost}`,
+                borderRadius: 12, minHeight: 44,
+                fontSize: 13, fontWeight: 700, color: P.inkMed, cursor: "pointer",
                 fontFamily: "var(--font-nunito), sans-serif",
-                minHeight: "44px",
+                boxShadow: `0 2px 8px rgba(26,18,16,0.06)`,
+                transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
               }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = P.emerald; (e.currentTarget as HTMLElement).style.color = P.emerald; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = P.inkGhost; (e.currentTarget as HTMLElement).style.color = P.inkMed; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+              onMouseDown={e => { (e.currentTarget as HTMLElement).style.transform = "scale(0.96)"; }}
+              onMouseUp={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
@@ -278,12 +340,20 @@ export default function PlayPage() {
             <button
               onClick={() => store.undo()}
               disabled={stateHistory.length < 2 || status !== "playing"}
-              className="btn-press flex-1 rounded-xl border text-xs font-bold cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-35 disabled:cursor-not-allowed"
               style={{
-                background: "#0F1F2B", borderColor: "rgba(255,255,255,0.08)", color: "#c8c0b5",
+                flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                background: "white", border: `1.5px solid ${P.inkGhost}`,
+                borderRadius: 12, minHeight: 44,
+                fontSize: 13, fontWeight: 700, color: P.inkMed, cursor: "pointer",
                 fontFamily: "var(--font-nunito), sans-serif",
-                minHeight: "44px",
+                boxShadow: `0 2px 8px rgba(26,18,16,0.06)`,
+                transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+                opacity: stateHistory.length < 2 || status !== "playing" ? 0.35 : 1,
               }}
+              onMouseEnter={e => { if (!(stateHistory.length < 2 || status !== "playing")) { (e.currentTarget as HTMLElement).style.borderColor = P.gold; (e.currentTarget as HTMLElement).style.color = P.gold; (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; } }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = P.inkGhost; (e.currentTarget as HTMLElement).style.color = P.inkMed; (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+              onMouseDown={e => { if (!(stateHistory.length < 2 || status !== "playing")) (e.currentTarget as HTMLElement).style.transform = "scale(0.96)"; }}
+              onMouseUp={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M9 14 4 9l5-5" />

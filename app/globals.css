@@ -91,10 +91,10 @@
 }
 
 /* ── Scrollbar ───────────────────────────────────── */
-::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
+::-webkit-scrollbar-thumb { background: #D0C8BC; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #B0A898; }
 
 /* ── Skip link (a11y) ────────────────────────────── */
 .skip-link {

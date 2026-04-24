@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSpeech } from "@/lib/speech";
 import { getRankByXP, getNextRank, RANKS } from "@/lib/progression/data";
@@ -197,8 +197,10 @@ export default function PlayPage() {
   }, [screen, router]);
 
   // Hydrate progression from localStorage on mount
+  const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     store.hydrateProgression();
+    setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -303,10 +305,14 @@ export default function PlayPage() {
       }
     }
 
-    // Check detected tactics against the active mission
+    // Check detected tactics against the active mission. Only fire the
+    // first matching one — the celebration is single-slot and chained
+    // fires would clobber each other.
     if (analysis?.tactics && analysis.tactics.length > 0) {
       for (const t of analysis.tactics) {
+        const before = store.ahaCelebration;
         store.handleTacticDetected(t);
+        if (store.ahaCelebration && store.ahaCelebration !== before) break;
       }
     }
 
@@ -379,6 +385,7 @@ export default function PlayPage() {
   };
 
   if (screen === "onboarding") return null;
+  if (!hydrated) return null;
 
   const diffLabel = ["Easy", "Medium", "Hard"][difficulty - 1];
 

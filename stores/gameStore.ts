@@ -4,8 +4,8 @@ import { create } from "zustand";
 import { Chess } from "chess.js";
 import type { Move, LastMove, GameStatus, CoachMessage, Difficulty, Square } from "@/lib/chess/types";
 import type { PlayerProgression, Mission, RankId, TacticDetection, Power } from "@/lib/progression/types";
-import { getRankByXP, XP_REWARDS, getStreakMultiplier, POWERS } from "@/lib/progression/data";
-import { generateMission, missionMatchesTactic } from "@/lib/progression/missions";
+import { getRankByXP, XP_REWARDS, getStreakMultiplier, POWERS, KINGDOMS } from "@/lib/progression/data";
+import { generateMission, missionMatchesTactic, findStrategyForTactic } from "@/lib/progression/missions";
 
 const PROGRESSION_KEY = "chesswhiz.progression";
 
@@ -308,25 +308,54 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ? [...progression.earnedPowers, powerId]
       : progression.earnedPowers;
 
-    // Infer which strategy this mission trained and mark it mastered.
-    // We look up the strategy whose tactic matches the mission's targetTactic
-    // and which is in the current kingdom.
-    let masteredStrategies = progression.masteredStrategies;
-    // Import is static; this keeps the store self-contained. We look up by
-    // tactic name matching the strategy's id pattern.
-    // (A strategy can map to the same tactic; any unmastered one is OK.)
+    // Find the strategy this mission actually trained — walk ALL kingdoms
+    // (missions fall through), prefer ones in the current kingdom.
+    let strategyToMaster = findStrategyForTactic(
+      progression.currentKingdom,
+      mission.targetTactic,
+      progression.masteredStrategies,
+    );
+    if (!strategyToMaster) {
+      for (const k of KINGDOMS) {
+        const s = findStrategyForTactic(k.id, mission.targetTactic, progression.masteredStrategies);
+        if (s) { strategyToMaster = s; break; }
+      }
+    }
+    const masteredStrategies = strategyToMaster
+      ? [...progression.masteredStrategies, strategyToMaster.id]
+      : progression.masteredStrategies;
+
+    // If the strategy belongs to a kingdom the player hasn't entered yet,
+    // auto-advance currentKingdom. This also handles the tutorial "village"
+    // kingdom, which has no detectable strategies and would otherwise strand
+    // the player.
+    let currentKingdom = progression.currentKingdom;
+    if (strategyToMaster) {
+      const owningKingdom = KINGDOMS.find((k) =>
+        k.strategies.some((s) => s.id === strategyToMaster!.id)
+      );
+      if (owningKingdom) {
+        const currentIdx = KINGDOMS.findIndex((k) => k.id === currentKingdom);
+        const owningIdx = KINGDOMS.findIndex((k) => k.id === owningKingdom.id);
+        if (owningIdx > currentIdx) currentKingdom = owningKingdom.id;
+      }
+    }
 
     const nextProg: PlayerProgression = {
       ...progression,
       activeMission: null,
       earnedPowers,
       masteredStrategies,
+      currentKingdom,
     };
     saveProgression(nextProg);
     set({ progression: nextProg });
 
-    // Bonus XP for applying a tactic
+    // Bonus XP for applying a tactic + the strategy's own reward
     get().addXP(XP_REWARDS.applyTactic, `Applied ${mission.targetTactic}`);
+    if (strategyToMaster) {
+      get().addXP(strategyToMaster.xpReward, `Mastered: ${strategyToMaster.name}`);
+    }
 
     // Queue the next mission
     get().ensureMission();
@@ -389,22 +418,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   handleTacticDetected: (tactic) => {
-    const { progression } = get();
+    const { progression, ahaCelebration } = get();
     if (!progression.activeMission) return;
     if (!tactic.detected) return;
+    if (ahaCelebration) return; // already celebrating; don't clobber
     if (!missionMatchesTactic(progression.activeMission, tactic.type)) return;
 
-    // Look up the power to celebrate
     const powerId = progression.activeMission.powerId;
+
+    // Belt-and-suspenders: if the player somehow already owns the power,
+    // skip the celebration and just complete the mission silently so the
+    // next mission gets queued.
+    if (progression.earnedPowers.includes(powerId)) {
+      get().completeMission();
+      return;
+    }
+
     const power = POWERS.find((p) => p.id === powerId);
     if (!power) return;
 
     // Trigger the Aha celebration — the page will render the overlay.
-    set({ ahaCelebration: { tactic, power } });
-
     // NOTE: we don't complete the mission here. The AhaCelebration UI calls
     // store.dismissAha() after ~5s, which in turn completes the mission.
-    // This keeps the celebration "on screen" and guarantees the user sees it.
+    set({ ahaCelebration: { tactic, power } });
   },
 
   dismissAha: () => {

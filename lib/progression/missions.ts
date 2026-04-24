@@ -1,10 +1,10 @@
 import type { Mission, PlayerProgression, Strategy, TacticType } from "./types";
-import { KINGDOMS, POWERS, getKingdomById } from "./data";
+import { KINGDOMS, POWERS } from "./data";
 
 // Map strategy IDs to the tactic type the detector fires for.
 // Keep this table narrow: if a strategy doesn't correspond to a detected
 // tactic, we skip it (missions need to be verifiable).
-const STRATEGY_TO_TACTIC: Record<string, TacticType> = {
+export const STRATEGY_TO_TACTIC: Record<string, TacticType> = {
   knight_forks: "fork",
   royal_fork: "fork",
   pawn_forks: "fork",
@@ -20,17 +20,38 @@ const STRATEGY_TO_TACTIC: Record<string, TacticType> = {
 };
 
 // Map tactics to the Power awarded when the mission completes.
-// Uses the first matching power in the current kingdom.
+// We ONLY award a power whose tactic text plausibly matches — no "any power
+// in the kingdom" fallback, because awarding a Pin power for a fork mission
+// would break the trust the spec insists on.
 function powerIdForTactic(tactic: TacticType, kingdomId: string): string | null {
+  const needle = tactic.replace(/_/g, " ");
   const match = POWERS.find(
     (p) =>
       p.kingdom === kingdomId &&
-      p.tactic.toLowerCase().includes(tactic.replace("_", " "))
+      p.tactic.toLowerCase().includes(needle)
   );
-  if (match) return match.id;
-  // Fall back to ANY power in the kingdom.
-  const fallback = POWERS.find((p) => p.kingdom === kingdomId);
-  return fallback?.id ?? null;
+  return match?.id ?? null;
+}
+
+/**
+ * Find the next unmastered strategy in the given kingdom that corresponds
+ * to the given tactic. Used when completing a mission to figure out which
+ * strategy to mark as mastered.
+ */
+export function findStrategyForTactic(
+  kingdomId: string,
+  tactic: TacticType,
+  mastered: string[]
+): Strategy | null {
+  const k = KINGDOMS.find((x) => x.id === kingdomId);
+  if (!k) return null;
+  return (
+    k.strategies.find(
+      (s) =>
+        STRATEGY_TO_TACTIC[s.id] === tactic &&
+        !mastered.includes(s.id)
+    ) ?? null
+  );
 }
 
 function describe(tactic: TacticType): string {
@@ -49,19 +70,25 @@ function describe(tactic: TacticType): string {
   return names[tactic] ?? "Find a clever tactic!";
 }
 
-function nextUnmasteredStrategy(progression: PlayerProgression): Strategy | null {
-  const kingdom = getKingdomById(progression.currentKingdom);
-  if (!kingdom) return null;
-  for (const s of kingdom.strategies) {
-    if (progression.masteredStrategies.includes(s.id)) continue;
-    // Only offer strategies whose tactic we can actually detect
-    if (!STRATEGY_TO_TACTIC[s.id]) continue;
-    // Prerequisites satisfied?
-    const prereqsMet = s.prerequisites.every((pre) =>
-      progression.masteredStrategies.includes(pre)
-    );
-    if (!prereqsMet) continue;
-    return s;
+function nextUnmasteredStrategy(progression: PlayerProgression): { strategy: Strategy; kingdomId: string } | null {
+  // Walk the current kingdom first, then FALL THROUGH to later kingdoms
+  // if nothing matches. This prevents new players in "village" (which has
+  // no detectable strategies — it's a tutorial kingdom) from being stuck
+  // with no mission, and it keeps the mission stream going if a later
+  // kingdom has purely conceptual strategies (e.g. center_control).
+  const startIdx = KINGDOMS.findIndex((k) => k.id === progression.currentKingdom);
+  if (startIdx < 0) return null;
+  for (let i = startIdx; i < KINGDOMS.length; i++) {
+    const kingdom = KINGDOMS[i];
+    for (const s of kingdom.strategies) {
+      if (progression.masteredStrategies.includes(s.id)) continue;
+      if (!STRATEGY_TO_TACTIC[s.id]) continue; // un-verifiable
+      const prereqsMet = s.prerequisites.every((pre) =>
+        progression.masteredStrategies.includes(pre)
+      );
+      if (!prereqsMet) continue;
+      return { strategy: s, kingdomId: kingdom.id };
+    }
   }
   return null;
 }
@@ -71,14 +98,17 @@ function nextUnmasteredStrategy(progression: PlayerProgression): Strategy | null
  * and mastered strategies. Returns null when there's nothing to assign.
  */
 export function generateMission(progression: PlayerProgression): Mission | null {
-  const strat = nextUnmasteredStrategy(progression);
-  if (!strat) return null;
-  const tactic = STRATEGY_TO_TACTIC[strat.id];
+  const picked = nextUnmasteredStrategy(progression);
+  if (!picked) return null;
+  const tactic = STRATEGY_TO_TACTIC[picked.strategy.id];
   if (!tactic) return null;
-  const powerId = powerIdForTactic(tactic, progression.currentKingdom);
+  // Look up the power in the kingdom that OWNS the strategy, not the
+  // player's current kingdom — otherwise a fall-through mission to a
+  // later kingdom's strategy would have no power to award.
+  const powerId = powerIdForTactic(tactic, picked.kingdomId);
   if (!powerId) return null;
   return {
-    id: `mission_${strat.id}_${Date.now()}`,
+    id: `mission_${picked.strategy.id}_${Date.now()}`,
     targetTactic: tactic,
     description: describe(tactic),
     powerId,

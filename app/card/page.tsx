@@ -83,9 +83,9 @@ export default function CardPage() {
   const prog = store.progression;
   const rank = getRankByXP(prog.xp);
 
-  // v1 stats: we don't track per-session games won; use what we have.
+  // v1 stats: only real values make it onto the card.
   const stats = {
-    gamesWon: Math.floor(prog.xp / 40), // rough estimate from XP
+    gamesWon: prog.defeatedBosses.length,  // for v1 "games won" = bosses defeated
     puzzlesSolved: 0,
     longestStreak: prog.streak,
   };

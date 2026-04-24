@@ -131,7 +131,7 @@ const KnightCard = forwardRef<HTMLDivElement, KnightCardProps>(function KnightCa
         background: P.creamDeep, border: `1px solid ${P.inkGhost}`,
         display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10,
       }}>
-        <Stat label="Games Won" value={stats.gamesWon} />
+        <Stat label="Bosses" value={stats.gamesWon} />
         <Stat label="Powers" value={`${progression.earnedPowers.length}/${totalPowers}`} />
         <Stat label="Streak" value={`${stats.longestStreak}d`} />
       </div>

@@ -151,9 +151,10 @@ function HeroPuzzle() {
   return (
     <div style={{ position: "relative" }}>
       <div style={{
-        display: "grid", gridTemplateColumns: "repeat(8, 1fr)",
-        width: "min(340px, calc(100vw - 80px))",
-        aspectRatio: "1",
+        display: "grid",
+        gridTemplateColumns: "repeat(8, 40px)",
+        gridTemplateRows: "repeat(8, 40px)",
+        width: 320, height: 320,
         borderRadius: 14,
         overflow: "hidden",
         boxShadow: `0 0 0 2px ${P.parchment}, 0 0 0 4px ${P.inkGhost}, 0 24px 80px rgba(26,18,16,0.25), 0 8px 24px rgba(26,18,16,0.15)`,
@@ -191,7 +192,7 @@ function HeroPuzzle() {
               )}
               {piece && (
                 <span style={{
-                  fontSize: "min(calc(min(340px, calc(100vw - 80px)) / 10), 34px)",
+                  fontSize: 28,
                   lineHeight: 1,
                   filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.25))",
                   transform: isHov ? "scale(1.15)" : isKnight ? "scale(1.05)" : "scale(1)",

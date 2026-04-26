@@ -103,6 +103,25 @@ export function generateAnnotation(
     };
   }
 
+  // Generic praise/critique fallback — when Coach is speaking but the
+  // move doesn't match a specific tactic. Light up the from→to so the
+  // kid's eyes follow what's being narrated. Color matches the trigger:
+  // green for praise, yellow for inaccuracy, red for mistakes.
+  const generic = (() => {
+    if (analysis.trigger === "GREAT_MOVE") return "green" as const;
+    if (analysis.trigger === "OK_MOVE") return null; // too routine
+    if (analysis.trigger === "INACCURACY") return "yellow" as const;
+    if (analysis.trigger === "MISTAKE") return "yellow" as const;
+    return null;
+  })();
+  if (generic) {
+    return {
+      arrows: [{ from: move.from, to: move.to, color: generic, opacity: 0.55 }],
+      circles: [{ square: move.to, color: generic }],
+      duration: 4500,
+    };
+  }
+
   // No annotation for routine moves — clean board, no clutter.
   return null;
 }

@@ -38,16 +38,17 @@ export async function POST(req: NextRequest) {
 
   const encoder = new TextEncoder();
 
-  // Right-size the token budget to the trigger so Claude can't over-shoot
-  // the length we asked for in the prompt. Roughly: 1 word ≈ 1.3 tokens.
+  // Token budget per trigger. Sized for the prompt's word ceiling +
+  // 60% breathing room so Claude can finish its last sentence cleanly
+  // — running out of tokens mid-clause is what causes "...for" cutoffs.
   const MAX_TOKENS_BY_TRIGGER: Record<string, number> = {
-    GREAT_MOVE: 40,
-    OK_MOVE: 30,
-    INACCURACY: 80,
-    MISTAKE: 110,
-    BLUNDER: 140,
+    GREAT_MOVE: 70,    // 12 words → ~70 tokens with headroom
+    OK_MOVE: 55,       // 10 words → ~55 tokens
+    INACCURACY: 130,   // 30 words → ~130 tokens
+    MISTAKE: 170,      // 40 words → ~170 tokens
+    BLUNDER: 220,      // 50 words → ~220 tokens
   };
-  const maxTokens = MAX_TOKENS_BY_TRIGGER[analysis.trigger] ?? 80;
+  const maxTokens = MAX_TOKENS_BY_TRIGGER[analysis.trigger] ?? 130;
 
   const stream = new ReadableStream({
     async start(controller) {

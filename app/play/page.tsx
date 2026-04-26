@@ -560,6 +560,34 @@ export default function PlayPage() {
           const botStatus = getGameStatus(afterBot);
           store.makeMove(botSAN, afterBot, newChess, { from: botMove.from, to: botMove.to }, botStatus);
 
+          // Bot's move can also be a teaching moment — if it just
+          // forked, pinned, or threatened a piece, annotate it so the
+          // kid can SEE what just happened, not just hear about it.
+          // We pass a "fake" GREAT_MOVE analysis (the bot's perspective)
+          // because all we need is the tactic-driven part of the
+          // generator; non-tactic visualizations stay player-only.
+          const botAnalysis = analyzeMoveQuality(newChess, afterBot, botMove);
+          const botTactics = botAnalysis?.tactics?.filter((t) => t.detected) ?? [];
+          if (botTactics.length > 0 && botAnalysis) {
+            const annotation = generateAnnotation(botAnalysis, botTactics, botMove);
+            if (annotation) {
+              pendingAnnotationRef.current = annotation;
+              if (annotationFallbackTimerRef.current) clearTimeout(annotationFallbackTimerRef.current);
+              annotationFallbackTimerRef.current = setTimeout(() => {
+                if (pendingAnnotationRef.current) {
+                  const a = pendingAnnotationRef.current;
+                  pendingAnnotationRef.current = null;
+                  store.setBoardAnnotation(a);
+                  if (annotationClearTimerRef.current) clearTimeout(annotationClearTimerRef.current);
+                  annotationClearTimerRef.current = setTimeout(
+                    () => store.setBoardAnnotation(null),
+                    a.duration ?? 5000,
+                  );
+                }
+              }, 1600);
+            }
+          }
+
           if (botStatus !== "playing") {
             const text =
               botStatus === "black_wins"

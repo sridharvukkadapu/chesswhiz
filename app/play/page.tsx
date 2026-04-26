@@ -15,6 +15,7 @@ import { getLegalMoves, applyMove, getGameStatus, moveToSAN } from "@/lib/chess/
 import { analyzeMoveQuality } from "@/lib/coaching/analyzer";
 import { shouldCoach } from "@/lib/coaching/triggers";
 import { FALLBACKS } from "@/lib/coaching/prompts";
+import { generateAnnotation } from "@/lib/coaching/annotations";
 import { findBestMove } from "@/lib/chess/ai";
 import Board from "@/components/Board";
 import CoachPanel from "@/components/CoachPanel";
@@ -306,7 +307,7 @@ export default function PlayPage() {
     chess, selected, legalHighlights, lastMove, moveHistory,
     stateHistory, status, playerName, playerAge, difficulty,
     coachMessages, coachLoading, showPromo, botThinking, screen,
-    progression, lastXPGain, justRankedUp, ahaCelebration,
+    progression, lastXPGain, justRankedUp, ahaCelebration, boardAnnotation,
   } = store;
 
   useEffect(() => {
@@ -430,10 +431,23 @@ export default function PlayPage() {
     }
 
     const analysis = analyzeMoveQuality(prevChess, newChess, move);
-    if (analysis && shouldCoach(analysis, store.moveCount, store.lastCoachMove)) {
+    const willCoach = !!analysis && shouldCoach(analysis, store.moveCount, store.lastCoachMove);
+    if (willCoach && analysis) {
       requestCoaching(analysis);
       if (analysis.severity === 0) {
         store.addXP(5, "Great move!");
+      }
+    }
+
+    // Visual annotation — illustrate the coaching moment on the board.
+    // Generated from the same data the coach is talking about so the
+    // visual stays in sync with the words.
+    if (analysis && willCoach) {
+      const annotation = generateAnnotation(analysis, analysis.tactics ?? [], move);
+      if (annotation) {
+        store.setBoardAnnotation(annotation);
+        const dur = annotation.duration ?? 5000;
+        setTimeout(() => store.setBoardAnnotation(null), dur);
       }
     }
 
@@ -719,6 +733,7 @@ export default function PlayPage() {
             showPromo={showPromo}
             status={status}
             botThinking={botThinking}
+            annotation={boardAnnotation}
             onSquareClick={handleSquareClick}
             onPromo={handlePromo}
           />

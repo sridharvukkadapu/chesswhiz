@@ -152,6 +152,8 @@ function detectFork(chess: Chess, move: Move): TacticDetection | null {
     detected: true,
     details,
     materialWon,
+    attackerSquare: move.to,
+    targetSquares: sorted.map((t) => t.square),
   };
 }
 
@@ -219,6 +221,9 @@ function detectPin(chess: Chess, move: Move): TacticDetection | null {
                 detected: true,
                 details: `Absolute pin! Your ${pieceName(attacker.type as PieceType)} on ${move.to} pins the ${pieceName(firstPiece.type)} on ${firstPiece.sq} to the king.`,
                 materialWon: pinnedValue,
+                attackerSquare: move.to,
+                pinnedSquare: firstPiece.sq,
+                behindSquare: sq,
               };
             }
             // Relative pin — require the PINNED piece to be worth ≥3 (minor piece or higher).
@@ -229,6 +234,9 @@ function detectPin(chess: Chess, move: Move): TacticDetection | null {
                 detected: true,
                 details: `Relative pin! Your ${pieceName(attacker.type as PieceType)} on ${move.to} pins the ${pieceName(firstPiece.type)} to the ${pieceName(p.type as PieceType)} behind it.`,
                 materialWon: pinnedValue,
+                attackerSquare: move.to,
+                pinnedSquare: firstPiece.sq,
+                behindSquare: sq,
               };
             }
           }
@@ -277,11 +285,15 @@ function detectSkewer(chess: Chess, move: Move): TacticDetection | null {
             // and back piece is worth at least a minor piece (don't celebrate skewering to pawns).
             const meaningful = backValue >= 300;
             if ((isKingFront || frontValue > backValue) && meaningful) {
+              const backSq = rcToSq(r, c);
               return {
                 type: "skewer",
                 detected: true,
                 details: `Skewer! Your ${pieceName(attacker.type as PieceType)} on ${move.to} forces the ${pieceName(firstPiece.type)} to move, exposing the ${pieceName(p.type as PieceType)} behind it.`,
                 materialWon: backValue,
+                attackerSquare: move.to,
+                frontSquare: firstPiece.sq,
+                backSquare: backSq,
               };
             }
           }

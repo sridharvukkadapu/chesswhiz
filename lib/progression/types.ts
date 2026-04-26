@@ -105,6 +105,15 @@ export interface TacticDetection {
   detected: boolean;
   details: string;
   materialWon: number; // centipawns
+
+  // Squares involved — populated by detectors so the board annotation
+  // layer can draw arrows/circles from the same logic that named the tactic.
+  attackerSquare?: string;     // e.g. the forking knight, the pinning bishop
+  targetSquares?: string[];    // pieces attacked by the tactic (forks: both)
+  pinnedSquare?: string;       // the piece that's stuck in place
+  behindSquare?: string;       // pin: the high-value piece behind
+  frontSquare?: string;        // skewer: the bigger piece in front
+  backSquare?: string;         // skewer: the back piece exposed when the front moves
 }
 
 // XP source logging

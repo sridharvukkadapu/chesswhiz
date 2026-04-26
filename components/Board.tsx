@@ -1,7 +1,8 @@
 "use client";
 
 import { Chess } from "chess.js";
-import type { Move, LastMove, Square } from "@/lib/chess/types";
+import type { Move, LastMove, Square, BoardAnnotation } from "@/lib/chess/types";
+import BoardAnnotations from "@/components/BoardAnnotations";
 
 const PIECE_CHARS: Record<string, string> = {
   wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙",
@@ -22,13 +23,14 @@ interface BoardProps {
   showPromo: Move | null;
   status: string;
   botThinking: boolean;
+  annotation?: BoardAnnotation | null;
   onSquareClick: (r: number, c: number) => void;
   onPromo: (piece: string) => void;
 }
 
 export default function Board({
   chess, selected, legalHighlights, lastMove,
-  showPromo, status, botThinking, onSquareClick, onPromo,
+  showPromo, status, botThinking, annotation, onSquareClick, onPromo,
 }: BoardProps) {
   const board = chess.board();
   const inCheck = chess.isCheck();
@@ -41,6 +43,7 @@ export default function Board({
         className="rounded-xl overflow-hidden"
         style={{
           boxShadow: "0 0 0 1px rgba(255,255,255,0.07), 0 24px 64px rgba(0,0,0,0.8), 0 8px 24px rgba(0,0,0,0.5)",
+          position: "relative",
         }}
       >
         <div
@@ -185,6 +188,9 @@ export default function Board({
             );
           })}
         </div>
+        {/* Coach annotation overlay — arrows, circles, square highlights.
+            Sits inside the rounded clip so it never spills past the board. */}
+        <BoardAnnotations annotation={annotation ?? null} />
       </div>
 
       {/* Promotion modal */}

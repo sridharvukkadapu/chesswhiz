@@ -44,6 +44,37 @@ export interface CoachMessage {
   text: string;
 }
 
+// ── Board annotations ──────────────────────────────────
+// Visual overlays that illustrate what Coach Pawn just said. Drawn as
+// an SVG layer on top of the board, fade in/out automatically.
+
+export type AnnotationColor = "green" | "red" | "yellow" | "blue";
+
+export interface SquareHighlight {
+  square: string;
+  color: AnnotationColor;
+  opacity?: number;
+}
+
+export interface BoardArrow {
+  from: string;
+  to: string;
+  color: AnnotationColor;
+  opacity?: number;
+}
+
+export interface BoardCircle {
+  square: string;
+  color: AnnotationColor;
+}
+
+export interface BoardAnnotation {
+  highlights?: SquareHighlight[];
+  arrows?: BoardArrow[];
+  circles?: BoardCircle[];
+  duration?: number; // ms; default 5000
+}
+
 export interface CoachPrompt {
   system: string;
   user: string;

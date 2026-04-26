@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { Chess } from "chess.js";
-import type { Move, LastMove, GameStatus, CoachMessage, Difficulty, Square } from "@/lib/chess/types";
+import type { Move, LastMove, GameStatus, CoachMessage, Difficulty, Square, BoardAnnotation } from "@/lib/chess/types";
 import type { PlayerProgression, Mission, RankId, TacticDetection, Power } from "@/lib/progression/types";
 import { getRankByXP, XP_REWARDS, getStreakMultiplier, POWERS, KINGDOMS } from "@/lib/progression/data";
 import { generateMission, missionMatchesTactic, findStrategyForTactic } from "@/lib/progression/missions";
@@ -124,6 +124,10 @@ interface GameStore {
   // Voice usage tracking (ElevenLabs cost meter)
   voiceUsage: VoiceUsage;
 
+  // Visual board annotation overlay (clears automatically; also cleared
+  // on the next move so old arrows don't linger over a fresh position)
+  boardAnnotation: BoardAnnotation | null;
+
   // Actions
   setSettings: (name: string, age: number, difficulty: Difficulty) => void;
   selectSquare: (square: Square, moves: Move[]) => void;
@@ -149,6 +153,7 @@ interface GameStore {
   hydrateProgression: () => void;
   setTier: (tier: import("@/lib/progression/types").Tier) => void;
   recordVoiceUsage: (chars: number, kind: "tts" | "fallback") => void;
+  setBoardAnnotation: (annotation: BoardAnnotation | null) => void;
   ensureMission: () => void;
   handleTacticDetected: (tactic: TacticDetection) => void;
   dismissAha: () => void;
@@ -178,6 +183,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   justRankedUp: null,
   ahaCelebration: null,
   voiceUsage: DEFAULT_VOICE_USAGE,
+  boardAnnotation: null,
 
   setSettings: (name, age, difficulty) => {
     // Update streak on session start
@@ -275,6 +281,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       lastCoachMove: -3,
       botThinking: false,
       showPromo: null,
+      boardAnnotation: null,
       coachMessages: [
         {
           id: crypto.randomUUID(),
@@ -442,6 +449,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     saveProgression(next);
     set({ progression: next });
   },
+
+  setBoardAnnotation: (annotation) => set({ boardAnnotation: annotation }),
 
   recordVoiceUsage: (chars, kind) => {
     const today = todayISO();

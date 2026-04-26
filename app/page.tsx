@@ -1043,11 +1043,29 @@ function Testimonials() {
           </p>
           <p style={{
             fontSize: 14, lineHeight: 1.7, color: P.inkLight,
-            margin: 0,
+            margin: "0 0 22px",
             fontFamily: "var(--font-nunito), sans-serif",
           }}>
             Try it with your kid this weekend. If Coach Pawn doesn&apos;t make them smile in the first 5 minutes, I&apos;d love to know why.
           </p>
+          <Link href="/onboard" style={{
+            display: "inline-block",
+            background: P.ink, color: P.cream,
+            borderRadius: 14, padding: "14px 32px",
+            fontSize: 15, fontWeight: 800,
+            textDecoration: "none",
+            fontFamily: "var(--font-nunito), sans-serif",
+            boxShadow: "0 6px 22px rgba(26,18,16,0.18)",
+            letterSpacing: 0.3,
+          }}>
+            Try it free — be an early family
+          </Link>
+          <div style={{
+            marginTop: 10, fontSize: 12, color: P.inkFaint,
+            fontFamily: "var(--font-nunito), sans-serif",
+          }}>
+            <a href="mailto:hello@chesswhiz.com" style={{ color: P.inkFaint, textDecoration: "underline" }}>hello@chesswhiz.com</a> · I read every email
+          </div>
         </div>
       </Reveal>
     </section>

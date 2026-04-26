@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import KnightCard from "@/components/KnightCard";
+import BottomNav from "@/components/BottomNav";
 import { useGameStore } from "@/stores/gameStore";
 import { getRankByXP } from "@/lib/progression/data";
 
@@ -185,6 +186,8 @@ export default function CardPage() {
           zIndex: 100,
         }}>{toast}</div>
       )}
+      <div style={{ height: 80 }} />
+      <BottomNav />
     </div>
   );
 }

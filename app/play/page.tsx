@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useSpeech } from "@/lib/speech";
 import { getRankByXP, getNextRank, RANKS } from "@/lib/progression/data";
 import AhaCelebration from "@/components/AhaCelebration";
+import PostGameScreen from "@/components/PostGameScreen";
+import ProgressStrip from "@/components/ProgressStrip";
+import BottomNav from "@/components/BottomNav";
 import { Chess } from "chess.js";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
@@ -317,6 +320,18 @@ export default function PlayPage() {
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Post-game screen: show after a brief delay so the Aha! celebration
+  // (and any final coach message) gets a beat before we take over the board.
+  const [showPostGame, setShowPostGame] = useState(false);
+  useEffect(() => {
+    if (status === "playing") {
+      setShowPostGame(false);
+      return;
+    }
+    const t = setTimeout(() => setShowPostGame(true), 2000);
+    return () => clearTimeout(t);
+  }, [status]);
 
   // ── Voice: speak each new coach message when enabled ──
   const speech = useSpeech();
@@ -631,6 +646,9 @@ export default function PlayPage() {
         </div>
       </header>
 
+      {/* Persistent progress strip — keeps the journey visible during play */}
+      <ProgressStrip progression={progression} />
+
       {/* Main layout */}
       <main
         id="main-content"
@@ -638,15 +656,26 @@ export default function PlayPage() {
           display: "flex", flexWrap: "wrap", justifyContent: "center",
           alignItems: "flex-start", gap: 16,
           maxWidth: 1000, margin: "0 auto",
-          padding: "16px 12px",
+          padding: "16px 12px 88px",
           position: "relative", zIndex: 1,
         }}
       >
-        {/* Left: Board column */}
+        {/* Left: Board column (or post-game screen when finished) */}
         <div style={{
           display: "flex", flexDirection: "column", gap: 8,
           width: "100%", maxWidth: "min(calc(100vw - 24px), 480px)",
         }}>
+        {showPostGame && (
+          <PostGameScreen
+            status={status}
+            playerName={playerName}
+            moveHistory={moveHistory}
+            coachMessages={coachMessages}
+            progression={progression}
+            onPlayAgain={() => store.resetGame()}
+          />
+        )}
+        {!showPostGame && (<>
           {/* Hand-lettered overline — same device as landing/onboarding */}
           <div style={{
             display: "flex", alignItems: "baseline", justifyContent: "space-between",
@@ -701,6 +730,7 @@ export default function PlayPage() {
             isBot={false}
           />
           <GameStatusBar status={status} playerName={playerName} onReset={() => store.resetGame()} />
+        </>)}
         </div>
 
         {/* Right: Coach + moves + actions */}
@@ -768,6 +798,8 @@ export default function PlayPage() {
           </div>
         </div>
       </main>
+
+      <BottomNav />
 
       <style>{`
         @keyframes drift {

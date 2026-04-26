@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useGameStore } from "@/stores/gameStore";
 import { KINGDOMS, POWERS, getRankByXP, getNextRank } from "@/lib/progression/data";
 import type { Kingdom, PlayerProgression } from "@/lib/progression/types";
+import BottomNav from "@/components/BottomNav";
 
 // Matches the landing page (Storybook Noir) palette exactly.
 const P = {
@@ -181,7 +182,7 @@ export default function KingdomPage() {
       </section>
 
       {/* Kingdom cards */}
-      <section style={{ maxWidth: 720, margin: "0 auto", padding: "8px 20px 80px", position: "relative", zIndex: 1 }}>
+      <section style={{ maxWidth: 720, margin: "0 auto", padding: "8px 20px 32px", position: "relative", zIndex: 1 }}>
         <h2 style={{
           fontSize: 11, color: P.inkLight, letterSpacing: 1.8,
           textTransform: "uppercase", fontWeight: 800, margin: "28px 0 14px",
@@ -194,7 +195,49 @@ export default function KingdomPage() {
             return <KingdomRow key={k.id} kingdom={k} status={status} progression={prog} />;
           })}
         </div>
+
+        {/* Visitor CTA — shows for new players (no XP yet, default progression) */}
+        {prog.xp === 0 && prog.completedKingdoms.length === 0 && prog.earnedPowers.length === 0 && (
+          <div style={{
+            marginTop: 32, padding: "24px 22px",
+            background: "white", borderRadius: 18,
+            border: `1px solid ${P.gold}40`,
+            boxShadow: `0 0 0 4px ${P.goldPale}, 0 8px 24px rgba(199,148,10,0.12)`,
+            textAlign: "center",
+          }}>
+            <span style={{
+              fontFamily: "'Caveat', cursive", fontSize: 18, color: P.gold,
+              display: "block", marginBottom: 4,
+            }}>start your quest →</span>
+            <h3 style={{
+              fontSize: 20, fontWeight: 900, color: P.ink,
+              fontFamily: "var(--font-playfair), serif",
+              margin: "0 0 8px", letterSpacing: -0.4,
+            }}>Pawn Village awaits</h3>
+            <p style={{
+              margin: "0 0 18px", fontSize: 14, lineHeight: 1.7,
+              color: P.inkLight, maxWidth: 380, marginLeft: "auto", marginRight: "auto",
+              fontFamily: "var(--font-nunito), sans-serif",
+            }}>
+              Play your first game to begin. Defeat the Knight Twins, earn Powers, and climb from Pawn to King.
+            </p>
+            <Link href="/onboard" style={{
+              display: "inline-block",
+              background: P.emerald, color: "white",
+              borderRadius: 14, padding: "14px 32px",
+              fontSize: 15, fontWeight: 800,
+              textDecoration: "none",
+              boxShadow: "0 6px 22px rgba(27,115,64,0.25)",
+              letterSpacing: 0.3,
+              fontFamily: "var(--font-nunito), sans-serif",
+            }}>Play your first game free</Link>
+          </div>
+        )}
+
+        <div style={{ height: 80 }} />
       </section>
+
+      <BottomNav />
     </div>
   );
 }

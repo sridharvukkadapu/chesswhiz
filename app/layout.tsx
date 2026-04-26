@@ -45,9 +45,17 @@ const quicksand = Quicksand({
   display: "swap",
 });
 
+// Vercel injects VERCEL_GIT_COMMIT_SHA at build time; falls back to "dev"
+// for local builds. Used as a version stamp so cache problems are
+// instantly diagnosable: "view source, search chesswhiz-version".
+const COMMIT_SHA = (process.env.VERCEL_GIT_COMMIT_SHA ?? "dev").slice(0, 7);
+
 export const metadata: Metadata = {
   title: "ChessWhiz — AI Chess Coach for Kids",
   description: "Learn chess with your personal AI coach. Play, make mistakes, and grow!",
+  other: {
+    "chesswhiz-version": COMMIT_SHA,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

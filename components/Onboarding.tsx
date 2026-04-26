@@ -331,10 +331,53 @@ export default function Onboarding({ onStart }: OnboardingProps) {
             fontFamily: "var(--font-nunito), sans-serif",
           }}>
             {canStart
-              ? <>Hi <strong style={{ color: P.ink }}>{firstName}</strong>! Ready to play? I&apos;ll cheer your best moves and help you see the ones you missed. ⭐</>
+              ? <>Hey <strong style={{ color: P.ink }}>{firstName}</strong>! I&apos;m Coach Pawn — your chess coach <em style={{ color: P.emerald, fontStyle: "normal", fontWeight: 700 }}>and</em> adventure buddy. We start in <strong style={{ color: P.ink }}>Pawn Village</strong>, then head to the <strong style={{ color: P.ink }}>Fork Forest</strong> to face the Knight Twins. Ready? ⭐</>
               : <span style={{ color: P.inkLight, fontStyle: "italic" }}>Tell me your name and I&apos;ll introduce myself…</span>}
           </p>
         </div>
+
+        {/* Step 04: Quest preview — appears once name is entered */}
+        {canStart && (
+          <div style={{
+            marginBottom: 22,
+            padding: "14px 16px",
+            background: P.creamDeep,
+            border: `1px solid ${P.gold}40`,
+            borderRadius: 14,
+            animation: "questAppear 0.5s cubic-bezier(0.34,1.56,0.64,1)",
+          }}>
+            <FieldLabel step="04" title="Your quest begins in" />
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 4 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: `linear-gradient(135deg, #8B735525 0%, ${P.parchment} 100%)`,
+                border: `1.5px solid #8B735566`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 22, flexShrink: 0,
+              }}>🏘️</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{
+                  fontSize: 15, fontWeight: 800, color: P.ink,
+                  fontFamily: "var(--font-playfair), serif", letterSpacing: -0.3,
+                }}>Pawn Village</div>
+                <div style={{ fontSize: 12, color: P.inkLight, marginTop: 1 }}>
+                  Learn how every piece moves with the Village Elder
+                </div>
+              </div>
+            </div>
+            <div style={{
+              marginTop: 10, paddingTop: 10,
+              borderTop: `1px dashed ${P.inkGhost}`,
+              fontSize: 12, color: P.inkLight,
+              display: "flex", alignItems: "center", gap: 6,
+            }}>
+              <span>Then →</span>
+              <span style={{ fontSize: 14 }}>🌲</span>
+              <span style={{ color: P.inkSoft, fontWeight: 700 }}>Fork Forest</span>
+              <span style={{ color: P.inkFaint }}>· face the Knight Twins</span>
+            </div>
+          </div>
+        )}
 
         {/* CTA */}
         <button
@@ -382,6 +425,10 @@ export default function Onboarding({ onStart }: OnboardingProps) {
         @keyframes driftSlow {
           0%   { transform: translateY(0px); }
           100% { transform: translateY(-30px); }
+        }
+        @keyframes questAppear {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

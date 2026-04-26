@@ -71,6 +71,8 @@ export interface Mission {
   maxGamesBeforeHint: number;
 }
 
+export type Tier = "free" | "champion";
+
 export interface PlayerProgression {
   rank: RankId;
   xp: number;
@@ -82,6 +84,7 @@ export interface PlayerProgression {
   activeMission: Mission | null;
   streak: number;
   lastPlayedDate: string; // ISO date (YYYY-MM-DD)
+  tier: Tier;
 }
 
 // Tactic detection

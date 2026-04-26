@@ -30,6 +30,7 @@ const DEFAULT_PROGRESSION: PlayerProgression = {
   activeMission: null,
   streak: 0,
   lastPlayedDate: "",
+  tier: "free",
 };
 
 function loadProgression(): PlayerProgression {
@@ -106,6 +107,7 @@ interface GameStore {
   clearXPGain: () => void;
   clearRankUp: () => void;
   hydrateProgression: () => void;
+  setTier: (tier: import("@/lib/progression/types").Tier) => void;
   ensureMission: () => void;
   handleTacticDetected: (tactic: TacticDetection) => void;
   dismissAha: () => void;
@@ -392,6 +394,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   clearXPGain: () => set({ lastXPGain: null }),
   clearRankUp: () => set({ justRankedUp: null }),
+
+  setTier: (tier) => {
+    const next = { ...get().progression, tier };
+    saveProgression(next);
+    set({ progression: next });
+  },
 
   hydrateProgression: () => {
     const prog = loadProgression();

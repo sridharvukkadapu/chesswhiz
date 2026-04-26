@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
-import { KINGDOMS, POWERS, getRankByXP, getNextRank } from "@/lib/progression/data";
+import { KINGDOMS, POWERS, getRankByXP, getNextRank, isKingdomLocked } from "@/lib/progression/data";
 import type { Kingdom, PlayerProgression } from "@/lib/progression/types";
 import BottomNav from "@/components/BottomNav";
+import UpgradeModal from "@/components/UpgradeModal";
 
 // Matches the landing page (Storybook Noir) palette exactly.
 const P = {
@@ -26,21 +28,45 @@ const P = {
   goldPale: "#FDF6E3",
 };
 
-function kingdomStatus(k: Kingdom, prog: PlayerProgression, rankLevel: number): "conquered" | "current" | "locked" {
+function kingdomStatus(k: Kingdom, prog: PlayerProgression, rankLevel: number): "conquered" | "current" | "locked" | "tier_locked" {
   if (prog.completedKingdoms.includes(k.id)) return "conquered";
+  // Tier gate takes precedence over rank — even a max-rank free user
+  // can't enter Fork Forest. This is the conversion trigger.
+  if (isKingdomLocked(k.id, prog.tier)) return "tier_locked";
   if (k.level > rankLevel) return "locked";
   if (k.id === prog.currentKingdom) return "current";
   return "locked";
 }
 
 export default function KingdomPage() {
+  return (
+    <Suspense fallback={null}>
+      <KingdomPageInner />
+    </Suspense>
+  );
+}
+
+function KingdomPageInner() {
   const store = useGameStore();
+  const searchParams = useSearchParams();
   const [hydrated, setHydrated] = useState(false);
+  const [upgradeFor, setUpgradeFor] = useState<Kingdom | null>(null);
+
   useEffect(() => {
     store.hydrateProgression();
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-open upgrade modal if redirected here from a locked kingdom URL
+  useEffect(() => {
+    if (!hydrated) return;
+    const upgradeId = searchParams.get("upgrade");
+    if (upgradeId) {
+      const k = KINGDOMS.find((kk) => kk.id === upgradeId);
+      if (k) setUpgradeFor(k);
+    }
+  }, [hydrated, searchParams]);
 
   if (!hydrated) return null;
 
@@ -192,7 +218,15 @@ export default function KingdomPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {KINGDOMS.map((k) => {
             const status = kingdomStatus(k, prog, rank.level);
-            return <KingdomRow key={k.id} kingdom={k} status={status} progression={prog} />;
+            return (
+              <KingdomRow
+                key={k.id}
+                kingdom={k}
+                status={status}
+                progression={prog}
+                onTierLockedClick={() => setUpgradeFor(k)}
+              />
+            );
           })}
         </div>
 
@@ -238,49 +272,70 @@ export default function KingdomPage() {
       </section>
 
       <BottomNav />
+
+      <UpgradeModal
+        open={!!upgradeFor}
+        onClose={() => setUpgradeFor(null)}
+        blockedKingdomName={upgradeFor?.name}
+        blockedKingdomIcon={upgradeFor?.boss?.emoji?.slice(0, 2)}
+      />
     </div>
   );
 }
 
 function KingdomRow({
-  kingdom, status, progression,
+  kingdom, status, progression, onTierLockedClick,
 }: {
   kingdom: Kingdom;
-  status: "conquered" | "current" | "locked";
+  status: "conquered" | "current" | "locked" | "tier_locked";
   progression: PlayerProgression;
+  onTierLockedClick: () => void;
 }) {
   const [expanded, setExpanded] = useState(status === "current");
 
   const badge = {
-    conquered: { label: "CONQUERED", color: P.emerald, bg: P.emeraldPale, icon: "✓" },
-    current:   { label: "CURRENT QUEST", color: P.gold, bg: P.goldPale, icon: "⚑" },
-    locked:    { label: "LOCKED", color: P.inkFaint, bg: "#F5F0E5", icon: "🔒" },
+    conquered:   { label: "CONQUERED", color: P.emerald, bg: P.emeraldPale, icon: "✓" },
+    current:     { label: "CURRENT QUEST", color: P.gold, bg: P.goldPale, icon: "⚑" },
+    locked:      { label: "LOCKED", color: P.inkFaint, bg: "#F5F0E5", icon: "🔒" },
+    tier_locked: { label: "CHAMPION", color: P.gold, bg: P.goldPale, icon: "🔒" },
   }[status];
 
   const mastered = kingdom.strategies.filter((s) =>
     progression.masteredStrategies.includes(s.id)
   ).length;
 
+  const isInert = status === "locked"; // rank-locked, no upgrade path
+  const isTierLocked = status === "tier_locked";
+
   return (
     <div style={{
       background: "white",
-      border: `${status === "current" ? 2 : 1}px solid ${status === "current" ? P.gold : P.inkGhost}`,
+      border: `${status === "current" || isTierLocked ? 2 : 1}px solid ${
+        status === "current" ? P.gold : isTierLocked ? `${P.gold}80` : P.inkGhost
+      }`,
       borderRadius: 18,
       boxShadow: status === "current"
         ? `0 0 0 4px ${P.goldPale}, 0 12px 36px rgba(199,148,10,0.18)`
+        : isTierLocked
+        ? `0 0 0 3px ${P.goldPale}, 0 6px 20px rgba(199,148,10,0.10)`
         : `0 4px 14px rgba(26,18,16,0.05)`,
-      opacity: status === "locked" ? 0.62 : 1,
+      opacity: isInert ? 0.62 : 1,
       transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
       overflow: "hidden",
     }}>
       <button
-        onClick={() => status !== "locked" && setExpanded((v) => !v)}
-        disabled={status === "locked"}
+        onClick={() => {
+          if (isTierLocked) { onTierLockedClick(); return; }
+          if (isInert) return;
+          setExpanded((v) => !v);
+        }}
+        disabled={isInert}
+        aria-label={isTierLocked ? `Unlock ${kingdom.name} with Champion` : undefined}
         style={{
           width: "100%", padding: "18px 20px",
           background: "transparent", border: "none",
           display: "flex", alignItems: "center", gap: 16,
-          cursor: status === "locked" ? "not-allowed" : "pointer",
+          cursor: isInert ? "not-allowed" : "pointer",
           textAlign: "left", color: "inherit", fontFamily: "inherit",
         }}
       >
@@ -302,9 +357,11 @@ function KingdomRow({
             }}>
               <span>{badge.icon}</span> {badge.label}
             </span>
-            {status !== "locked" && (
+            {!isInert && (
               <span style={{ fontSize: 11, color: P.inkLight, fontWeight: 600 }}>
-                {mastered}/{kingdom.strategies.length} strategies
+                {isTierLocked
+                  ? `${kingdom.strategies.length} strategies · 1 boss`
+                  : `${mastered}/${kingdom.strategies.length} strategies`}
               </span>
             )}
           </div>
@@ -314,15 +371,27 @@ function KingdomRow({
           }}>{kingdom.name}</div>
           <div style={{ fontSize: 13, color: P.inkLight, marginTop: 2 }}>{kingdom.subtitle}</div>
         </div>
-        {status !== "locked" && (
+        {!isInert && !isTierLocked && (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={P.inkLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
             style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}>
             <path d="M6 9l6 6 6-6" />
           </svg>
         )}
+        {isTierLocked && (
+          <span style={{
+            fontSize: 11, fontWeight: 800, color: P.gold,
+            letterSpacing: 0.4, flexShrink: 0,
+            display: "inline-flex", alignItems: "center", gap: 4,
+          }}>
+            Unlock
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </span>
+        )}
       </button>
 
-      {expanded && status !== "locked" && (
+      {expanded && !isInert && !isTierLocked && (
         <div style={{ padding: "0 20px 20px", borderTop: `1px solid ${P.parchment}` }}>
           <p style={{
             fontSize: 14, lineHeight: 1.75, color: P.inkSoft, margin: "16px 0 18px",

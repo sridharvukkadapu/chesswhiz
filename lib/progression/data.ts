@@ -590,6 +590,28 @@ export function getKingdomById(id: string): Kingdom | undefined {
   return KINGDOMS.find((k) => k.id === id);
 }
 
+// ───────── TIER GATING ─────────
+// Free tier: only Pawn Village is unlocked. Champion: everything.
+// Single source of truth — every lock check should call this.
+export function isKingdomLocked(
+  kingdomId: string,
+  tier: "free" | "champion"
+): boolean {
+  if (tier === "champion") return false;
+  return kingdomId !== "village";
+}
+
+// True once the player has finished enough of Pawn Village to feel
+// the lock — used to time the upgrade prompt for maximum impact.
+// "Ready" = mastered at least 3 of the 5 village strategies.
+export function isReadyForNextKingdom(masteredStrategies: string[]): boolean {
+  const village = KINGDOMS.find((k) => k.id === "village");
+  if (!village) return false;
+  const villageStrategyIds = new Set(village.strategies.map((s) => s.id));
+  const completed = masteredStrategies.filter((id) => villageStrategyIds.has(id)).length;
+  return completed >= 3;
+}
+
 // ───────── XP REWARDS TABLE ─────────
 export const XP_REWARDS = {
   winGame: { 1: 30, 2: 40, 3: 50 } as const,

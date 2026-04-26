@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { getRankByXP, getNextRank, KINGDOMS } from "@/lib/progression/data";
+import { useMemo, useState } from "react";
+import { getRankByXP, getNextRank, KINGDOMS, isReadyForNextKingdom } from "@/lib/progression/data";
 import type { PlayerProgression, Mission } from "@/lib/progression/types";
 import type { GameStatus, CoachMessage } from "@/lib/chess/types";
+import UpgradeModal from "./UpgradeModal";
 
 const P = {
   cream: "#FBF7F0",
@@ -138,6 +139,14 @@ export default function PostGameScreen({
   const isWin = status === "white_wins";
   const accent = isWin ? P.emerald : status === "black_wins" ? "#9A3412" : P.gold;
 
+  // Conversion trigger: free-tier player has done enough Pawn Village
+  // work to feel boxed in. Show upgrade pitch in place of "Current Quest".
+  const showUpgradePitch =
+    progression.tier === "free" &&
+    isReadyForNextKingdom(progression.masteredStrategies);
+  const forkForest = KINGDOMS.find((k) => k.id === "fork_forest");
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
   return (
     <div
       role="dialog"
@@ -253,8 +262,58 @@ export default function PostGameScreen({
         </div>
       </div>
 
-      {/* 03: Current quest */}
-      {progression.activeMission ? (
+      {/* 03: Current quest — OR upgrade pitch when ready for the next kingdom */}
+      {showUpgradePitch && forkForest ? (
+        <button
+          onClick={() => setUpgradeOpen(true)}
+          aria-label="Unlock the Fork Forest with Champion"
+          style={{
+            width: "100%", textAlign: "left", cursor: "pointer",
+            marginBottom: 18,
+            padding: "16px 18px", borderRadius: 14,
+            background: `linear-gradient(135deg, ${P.goldPale} 0%, ${P.emeraldPale} 100%)`,
+            border: `1.5px solid ${P.gold}`,
+            boxShadow: `0 0 0 3px ${P.goldPale}, 0 6px 20px rgba(199,148,10,0.18)`,
+            fontFamily: "inherit", color: "inherit",
+            transition: "transform 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+        >
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
+            <span style={{
+              fontFamily: "var(--font-playfair), serif",
+              fontSize: 13, fontWeight: 900, color: P.gold, letterSpacing: 0.3,
+            }}>03</span>
+            <span style={{
+              fontSize: 10, fontWeight: 800, color: P.gold,
+              letterSpacing: 1.4, textTransform: "uppercase",
+            }}>Next Adventure</span>
+            <span style={{
+              marginLeft: "auto",
+              fontSize: 9, fontWeight: 800, color: P.gold,
+              background: "white", border: `1px solid ${P.gold}40`,
+              padding: "2px 6px", borderRadius: 6,
+              letterSpacing: 0.6,
+            }}>🔒 CHAMPION</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <span style={{ fontSize: 32, lineHeight: 1, flexShrink: 0 }}>🌲</span>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{
+                fontSize: 16, fontWeight: 900, color: P.ink,
+                fontFamily: "var(--font-playfair), serif", letterSpacing: -0.3,
+              }}>The Fork Forest awaits!</div>
+              <div style={{
+                fontSize: 12, lineHeight: 1.55, color: P.inkSoft, marginTop: 2,
+                fontFamily: "var(--font-nunito), sans-serif",
+              }}>
+                You&apos;ve outgrown Pawn Village. Face the <strong style={{ color: P.ink }}>Knight Twins</strong> and earn the Fork Master power →
+              </div>
+            </div>
+          </div>
+        </button>
+      ) : progression.activeMission ? (
         <div style={{ marginBottom: 18 }}>
           <MissionProgress mission={progression.activeMission} />
         </div>
@@ -336,6 +395,13 @@ export default function PostGameScreen({
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
       `}</style>
+
+      <UpgradeModal
+        open={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        blockedKingdomName={forkForest?.name}
+        blockedKingdomIcon="🌲"
+      />
     </div>
   );
 }

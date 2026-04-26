@@ -394,6 +394,57 @@ function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Subscription tier — gated by parent PIN, so it's safe to show here.
+          Stripe wires up here once we ship payments; for now this is a
+          dev-only manual toggle for testing. */}
+      <div style={{
+        marginTop: 24, padding: "20px 22px",
+        background: "white", border: `1px solid ${P.inkGhost}`,
+        borderRadius: 18,
+        boxShadow: `0 4px 14px rgba(26,18,16,0.05)`,
+      }}>
+        <div style={{
+          fontSize: 11, fontWeight: 800, color: P.inkLight,
+          letterSpacing: 1.6, textTransform: "uppercase", marginBottom: 10,
+        }}>Subscription</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{
+              fontSize: 17, fontWeight: 900, color: P.ink,
+              fontFamily: "var(--font-playfair), serif", letterSpacing: -0.3,
+            }}>{prog.tier === "champion" ? "Champion" : "Free"}</div>
+            <div style={{ fontSize: 12, color: P.inkLight, marginTop: 2 }}>
+              {prog.tier === "champion"
+                ? "All 7 kingdoms, all powers, knight card unlocked."
+                : "Pawn Village only. Upgrade to unlock the rest."}
+            </div>
+          </div>
+          <button
+            onClick={() => store.setTier(prog.tier === "champion" ? "free" : "champion")}
+            style={{
+              background: prog.tier === "champion" ? "white" : P.emerald,
+              color: prog.tier === "champion" ? P.inkSoft : "white",
+              border: `1.5px solid ${prog.tier === "champion" ? P.inkGhost : P.emerald}`,
+              borderRadius: 12, padding: "10px 18px",
+              fontSize: 13, fontWeight: 800, cursor: "pointer",
+              fontFamily: "var(--font-nunito), sans-serif",
+              boxShadow: prog.tier === "champion"
+                ? `0 2px 8px rgba(26,18,16,0.06)`
+                : `0 6px 20px rgba(27,115,64,0.22)`,
+              letterSpacing: 0.3,
+            }}
+          >
+            {prog.tier === "champion" ? "Switch to Free" : "Activate Champion"}
+          </button>
+        </div>
+        <div style={{
+          marginTop: 10, fontSize: 11, color: P.inkFaint,
+          fontFamily: "var(--font-nunito), sans-serif",
+        }}>
+          Local toggle for testing. Stripe Checkout will replace this in v2.
+        </div>
+      </div>
     </section>
   );
 }

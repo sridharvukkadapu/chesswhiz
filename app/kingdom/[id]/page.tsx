@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
-import { KINGDOMS } from "@/lib/progression/data";
+import { KINGDOMS, isKingdomLocked } from "@/lib/progression/data";
 
 const P = {
   cream: "#FBF7F0",
@@ -35,8 +35,20 @@ export default function KingdomDetailPage() {
   }, []);
 
   const kingdom = KINGDOMS.find((k) => k.id === params.id);
+
+  // Tier gate — bounce locked kingdoms back to the map so the
+  // upgrade modal surfaces. Hook runs every render but only acts once.
+  useEffect(() => {
+    if (!hydrated || !kingdom) return;
+    if (isKingdomLocked(kingdom.id, store.progression.tier)) {
+      router.replace(`/kingdom?upgrade=${kingdom.id}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, kingdom?.id]);
+
   if (!kingdom) return notFound();
   if (!hydrated) return null;
+  if (isKingdomLocked(kingdom.id, store.progression.tier)) return null;
 
   const prog = store.progression;
   const defeated = kingdom.boss ? prog.defeatedBosses.includes(kingdom.boss.name) : false;

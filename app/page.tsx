@@ -426,13 +426,13 @@ function CoachConversation() {
 
 // ── Journey kingdom map ───────────────────────────────
 const JOURNEY = [
-  { id: "village",          icon: "🏘️", name: "Pawn Village",     color: "#8B7355" },
-  { id: "fork_forest",      icon: "🌲", name: "Fork Forest",      color: "#22C55E" },
-  { id: "pin_palace",       icon: "🏰", name: "Pin Palace",       color: "#3B82F6" },
-  { id: "skewer_spire",     icon: "🗼", name: "Skewer Spire",     color: "#EF4444" },
-  { id: "discovery_depths", icon: "⛰️", name: "Discovery Depths", color: "#F97316" },
-  { id: "strategy_summit",  icon: "🏔️", name: "Strategy Summit",  color: "#A855F7" },
-  { id: "endgame_throne",   icon: "👑", name: "Endgame Throne",   color: "#EAB308" },
+  { id: "village",          icon: "🏘️", name: "Pawn Village",     short: "Village",   color: "#8B7355" },
+  { id: "fork_forest",      icon: "🌲", name: "Fork Forest",      short: "Forks",     color: "#22C55E" },
+  { id: "pin_palace",       icon: "🏰", name: "Pin Palace",       short: "Pins",      color: "#3B82F6" },
+  { id: "skewer_spire",     icon: "🗼", name: "Skewer Spire",     short: "Skewers",   color: "#EF4444" },
+  { id: "discovery_depths", icon: "⛰️", name: "Discovery Depths", short: "Discovery", color: "#F97316" },
+  { id: "strategy_summit",  icon: "🏔️", name: "Strategy Summit",  short: "Strategy",  color: "#A855F7" },
+  { id: "endgame_throne",   icon: "👑", name: "Endgame Throne",   short: "Endgame",   color: "#EAB308" },
 ];
 
 const JOURNEY_POWERS = [
@@ -490,65 +490,55 @@ function JourneySection() {
           </p>
         </Reveal>
 
-        {/* Kingdom map — connected nodes */}
+        {/* Kingdom path — pill cards with short connector segments (matches spec) */}
         <Reveal delay={250}>
           <div style={{
-            position: "relative",
-            padding: "20px 0 40px",
+            display: "flex", justifyContent: "center", alignItems: "center",
+            flexWrap: "wrap", gap: 8,
+            margin: "8px auto 48px",
           }}>
-            {/* Connecting line */}
-            <div aria-hidden style={{
-              position: "absolute", left: "5%", right: "5%", top: 56,
-              height: 2, background: `linear-gradient(90deg, ${JOURNEY[0].color}40, ${JOURNEY[3].color}40, ${JOURNEY[6].color}40)`,
-              zIndex: 0,
-            }} />
-            <div style={{
-              position: "relative",
-              display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-              gap: 4, flexWrap: "nowrap",
-              overflowX: "auto", paddingBottom: 8,
-            }}>
-              {JOURNEY.map((k, i) => {
-                const isCur = i === activeKingdom;
-                return (
+            {JOURNEY.map((k, i) => {
+              const isCur = i === activeKingdom;
+              return (
+                <div key={k.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <button
-                    key={k.id}
                     onClick={() => setActiveKingdom(i)}
                     aria-pressed={isCur}
                     aria-label={`${k.name} — region ${i + 1} of 7`}
                     style={{
-                      flex: "0 0 auto",
-                      display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-                      background: "transparent", border: "none", cursor: "pointer",
-                      padding: 4,
+                      borderRadius: 12,
+                      padding: "12px 16px",
+                      textAlign: "center",
+                      border: `2px solid ${isCur ? "#22C55E" : "#253352"}`,
+                      background: isCur ? "rgba(34,197,94,0.15)" : "#1A1A2E",
+                      opacity: isCur ? 1 : 0.55,
+                      boxShadow: isCur ? "0 0 24px rgba(34,197,94,0.25)" : "none",
+                      cursor: "pointer",
                       fontFamily: "inherit", color: "inherit",
+                      transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+                      transform: isCur ? "translateY(-1px)" : "none",
+                      minWidth: 64,
                     }}
                   >
+                    <div style={{ fontSize: 22, lineHeight: 1 }}>{k.icon}</div>
                     <div style={{
-                      width: 56, height: 56, borderRadius: "50%",
-                      background: isCur
-                        ? `radial-gradient(circle at 35% 30%, ${k.color}, #0B1120 90%)`
-                        : "#1A2540",
-                      border: `2px solid ${isCur ? k.color : "#2C3956"}`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 26, lineHeight: 1,
-                      boxShadow: isCur ? `0 0 0 4px ${k.color}25, 0 0 30px ${k.color}50` : "none",
-                      transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-                      transform: isCur ? "scale(1.08)" : "scale(1)",
-                      animation: isCur ? "kingdomPulse 2.4s ease-in-out infinite" : "none",
-                    }}>{k.icon}</div>
-                    <span style={{
                       fontSize: 10, fontWeight: 800,
-                      color: isCur ? k.color : "rgba(251,247,240,0.45)",
-                      letterSpacing: 0.5, textTransform: "uppercase",
+                      letterSpacing: 0.4, marginTop: 4,
+                      color: isCur ? "#22C55E" : "rgba(251,247,240,0.55)",
                       fontFamily: "var(--font-nunito), sans-serif",
-                      textAlign: "center", maxWidth: 80,
-                      transition: "color 0.3s ease",
-                    }}>{k.name}</span>
+                    }}>{k.short}</div>
                   </button>
-                );
-              })}
-            </div>
+                  {i < JOURNEY.length - 1 && (
+                    <div aria-hidden style={{
+                      width: 16, height: 2,
+                      background: isCur ? "#22C55E" : "#253352",
+                      opacity: isCur ? 1 : 0.6,
+                      transition: "background 0.3s ease",
+                    }} />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </Reveal>
 
@@ -1021,38 +1011,55 @@ function StatsStrip() {
 // ── Testimonials ──────────────────────────────────────
 function Testimonials() {
   return (
-    <section style={{ padding: "80px 28px", maxWidth: 720, margin: "0 auto", position: "relative", zIndex: 1 }}>
-      <Reveal>
-        <div style={{
-          background: "white", borderRadius: 24,
-          padding: "44px 36px",
-          border: `1px solid ${P.inkGhost}`,
-          boxShadow: `0 0 0 4px ${P.parchment}, 0 8px 32px rgba(26,18,16,0.08)`,
-          textAlign: "center",
+    <>
+      {/* Honest social proof line, replaces stat counters */}
+      <section style={{
+        maxWidth: 640, margin: "0 auto",
+        padding: "40px 28px",
+        textAlign: "center",
+        borderTop: `1px solid #E8E0D4`,
+        borderBottom: `1px solid #E8E0D4`,
+        position: "relative", zIndex: 1,
+      }}>
+        <p style={{
+          fontSize: 18, color: P.inkSoft,
+          fontFamily: "var(--font-quicksand, var(--font-nunito)), sans-serif",
+          fontWeight: 600, margin: 0,
         }}>
-          <span style={{
+          Launched April 2026 — built by a chess dad in Texas for his own kids.
+        </p>
+        <p style={{
+          fontSize: 14, color: P.inkLight, marginTop: 8,
+          fontFamily: "var(--font-nunito), sans-serif",
+        }}>
+          Free to start. No signup required.
+        </p>
+      </section>
+
+      {/* Early access CTA, replaces fake testimonials */}
+      <section style={{ padding: "64px 28px", maxWidth: 640, margin: "0 auto", textAlign: "center", position: "relative", zIndex: 1 }}>
+        <Reveal>
+          <p style={{
             fontFamily: "'Caveat', cursive", fontSize: 19, color: P.gold,
-            display: "block", marginBottom: 6,
-          }}>a note from the maker →</span>
+            margin: "0 0 8px",
+          }}>early access</p>
+          <h2 style={{
+            fontFamily: "var(--font-playfair), serif",
+            fontSize: 28, fontWeight: 900, margin: "0 0 12px",
+            color: P.ink, letterSpacing: -0.6,
+          }}>Be one of the first families</h2>
           <p style={{
-            fontSize: 18, lineHeight: 1.8, color: P.inkSoft,
-            margin: "8px 0 18px",
+            color: P.inkLight, fontSize: 15, lineHeight: 1.7,
+            maxWidth: 460, margin: "0 auto 28px",
             fontFamily: "var(--font-nunito), sans-serif",
           }}>
-            ChessWhiz launched in <strong style={{ color: P.ink }}>April 2026</strong>. It&apos;s built by a chess dad in Texas for his own kids — and now for yours. No fake testimonials. No paid reviews. Just a tool I wish I&apos;d had.
-          </p>
-          <p style={{
-            fontSize: 14, lineHeight: 1.7, color: P.inkLight,
-            margin: "0 0 22px",
-            fontFamily: "var(--font-nunito), sans-serif",
-          }}>
-            Try it with your kid this weekend. If Coach Pawn doesn&apos;t make them smile in the first 5 minutes, I&apos;d love to know why.
+            ChessWhiz just launched. We&apos;re inviting families to try it free and help shape the product. Your feedback matters.
           </p>
           <Link href="/onboard" style={{
             display: "inline-block",
             background: P.ink, color: P.cream,
-            borderRadius: 14, padding: "14px 32px",
-            fontSize: 15, fontWeight: 800,
+            borderRadius: 14, padding: "16px 32px",
+            fontSize: 16, fontWeight: 800,
             textDecoration: "none",
             fontFamily: "var(--font-nunito), sans-serif",
             boxShadow: "0 6px 22px rgba(26,18,16,0.18)",
@@ -1061,14 +1068,14 @@ function Testimonials() {
             Try it free — be an early family
           </Link>
           <div style={{
-            marginTop: 10, fontSize: 12, color: P.inkFaint,
+            marginTop: 14, fontSize: 12, color: P.inkFaint,
             fontFamily: "var(--font-nunito), sans-serif",
           }}>
             <a href="mailto:hello@chesswhiz.com" style={{ color: P.inkFaint, textDecoration: "underline" }}>hello@chesswhiz.com</a> · I read every email
           </div>
-        </div>
-      </Reveal>
-    </section>
+        </Reveal>
+      </section>
+    </>
   );
 }
 

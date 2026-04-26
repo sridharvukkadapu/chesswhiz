@@ -1,47 +1,39 @@
 import type { Metadata } from "next";
-import { Baloo_2, Caveat, Cinzel, Comic_Neue, Playfair_Display, Quicksand } from "next/font/google";
+import { Caveat, Cormorant_Garamond, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-const baloo = Baloo_2({
+// ChessWhiz Reimagined — fonts match the design handoff bundle.
+//   Cormorant Garamond — premium fantasy serif (display, brand, italics)
+//   Plus Jakarta Sans  — friendly modern UI sans
+//   Caveat             — handwritten coach annotations
+//   JetBrains Mono     — move history, stat labels, FEN
+
+const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-baloo",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-cormorant",
   display: "swap",
 });
 
-const comicNeue = Comic_Neue({
+const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
-  weight: ["300", "400", "700"],
-  variable: "--font-nunito",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-jakarta",
   display: "swap",
 });
 
 const caveat = Caveat({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-caveat",
   display: "swap",
 });
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["400", "700", "900"],
-  style: ["normal", "italic"],
-  variable: "--font-playfair",
-  display: "swap",
-});
-
-const cinzel = Cinzel({
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "900"],
-  variable: "--font-cinzel",
-  display: "swap",
-});
-
-const quicksand = Quicksand({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-quicksand",
+  variable: "--font-jetbrains-mono",
   display: "swap",
 });
 
@@ -60,8 +52,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${baloo.variable} ${comicNeue.variable} ${playfair.variable} ${caveat.variable} ${cinzel.variable} ${quicksand.variable}`}>
-      <body style={{ margin: 0, background: "#0F172A" }}>
+    <html lang="en" className={`${cormorant.variable} ${jakarta.variable} ${caveat.variable} ${jetbrainsMono.variable}`}>
+      <body style={{ margin: 0, background: "#07050F" }}>
         <a href="#main-content" className="skip-link">Skip to content</a>
         {children}
       </body>

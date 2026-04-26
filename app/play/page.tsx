@@ -379,6 +379,9 @@ export default function PlayPage() {
               try {
                 const parsed = JSON.parse(data);
                 if (parsed.text) fullText += parsed.text;
+                // Server may emit a "replace" event after streaming if
+                // the response exceeded the hard word ceiling — honor it.
+                if (typeof parsed.replace === "string") fullText = parsed.replace;
               } catch {}
             }
           }

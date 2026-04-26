@@ -6,10 +6,9 @@ function ageRules(age: number, name: string): string {
 
 RULES:
 - Use very simple words only (1-2 syllables when possible)
-- Max 2 sentences total
 - Use emoji freely (⭐🎉🏆🎮)
 - Say "oopsie!" or "hmm, let's think again!" instead of "wrong"
-- Use analogies: knights are horses, bishops move diagonally like sneaky foxes, rooks are towers
+- Use analogies ONLY for blunders: knights are horses, bishops are sneaky foxes, rooks are towers
 - NEVER suggest a specific move — only explain what happened
 - NEVER be harsh or discouraging
 - Celebrate effort, not just results`;
@@ -20,7 +19,6 @@ RULES:
 
 RULES:
 - You can use basic chess terms (fork, pin, check, develop) — briefly explain them when first used
-- Max 3 sentences
 - Be playful and encouraging
 - NEVER suggest a specific move — only explain what happened
 - NEVER be harsh or discouraging
@@ -31,12 +29,26 @@ RULES:
 
 RULES:
 - Use proper chess terminology freely
-- Max 3-4 sentences
 - Encourage strategic thinking and planning ahead
 - NEVER suggest a specific move — only explain what happened
 - Be encouraging but also honest about mistakes
 - Celebrate good ideas even when execution wasn't perfect`;
 }
+
+// Length rules per trigger — match message size to moment importance.
+// Routine moves get a short cheer; blunders get a real explanation.
+const LENGTH_RULES: Record<TriggerType, string> = {
+  GREAT_MOVE:
+    `CRITICAL: ONE short sentence, under 12 words. No analogies. Just a quick cheer + what was good. Example: "Nice! d4 grabs the center. 🎯"`,
+  OK_MOVE:
+    `CRITICAL: ONE short sentence, under 10 words. Don't explain anything. Just acknowledge. Example: "Solid move! Keep going."`,
+  INACCURACY:
+    `Two sentences max, under 30 words total. Name what was played, hint that something stronger existed, say why in one clause. No analogies unless the kid is age 5–7.`,
+  MISTAKE:
+    `Two to three sentences, under 40 words. Explain what went wrong simply. Mention a better option exists (do NOT name a specific move). End with encouragement. ONE teaching point only.`,
+  BLUNDER:
+    `Three sentences max, under 50 words. This is where you can use an analogy if it helps. Explain the mistake, point at a better option (without naming a specific move), and encourage. Be warm.`,
+};
 
 const TRIGGER_INSTRUCTIONS: Record<TriggerType, (a: MoveAnalysis) => string> = {
   GREAT_MOVE: (a) => `${a.san} is an excellent move! It was one of the best options available. Praise the player and briefly explain what makes this move strong.`,
@@ -52,7 +64,9 @@ export function buildCoachPrompt(
   playerName: string,
   age: number
 ): CoachPrompt {
-  const system = ageRules(age, playerName);
+  const lengthRule = LENGTH_RULES[analysis.trigger] ?? LENGTH_RULES.OK_MOVE;
+  const system = `${lengthRule}\n\n${ageRules(age, playerName)}`;
+
   const moveStr = moveHistory
     .map((m, i) => (i % 2 === 0 ? `${Math.floor(i / 2) + 1}. ` : "") + m)
     .join(" ");
@@ -63,6 +77,37 @@ export function buildCoachPrompt(
 ${instruction}`;
 
   return { system, user };
+}
+
+// Hard ceiling enforced server-side after Claude responds. The prompt
+// asks for short responses, but Claude occasionally over-shoots; this
+// makes the ceiling a guarantee, not a hope.
+const MAX_WORDS: Record<TriggerType, number> = {
+  GREAT_MOVE: 15,
+  OK_MOVE: 12,
+  INACCURACY: 35,
+  MISTAKE: 45,
+  BLUNDER: 55,
+};
+
+export function enforceLength(text: string, trigger: TriggerType): string {
+  const limit = MAX_WORDS[trigger] ?? 30;
+  const words = text.trim().split(/\s+/);
+  if (words.length <= limit) return text.trim();
+
+  const truncated = words.slice(0, limit).join(" ");
+  // End at the last complete sentence in the truncated window so the
+  // message doesn't cut mid-thought. Only do that if the sentence break
+  // is past the halfway point — otherwise we'd lose too much content.
+  const lastEnd = Math.max(
+    truncated.lastIndexOf("."),
+    truncated.lastIndexOf("!"),
+    truncated.lastIndexOf("?"),
+  );
+  if (lastEnd > truncated.length / 2) {
+    return truncated.slice(0, lastEnd + 1);
+  }
+  return truncated.replace(/[,;:]$/, "") + "…";
 }
 
 export const FALLBACKS: Record<TriggerType, string[]> = {

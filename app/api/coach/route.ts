@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { buildCoachPrompt, FALLBACKS } from "@/lib/coaching/prompts";
+import { buildCoachPrompt, FALLBACKS, enforceLength } from "@/lib/coaching/prompts";
 import type { MoveAnalysis } from "@/lib/chess/types";
 
 const client = new Anthropic();
@@ -38,28 +38,56 @@ export async function POST(req: NextRequest) {
 
   const encoder = new TextEncoder();
 
+  // Right-size the token budget to the trigger so Claude can't over-shoot
+  // the length we asked for in the prompt. Roughly: 1 word ≈ 1.3 tokens.
+  const MAX_TOKENS_BY_TRIGGER: Record<string, number> = {
+    GREAT_MOVE: 40,
+    OK_MOVE: 30,
+    INACCURACY: 80,
+    MISTAKE: 110,
+    BLUNDER: 140,
+  };
+  const maxTokens = MAX_TOKENS_BY_TRIGGER[analysis.trigger] ?? 80;
+
   const stream = new ReadableStream({
     async start(controller) {
       try {
         const anthropicStream = await client.messages.stream({
           model: "claude-sonnet-4-5",
-          max_tokens: 300,
+          max_tokens: maxTokens,
           system,
           messages: [{ role: "user", content: user }],
         });
 
+        // Buffer the full text so we can emit a corrected final chunk
+        // if the streamed total exceeds the hard word ceiling. Most
+        // messages stream entirely below the cap and this is a no-op.
+        let buffered = "";
         for await (const chunk of anthropicStream) {
           if (
             chunk.type === "content_block_delta" &&
             chunk.delta.type === "text_delta"
           ) {
+            buffered += chunk.delta.text;
             const data = `data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`;
             controller.enqueue(encoder.encode(data));
           }
         }
 
+        // Hard length guard. If trimmed != streamed, send a "replace"
+        // event so the client can rewrite the bubble cleanly.
+        const trimmed = enforceLength(buffered, analysis.trigger);
+        if (trimmed !== buffered.trim()) {
+          const data = `data: ${JSON.stringify({ replace: trimmed })}\n\n`;
+          controller.enqueue(encoder.encode(data));
+        }
+
         // Log every coaching response for manual audit (first 100 responses)
-        console.log("[coach]", { trigger: analysis.trigger, system, user });
+        console.log("[coach]", {
+          trigger: analysis.trigger,
+          words: buffered.trim().split(/\s+/).length,
+          trimmed: trimmed !== buffered.trim(),
+        });
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       } catch (err) {

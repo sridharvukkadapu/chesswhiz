@@ -395,6 +395,12 @@ function Dashboard() {
         </div>
       )}
 
+      {/* Voice usage meter — ElevenLabs cost sanity check.
+          Creator plan ships 100,000 chars/month; we show the daily burn
+          and the projected monthly so a parent (or the dev) can spot
+          runaway usage early. */}
+      <VoiceUsageCard />
+
       {/* Subscription tier — gated by parent PIN, so it's safe to show here.
           Stripe wires up here once we ship payments; for now this is a
           dev-only manual toggle for testing. */}
@@ -467,3 +473,107 @@ function Metric({ label, value, color }: { label: string; value: string; color: 
     </div>
   );
 }
+
+function VoiceUsageCard() {
+  const usage = useGameStore((s) => s.voiceUsage);
+
+  // Creator plan: 100,000 chars/month included. Override via prop later
+  // if/when the user is on Pro/Scale.
+  const MONTHLY_QUOTA = 100_000;
+  const monthPct = Math.min(100, Math.round((usage.charsMonth / MONTHLY_QUOTA) * 100));
+
+  // Project month-end usage by day-of-month rate (1-31).
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const projected = dayOfMonth > 0
+    ? Math.round((usage.charsMonth / dayOfMonth) * daysInMonth)
+    : 0;
+  const projectedPct = Math.min(100, Math.round((projected / MONTHLY_QUOTA) * 100));
+  const overProjected = projected > MONTHLY_QUOTA;
+
+  // ElevenLabs Turbo v2.5 list price ~$0.15 per 1k chars (Creator overage).
+  const overageChars = Math.max(0, usage.charsMonth - MONTHLY_QUOTA);
+  const overageDollars = (overageChars / 1000) * 0.15;
+
+  const barColor = monthPct > 90 ? "#DC2626" : monthPct > 70 ? P.gold : P.emerald;
+
+  return (
+    <div style={{
+      marginTop: 24, padding: "20px 22px",
+      background: "white", border: `1px solid ${P.inkGhost}`,
+      borderRadius: 18,
+      boxShadow: `0 4px 14px rgba(26,18,16,0.05)`,
+    }}>
+      <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
+        <span style={{
+          fontSize: 11, fontWeight: 800, color: P.inkLight,
+          letterSpacing: 1.6, textTransform: "uppercase",
+        }}>Coach Pawn voice · this month</span>
+        <span style={{ fontSize: 11, color: P.inkFaint, fontWeight: 600 }}>
+          {usage.monthKey || "—"}
+        </span>
+      </div>
+
+      {/* Monthly bar */}
+      <div style={{
+        height: 8, borderRadius: 4,
+        background: P.parchment, overflow: "hidden", marginBottom: 8,
+      }}>
+        <div style={{
+          width: `${monthPct}%`, height: "100%",
+          background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)`,
+          transition: "width 0.6s ease-out",
+        }} />
+      </div>
+      <div style={{
+        display: "flex", justifyContent: "space-between",
+        fontSize: 12, color: P.inkLight, marginBottom: 16,
+      }}>
+        <span>
+          <strong style={{ color: P.ink }}>{usage.charsMonth.toLocaleString()}</strong> / {MONTHLY_QUOTA.toLocaleString()} chars
+        </span>
+        <span>{monthPct}% of plan</span>
+      </div>
+
+      {/* Today's stats */}
+      <div style={{
+        display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 14,
+      }}>
+        <Metric label="Today" value={usage.charsToday.toLocaleString()} color={P.ink} />
+        <Metric label="Calls today" value={String(usage.callsToday)} color={P.emerald} />
+        <Metric label="Fallbacks" value={String(usage.fallbacksToday)} color={usage.fallbacksToday > 0 ? P.gold : P.inkLight} />
+      </div>
+
+      {/* Projection */}
+      <div style={{
+        padding: "12px 14px", borderRadius: 12,
+        background: overProjected ? "#FEF2F2" : P.creamDeep,
+        border: `1px solid ${overProjected ? "#FCA5A5" : P.inkGhost}`,
+        fontSize: 12, lineHeight: 1.6, color: P.inkSoft,
+      }}>
+        At today's rate, projected month-end:{" "}
+        <strong style={{ color: overProjected ? "#DC2626" : P.ink }}>
+          {projected.toLocaleString()} chars ({projectedPct}%)
+        </strong>
+        {overProjected && (
+          <>
+            <br />
+            Estimated overage cost:{" "}
+            <strong style={{ color: "#DC2626" }}>+${overageDollars.toFixed(2)}</strong>
+            {" "}— or upgrade the ElevenLabs plan.
+          </>
+        )}
+        {usage.fallbacksToday > 0 && (
+          <>
+            <br />
+            <span style={{ color: P.inkLight, fontStyle: "italic" }}>
+              {usage.fallbacksToday} fallback{usage.fallbacksToday === 1 ? "" : "s"} to browser voice today (free, but check the API key).
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+

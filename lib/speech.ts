@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useGameStore } from "@/stores/gameStore";
 
 const STORAGE_KEY = "chesswhiz.voice";
 
@@ -44,6 +45,7 @@ export function useSpeech() {
   // Increments on every speak/stop — lets us cancel an in-flight TTS fetch
   // when a newer message arrives.
   const playTokenRef = useRef(0);
+  const recordVoiceUsage = useGameStore((s) => s.recordVoiceUsage);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -148,6 +150,8 @@ export function useSpeech() {
       if (prevSrc && prevSrc.startsWith("blob:")) URL.revokeObjectURL(prevSrc);
 
       await audio.play();
+      // Only count usage on a successful playback path.
+      recordVoiceUsage(clean.length, "tts");
       return;
     } catch {
       // Fall through to browser TTS — better than silent failure on a
@@ -157,8 +161,9 @@ export function useSpeech() {
     if (myToken !== playTokenRef.current) return;
     if ("speechSynthesis" in window) {
       speakViaBrowser(clean, fallbackVoiceRef.current);
+      recordVoiceUsage(clean.length, "fallback");
     }
-  }, [enabled]);
+  }, [enabled, recordVoiceUsage]);
 
   return { enabled, supported, toggle, speak, stop };
 }

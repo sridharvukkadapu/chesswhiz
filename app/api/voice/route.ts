@@ -1,9 +1,8 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 
-// Default voice: "Rachel" (warm female narrator) — common in ElevenLabs
-// onboarding examples. Override per-deployment via ELEVENLABS_VOICE_ID.
-const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM";
+// Default Coach Pawn voice. Override per-deployment via ELEVENLABS_VOICE_ID.
+const DEFAULT_VOICE_ID = "hnu83udpXxIAiBp91Ci5";
 
 const RequestSchema = z.object({
   text: z.string().min(1).max(800),

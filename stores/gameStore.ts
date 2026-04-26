@@ -8,9 +8,46 @@ import { getRankByXP, XP_REWARDS, getStreakMultiplier, POWERS, KINGDOMS } from "
 import { generateMission, missionMatchesTactic, findStrategyForTactic } from "@/lib/progression/missions";
 
 const PROGRESSION_KEY = "chesswhiz.progression";
+const VOICE_USAGE_KEY = "chesswhiz.voiceUsage";
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+export interface VoiceUsage {
+  date: string;       // YYYY-MM-DD — rolls over at midnight local
+  charsToday: number; // since `date`
+  charsMonth: number; // since first day of the current YYYY-MM
+  monthKey: string;   // YYYY-MM, lets us reset on month change
+  callsToday: number;
+  fallbacksToday: number; // browser-TTS calls (free)
+}
+
+const DEFAULT_VOICE_USAGE: VoiceUsage = {
+  date: "",
+  charsToday: 0,
+  charsMonth: 0,
+  monthKey: "",
+  callsToday: 0,
+  fallbacksToday: 0,
+};
+
+function loadVoiceUsage(): VoiceUsage {
+  if (typeof window === "undefined") return DEFAULT_VOICE_USAGE;
+  try {
+    const raw = localStorage.getItem(VOICE_USAGE_KEY);
+    if (!raw) return DEFAULT_VOICE_USAGE;
+    return { ...DEFAULT_VOICE_USAGE, ...(JSON.parse(raw) as Partial<VoiceUsage>) };
+  } catch {
+    return DEFAULT_VOICE_USAGE;
+  }
+}
+
+function saveVoiceUsage(u: VoiceUsage): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(VOICE_USAGE_KEY, JSON.stringify(u));
+  } catch {}
 }
 
 function daysBetween(a: string, b: string): number {
@@ -84,6 +121,9 @@ interface GameStore {
   justRankedUp: RankId | null;
   ahaCelebration: { tactic: TacticDetection; power: Power } | null;
 
+  // Voice usage tracking (ElevenLabs cost meter)
+  voiceUsage: VoiceUsage;
+
   // Actions
   setSettings: (name: string, age: number, difficulty: Difficulty) => void;
   selectSquare: (square: Square, moves: Move[]) => void;
@@ -108,6 +148,7 @@ interface GameStore {
   clearRankUp: () => void;
   hydrateProgression: () => void;
   setTier: (tier: import("@/lib/progression/types").Tier) => void;
+  recordVoiceUsage: (chars: number, kind: "tts" | "fallback") => void;
   ensureMission: () => void;
   handleTacticDetected: (tactic: TacticDetection) => void;
   dismissAha: () => void;
@@ -136,6 +177,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   lastXPGain: null,
   justRankedUp: null,
   ahaCelebration: null,
+  voiceUsage: DEFAULT_VOICE_USAGE,
 
   setSettings: (name, age, difficulty) => {
     // Update streak on session start
@@ -401,9 +443,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ progression: next });
   },
 
+  recordVoiceUsage: (chars, kind) => {
+    const today = todayISO();
+    const monthKey = today.slice(0, 7); // YYYY-MM
+    const cur = get().voiceUsage;
+    const dayChanged = cur.date !== today;
+    const monthChanged = cur.monthKey !== monthKey;
+    const next: VoiceUsage = {
+      date: today,
+      monthKey,
+      charsToday: (dayChanged ? 0 : cur.charsToday) + (kind === "tts" ? chars : 0),
+      charsMonth: (monthChanged ? 0 : cur.charsMonth) + (kind === "tts" ? chars : 0),
+      callsToday: (dayChanged ? 0 : cur.callsToday) + (kind === "tts" ? 1 : 0),
+      fallbacksToday: (dayChanged ? 0 : cur.fallbacksToday) + (kind === "fallback" ? 1 : 0),
+    };
+    saveVoiceUsage(next);
+    set({ voiceUsage: next });
+  },
+
   hydrateProgression: () => {
     const prog = loadProgression();
-    set({ progression: prog });
+    set({ progression: prog, voiceUsage: loadVoiceUsage() });
     // If there's no active mission, try to assign one.
     if (!prog.activeMission) {
       const mission = generateMission(prog);

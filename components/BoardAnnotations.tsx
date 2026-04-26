@@ -60,11 +60,12 @@ export default function BoardAnnotations({ annotation, flipped = false }: Props)
       preserveAspectRatio="none"
       style={{
         position: "absolute",
-        inset: 0,
+        top: 0,
+        left: 0,
         width: "100%",
         height: "100%",
         pointerEvents: "none",
-        zIndex: 5,
+        zIndex: 15,
         opacity: visible ? 1 : 0,
         transition: "opacity 500ms ease",
       }}

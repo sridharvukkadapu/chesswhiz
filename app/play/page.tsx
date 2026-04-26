@@ -322,6 +322,30 @@ export default function PlayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Diagnostic: press `a` while on /play?debug=annotations to fire a
+  // sample fork annotation. Quick pipeline sanity check that doesn't
+  // require manufacturing a real tactic on the board.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!new URLSearchParams(window.location.search).has("debug")) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "a" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      store.setBoardAnnotation({
+        arrows: [
+          { from: "f3", to: "e5", color: "green" },
+          { from: "f3", to: "g5", color: "green" },
+        ],
+        circles: [{ square: "f3", color: "green" }],
+        duration: 5000,
+      });
+      setTimeout(() => store.setBoardAnnotation(null), 5000);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [store]);
+
   // Post-game screen: show after a brief delay so the Aha! celebration
   // (and any final coach message) gets a beat before we take over the board.
   const [showPostGame, setShowPostGame] = useState(false);
@@ -439,15 +463,20 @@ export default function PlayPage() {
       }
     }
 
-    // Visual annotation — illustrate the coaching moment on the board.
-    // Generated from the same data the coach is talking about so the
-    // visual stays in sync with the words.
-    if (analysis && willCoach) {
-      const annotation = generateAnnotation(analysis, analysis.tactics ?? [], move);
-      if (annotation) {
-        store.setBoardAnnotation(annotation);
-        const dur = annotation.duration ?? 5000;
-        setTimeout(() => store.setBoardAnnotation(null), dur);
+    // Visual annotation — illustrate what just happened on the board.
+    // Tactics ALWAYS annotate (a fork is a teaching moment whether or
+    // not Coach Pawn happened to roll a "speak" this turn). Non-tactic
+    // annotations only fire when Coach is also speaking, so the visual
+    // doesn't show up out of nowhere on routine moves.
+    if (analysis) {
+      const hasTactic = analysis.tactics?.some((t) => t.detected);
+      if (hasTactic || willCoach) {
+        const annotation = generateAnnotation(analysis, analysis.tactics ?? [], move);
+        if (annotation) {
+          store.setBoardAnnotation(annotation);
+          const dur = annotation.duration ?? 5000;
+          setTimeout(() => store.setBoardAnnotation(null), dur);
+        }
       }
     }
 

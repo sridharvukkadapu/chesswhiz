@@ -2,28 +2,12 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-
-const P = {
-  cream: "#FBF7F0",
-  parchment: "#F0E8D8",
-  ink: "#1A1210",
-  inkSoft: "#2E2620",
-  inkMed: "#5C544A",
-  inkLight: "#8A8278",
-  inkFaint: "#B0A898",
-  inkGhost: "#D0C8BC",
-  emerald: "#1B7340",
-  emeraldBright: "#22C55E",
-  emeraldPale: "#E6F4EC",
-  gold: "#C7940A",
-  goldLight: "#F0D060",
-  goldPale: "#FDF6E3",
-};
+import { T } from "@/lib/design/tokens";
+import { GoldFoilText } from "@/lib/design/atmosphere";
 
 interface UpgradeModalProps {
   open: boolean;
   onClose: () => void;
-  // What the kid was trying to access — drives the headline copy
   blockedKingdomName?: string;
   blockedKingdomIcon?: string;
 }
@@ -31,7 +15,6 @@ interface UpgradeModalProps {
 export default function UpgradeModal({
   open, onClose, blockedKingdomName, blockedKingdomIcon,
 }: UpgradeModalProps) {
-  // Lock body scroll while open
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -46,9 +29,7 @@ export default function UpgradeModal({
 
   if (!open) return null;
 
-  const headline = blockedKingdomName
-    ? `${blockedKingdomName} awaits!`
-    : "Unlock the full Chess Kingdom";
+  const headline = blockedKingdomName ? `${blockedKingdomName} awaits!` : "Unlock the full Chess Kingdom";
 
   return (
     <div
@@ -57,101 +38,166 @@ export default function UpgradeModal({
       aria-label="Upgrade to Champion"
       onClick={onClose}
       style={{
-        position: "fixed", inset: 0, zIndex: 100,
-        background: "rgba(11,17,32,0.72)",
-        backdropFilter: "blur(8px)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "20px",
-        animation: "upgradeFade 0.25s ease-out",
+        position: "fixed",
+        inset: 0,
+        zIndex: 100,
+        background: "rgba(7,5,15,0.82)",
+        backdropFilter: "blur(10px)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 20,
+        animation: "umFade 0.25s ease-out",
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          width: "100%", maxWidth: 440,
-          background: P.cream,
-          borderRadius: 24,
-          boxShadow: `0 0 0 4px ${P.parchment}, 0 30px 80px rgba(0,0,0,0.4)`,
-          padding: "32px 28px 28px",
+          width: "100%",
+          maxWidth: 460,
+          background: "linear-gradient(180deg, rgba(36,24,69,0.96) 0%, rgba(14,10,31,0.99) 100%)",
+          borderRadius: 26,
+          border: `1.5px solid ${T.amber}55`,
+          boxShadow: `0 0 0 4px rgba(245,182,56,0.12), ${T.shadowDeep}`,
+          padding: "32px 30px 28px",
           position: "relative",
-          animation: "upgradePop 0.45s cubic-bezier(0.16,1,0.3,1)",
+          animation: "umPop 0.45s cubic-bezier(0.16,1,0.3,1)",
         }}
       >
-        {/* Close button */}
         <button
           onClick={onClose}
           aria-label="Close"
           style={{
-            position: "absolute", top: 12, right: 12,
-            width: 32, height: 32, borderRadius: "50%",
-            background: "transparent", border: "none",
-            color: P.inkLight, cursor: "pointer", fontSize: 20,
-            display: "flex", alignItems: "center", justifyContent: "center",
+            position: "absolute",
+            top: 12,
+            right: 12,
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            background: "transparent",
+            border: "none",
+            color: T.textLo,
+            cursor: "pointer",
+            fontSize: 20,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
-        >×</button>
+        >
+          ×
+        </button>
 
-        {/* Top icon — locked kingdom or generic crown */}
-        <div style={{ textAlign: "center", marginBottom: 12 }}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", justifyContent: "center",
-            width: 72, height: 72, borderRadius: 20,
-            background: `linear-gradient(135deg, ${P.goldPale} 0%, ${P.parchment} 100%)`,
-            border: `2px solid ${P.gold}55`,
-            fontSize: 36, position: "relative",
-            boxShadow: `0 8px 24px rgba(199,148,10,0.18)`,
-          }}>
+        {/* Top icon */}
+        <div style={{ textAlign: "center", marginBottom: 14 }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 76,
+              height: 76,
+              borderRadius: 22,
+              background: "linear-gradient(135deg, rgba(245,182,56,0.25) 0%, rgba(192,132,252,0.18) 100%)",
+              border: `1.5px solid ${T.amber}`,
+              fontSize: 38,
+              position: "relative",
+              boxShadow: T.glowAmber,
+            }}
+          >
             {blockedKingdomIcon ?? "👑"}
-            <span style={{
-              position: "absolute", bottom: -4, right: -4,
-              width: 28, height: 28, borderRadius: "50%",
-              background: P.ink, color: P.cream,
-              border: `3px solid ${P.cream}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 13,
-            }}>🔒</span>
+            <span
+              style={{
+                position: "absolute",
+                bottom: -6,
+                right: -6,
+                width: 30,
+                height: 30,
+                borderRadius: "50%",
+                background: T.obsidian,
+                color: T.amberGlow,
+                border: `3px solid ${T.amber}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+              }}
+            >
+              🔒
+            </span>
           </div>
         </div>
 
-        {/* Headline */}
         <div style={{ textAlign: "center", marginBottom: 6 }}>
-          <span style={{
-            fontFamily: "'Caveat', cursive", fontSize: 18, color: P.gold,
-          }}>your next adventure →</span>
+          <span
+            style={{
+              fontFamily: T.fontHand,
+              fontSize: 18,
+              color: T.amberGlow,
+              transform: "rotate(-2deg)",
+              display: "inline-block",
+            }}
+          >
+            your next adventure →
+          </span>
         </div>
-        <h2 style={{
-          textAlign: "center",
-          fontSize: 26, fontWeight: 900,
-          fontFamily: "var(--font-playfair), serif",
-          color: P.ink, margin: "0 0 8px", letterSpacing: -0.6,
-        }}>{headline}</h2>
-        <p style={{
-          textAlign: "center", fontSize: 14, lineHeight: 1.65,
-          color: P.inkLight, margin: "0 0 22px",
-          fontFamily: "var(--font-nunito), sans-serif",
-        }}>
-          {blockedKingdomName
-            ? <>You&apos;ve grown beyond Pawn Village. To enter <strong style={{ color: P.ink }}>{blockedKingdomName}</strong> — and the 5 kingdoms after it — unlock Champion.</>
-            : <>Pawn Village is just the beginning. Unlock all 7 kingdoms, 7 bosses, 20 Powers, and your shareable Knight Card.</>}
+        <h2
+          style={{
+            textAlign: "center",
+            fontFamily: T.fontDisplay,
+            fontStyle: "italic",
+            fontSize: 28,
+            fontWeight: 600,
+            color: T.textHi,
+            margin: "0 0 8px",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {headline}
+        </h2>
+        <p
+          style={{
+            textAlign: "center",
+            fontFamily: T.fontUI,
+            fontSize: 14,
+            lineHeight: 1.65,
+            color: T.textMed,
+            margin: "0 0 22px",
+          }}
+        >
+          {blockedKingdomName ? (
+            <>You&apos;ve grown beyond Pawn Village. To enter <strong style={{ color: T.amberGlow }}>{blockedKingdomName}</strong> — and the 5 kingdoms after it — unlock Champion.</>
+          ) : (
+            <>Pawn Village is just the beginning. Unlock all 7 kingdoms, 7 bosses, 20 Powers, and your shareable Knight Card.</>
+          )}
         </p>
 
-        {/* Champion features */}
-        <div style={{
-          background: "white",
-          border: `1.5px solid ${P.gold}40`,
-          borderRadius: 16,
-          padding: "18px 18px",
-          marginBottom: 18,
-          boxShadow: `0 0 0 3px ${P.goldPale}`,
-        }}>
-          <div style={{
-            display: "inline-block",
-            background: P.gold, color: "white",
-            borderRadius: 6, padding: "3px 10px",
-            fontSize: 10, fontWeight: 800, letterSpacing: 0.6,
-            fontFamily: "var(--font-nunito), sans-serif",
-            marginBottom: 12,
-          }}>CHAMPION · $4.99/mo</div>
-          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
+        <div
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: `1.5px solid ${T.amber}55`,
+            borderRadius: 18,
+            padding: "18px 18px",
+            marginBottom: 18,
+            boxShadow: "inset 0 0 0 3px rgba(245,182,56,0.06)",
+          }}
+        >
+          <div
+            style={{
+              display: "inline-block",
+              background: T.goldFoil,
+              color: T.inkDeep,
+              borderRadius: 6,
+              padding: "3px 10px",
+              fontSize: 10,
+              fontWeight: 800,
+              letterSpacing: "0.18em",
+              fontFamily: T.fontUI,
+              marginBottom: 12,
+            }}
+          >
+            CHAMPION · $4.99/mo
+          </div>
+          <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: 7 }}>
             {[
               "All 7 kingdoms · 7 bosses to defeat",
               "20 Powers to collect",
@@ -159,50 +205,75 @@ export default function UpgradeModal({
               "Unlimited games · all difficulty levels",
               "Mission system + Aha! celebrations",
             ].map((f, i) => (
-              <li key={i} style={{
-                display: "flex", alignItems: "center", gap: 8,
-                fontSize: 13, color: P.inkSoft,
-                fontFamily: "var(--font-nunito), sans-serif",
-              }}>
-                <span style={{
-                  width: 16, height: 16, borderRadius: "50%", flexShrink: 0,
-                  background: P.emerald, color: "white",
-                  display: "inline-flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 10, fontWeight: 800,
-                }}>✓</span>
+              <li
+                key={i}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  fontFamily: T.fontUI,
+                  fontSize: 13,
+                  color: T.textHi,
+                }}
+              >
+                <span
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    background: T.emerald,
+                    color: T.obsidian,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 10,
+                    fontWeight: 800,
+                    boxShadow: `0 0 8px ${T.emeraldGlow}`,
+                  }}
+                >
+                  ✓
+                </span>
                 {f}
               </li>
             ))}
           </ul>
         </div>
 
-        {/* CTA — for now the upgrade flow doesn't exist; route to onboard
-            with a flag so we can wire Stripe Checkout later. */}
         <Link
           href="/onboard?from=upgrade"
           onClick={onClose}
           style={{
-            display: "block", width: "100%",
-            background: P.emerald, color: "white",
-            borderRadius: 14, padding: "16px 0",
+            display: "block",
+            width: "100%",
+            background: T.goldFoil,
+            color: T.inkDeep,
+            borderRadius: 14,
+            padding: "16px 0",
             textAlign: "center",
-            fontSize: 15, fontWeight: 800,
+            fontSize: 16,
+            fontWeight: 800,
             textDecoration: "none",
-            fontFamily: "var(--font-nunito), sans-serif",
-            boxShadow: "0 8px 24px rgba(27,115,64,0.28)",
-            letterSpacing: 0.3,
+            fontFamily: T.fontUI,
+            boxShadow: T.glowAmber,
+            letterSpacing: "0.05em",
           }}
         >
-          Start 7-day free trial
+          ✦ Start 7-day free trial ✦
         </Link>
         <button
           onClick={onClose}
           style={{
-            display: "block", width: "100%",
-            background: "transparent", border: "none",
-            marginTop: 10, padding: "8px 0",
-            fontSize: 13, color: P.inkLight, cursor: "pointer",
-            fontFamily: "var(--font-nunito), sans-serif",
+            display: "block",
+            width: "100%",
+            background: "transparent",
+            border: "none",
+            marginTop: 10,
+            padding: "8px 0",
+            fontSize: 13,
+            color: T.textLo,
+            cursor: "pointer",
+            fontFamily: T.fontUI,
             fontWeight: 600,
           }}
         >
@@ -211,11 +282,8 @@ export default function UpgradeModal({
       </div>
 
       <style>{`
-        @keyframes upgradeFade {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes upgradePop {
+        @keyframes umFade { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes umPop {
           from { opacity: 0; transform: translateY(20px) scale(0.96); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }

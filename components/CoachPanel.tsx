@@ -2,149 +2,254 @@
 
 import { useEffect, useRef } from "react";
 import type { CoachMessage } from "@/lib/chess/types";
+import { T } from "@/lib/design/tokens";
+import CoachPawn from "@/components/CoachPawn";
+import VoiceWave from "@/components/VoiceWave";
 
-const P = {
-  cream: "#FBF7F0",
-  parchment: "#F0E8D8",
-  ink: "#1A1210",
-  inkSoft: "#2E2620",
-  inkMed: "#5C544A",
-  inkLight: "#8A8278",
-  inkFaint: "#B0A898",
-  inkGhost: "#D0C8BC",
-  emerald: "#1B7340",
-  emeraldPale: "#E6F4EC",
-  gold: "#C7940A",
-  goldPale: "#FDF6E3",
+const MSG_STYLES: Record<
+  CoachMessage["type"],
+  { bg: string; border: string; tail: string; tone: string }
+> = {
+  intro: {
+    bg: "linear-gradient(180deg, rgba(245,182,56,0.10) 0%, rgba(245,182,56,0.04) 100%)",
+    border: "rgba(245,182,56,0.28)",
+    tail: "rgba(245,182,56,0.28)",
+    tone: T.amberGlow,
+  },
+  praise: {
+    bg: "linear-gradient(180deg, rgba(52,211,153,0.10) 0%, rgba(52,211,153,0.04) 100%)",
+    border: "rgba(52,211,153,0.28)",
+    tail: "rgba(52,211,153,0.28)",
+    tone: T.emeraldGlow,
+  },
+  tip: {
+    bg: "rgba(255,255,255,0.04)",
+    border: T.border,
+    tail: T.border,
+    tone: T.textMed,
+  },
+  correction: {
+    bg: "linear-gradient(180deg, rgba(255,107,107,0.10) 0%, rgba(255,107,107,0.04) 100%)",
+    border: "rgba(255,107,107,0.28)",
+    tail: "rgba(255,107,107,0.28)",
+    tone: T.rubyGlow,
+  },
+  celebration: {
+    bg: "linear-gradient(180deg, rgba(245,182,56,0.18) 0%, rgba(245,182,56,0.06) 100%)",
+    border: "rgba(252,211,77,0.5)",
+    tail: "rgba(252,211,77,0.5)",
+    tone: T.amberGlow,
+  },
 };
-
-const MSG_STYLES: Record<CoachMessage["type"], { bg: string; border: string; labelColor: string }> = {
-  intro:       { bg: P.goldPale,    border: P.gold,    labelColor: P.gold },
-  praise:      { bg: P.emeraldPale, border: P.emerald, labelColor: P.emerald },
-  tip:         { bg: "white",       border: P.inkGhost, labelColor: P.inkMed },
-  correction:  { bg: "#FFF5EB",     border: "#FDBA74", labelColor: "#9A3412" },
-  celebration: { bg: P.goldPale,    border: P.gold,    labelColor: P.gold },
-};
-
-function CoachIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2z" />
-      <path d="M12 12c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z" />
-    </svg>
-  );
-}
 
 interface CoachPanelProps {
   messages: CoachMessage[];
   loading: boolean;
+  voicePlaying?: boolean;
 }
 
-export default function CoachPanel({ messages, loading }: CoachPanelProps) {
+export default function CoachPanel({ messages, loading, voicePlaying = false }: CoachPanelProps) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
   }, [messages]);
 
+  // Coach expression: cheer if last message is celebration/intro praise,
+  // talking if voice is playing, sad on correction-only state, idle otherwise.
+  const last = messages[messages.length - 1];
+  const expression = voicePlaying
+    ? "talking"
+    : last?.type === "celebration"
+      ? "cheer"
+      : last?.type === "correction"
+        ? "sad"
+        : "idle";
+
   return (
-    <div style={{
-      display: "flex", flexDirection: "column",
-      borderRadius: 16, overflow: "hidden",
-      background: "white",
-      border: `1px solid ${P.inkGhost}`,
-      boxShadow: `0 4px 20px rgba(26,18,16,0.06)`,
-      flex: "1 1 0", minHeight: 240, maxHeight: 380,
-    }}>
-      {/* Header */}
-      <div style={{
-        display: "flex", alignItems: "center", gap: 8,
-        padding: "10px 16px",
-        borderBottom: `1px solid ${P.parchment}`,
-        background: P.cream,
-      }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: "50%",
-          background: P.emeraldPale, display: "flex", alignItems: "center", justifyContent: "center",
-          border: `1.5px solid ${P.emerald}30`,
-          color: P.emerald, flexShrink: 0,
-        }}>
-          <CoachIcon />
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+      }}
+    >
+      {/* Coach Pawn header — character + name + status */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <CoachPawn size={84} expression={expression} />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            style={{
+              fontFamily: T.fontDisplay,
+              fontStyle: "italic",
+              fontSize: 26,
+              fontWeight: 600,
+              color: T.textHi,
+              letterSpacing: "-0.01em",
+              lineHeight: 1,
+            }}
+          >
+            Coach Pawn
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
+            {voicePlaying ? (
+              <>
+                <VoiceWave scale={0.55} color={T.amberGlow} speaking />
+                <span
+                  style={{
+                    fontFamily: T.fontUI,
+                    fontSize: 11,
+                    color: T.amberGlow,
+                    fontWeight: 700,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Speaking
+                </span>
+              </>
+            ) : loading ? (
+              <>
+                <span style={{ display: "inline-flex", gap: 3 }}>
+                  {[0, 1, 2].map((i) => (
+                    <span
+                      key={i}
+                      style={{
+                        width: 5,
+                        height: 5,
+                        borderRadius: "50%",
+                        background: T.amberGlow,
+                        animation: `cpDotPulse 1.4s ease-in-out ${i * 0.18}s infinite`,
+                      }}
+                    />
+                  ))}
+                </span>
+                <span
+                  style={{
+                    fontFamily: T.fontUI,
+                    fontSize: 11,
+                    color: T.amberGlow,
+                    fontWeight: 600,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Thinking
+                </span>
+              </>
+            ) : (
+              <>
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: T.emerald,
+                    boxShadow: `0 0 8px ${T.emerald}`,
+                  }}
+                />
+                <span
+                  style={{
+                    fontFamily: T.fontUI,
+                    fontSize: 11,
+                    color: T.textLo,
+                    fontWeight: 500,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Online · listening
+                </span>
+              </>
+            )}
+          </div>
         </div>
-        <span style={{
-          fontSize: 14, fontWeight: 800, color: P.ink,
-          fontFamily: "var(--font-playfair), serif",
-          letterSpacing: -0.2,
-        }}>Coach Pawn</span>
-
-        {/* Online indicator */}
-        <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 4 }}>
-          <div style={{ width: 6, height: 6, borderRadius: "50%", background: P.emerald }} />
-          <span style={{ fontSize: 10, color: P.emerald, fontFamily: "var(--font-nunito), sans-serif", fontWeight: 600 }}>Online</span>
-        </div>
-
-        {/* Thinking dots */}
-        {loading && (
-          <span style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 3 }} aria-label="Coach is thinking">
-            {[0, 1, 2].map(i => (
-              <span key={i} style={{
-                display: "inline-block", width: 5, height: 5, borderRadius: "50%",
-                background: P.gold,
-                animation: `dotPulse 1.4s infinite ease-in-out ${i * 0.2}s`,
-              }} />
-            ))}
-          </span>
-        )}
       </div>
 
-      {/* Messages */}
+      {/* Messages list */}
       <div
         ref={ref}
-        style={{ flex: 1, overflowY: "auto", padding: "12px", display: "flex", flexDirection: "column", gap: 8 }}
         aria-live="polite"
         aria-label="Coach messages"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          maxHeight: 360,
+          overflowY: "auto",
+          paddingRight: 4,
+        }}
       >
         {messages.map((msg) => {
           const s = MSG_STYLES[msg.type] ?? MSG_STYLES.tip;
           return (
             <div
               key={msg.id}
-              className="coach-fade"
+              className="cp-msg"
               style={{
-                padding: "10px 14px",
+                position: "relative",
                 background: s.bg,
-                borderLeft: `3px solid ${s.border}`,
-                borderRadius: "2px 12px 12px 12px",
-                border: `1px solid ${s.border}30`,
-                borderLeftWidth: 3,
+                border: `1.5px solid ${s.border}`,
+                borderRadius: 18,
+                padding: "14px 18px",
+                boxShadow: "inset 0 1px 0 rgba(252,211,77,0.05), 0 8px 22px rgba(0,0,0,0.32)",
               }}
             >
-              <p style={{
-                margin: 0, fontSize: 13.5, lineHeight: 1.7,
-                color: P.inkSoft,
-                fontFamily: "var(--font-nunito), sans-serif",
-              }}>{msg.text}</p>
+              {/* tail */}
+              <div
+                aria-hidden
+                style={{
+                  position: "absolute",
+                  left: -10,
+                  top: 18,
+                  width: 0,
+                  height: 0,
+                  borderTop: "10px solid transparent",
+                  borderBottom: "10px solid transparent",
+                  borderRight: `12px solid ${s.tail}`,
+                }}
+              />
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 15,
+                  lineHeight: 1.55,
+                  color: T.textHi,
+                  fontFamily: T.fontUI,
+                  fontWeight: 500,
+                  letterSpacing: "-0.005em",
+                }}
+              >
+                {msg.text}
+              </p>
             </div>
           );
         })}
 
         {messages.length === 0 && !loading && (
-          <p style={{
-            fontSize: 13, color: P.inkFaint, textAlign: "center",
-            marginTop: 16, fontStyle: "italic",
-            fontFamily: "var(--font-nunito), sans-serif",
-          }}>Make your first move to get coaching!</p>
+          <p
+            style={{
+              fontSize: 13,
+              color: T.textDim,
+              textAlign: "center",
+              marginTop: 16,
+              fontStyle: "italic",
+              fontFamily: T.fontUI,
+            }}
+          >
+            Make your first move to get coaching!
+          </p>
         )}
       </div>
 
       <style>{`
-        @keyframes dotPulse {
-          0%, 80%, 100% { opacity: 0.2; transform: scale(0.7); }
+        @keyframes cpDotPulse {
+          0%, 80%, 100% { opacity: 0.25; transform: scale(0.7); }
           40% { opacity: 1; transform: scale(1); }
         }
-        .coach-fade {
-          animation: coachFadeIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
+        .cp-msg {
+          animation: cpMsgIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
         }
-        @keyframes coachFadeIn {
+        @keyframes cpMsgIn {
           from { opacity: 0; transform: translateY(6px); }
           to   { opacity: 1; transform: translateY(0); }
         }

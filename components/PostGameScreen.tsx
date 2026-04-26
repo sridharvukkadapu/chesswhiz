@@ -6,24 +6,9 @@ import { getRankByXP, getNextRank, KINGDOMS, isReadyForNextKingdom } from "@/lib
 import type { PlayerProgression, Mission } from "@/lib/progression/types";
 import type { GameStatus, CoachMessage } from "@/lib/chess/types";
 import UpgradeModal from "./UpgradeModal";
-
-const P = {
-  cream: "#FBF7F0",
-  creamDeep: "#F5EFE4",
-  parchment: "#F0E8D8",
-  ink: "#1A1210",
-  inkSoft: "#2E2620",
-  inkMed: "#5C544A",
-  inkLight: "#8A8278",
-  inkFaint: "#B0A898",
-  inkGhost: "#D0C8BC",
-  emerald: "#1B7340",
-  emeraldBright: "#22C55E",
-  emeraldPale: "#E6F4EC",
-  gold: "#C7940A",
-  goldLight: "#F0D060",
-  goldPale: "#FDF6E3",
-};
+import CoachPawn from "./CoachPawn";
+import { T, KINGDOM_COLORS } from "@/lib/design/tokens";
+import { Piece, type PieceType } from "@/components/ChessPieces";
 
 const KINGDOM_ICONS: Record<string, string> = {
   village: "🏘️",
@@ -35,6 +20,15 @@ const KINGDOM_ICONS: Record<string, string> = {
   endgame_throne: "👑",
 };
 
+const RANK_PIECE: Record<string, PieceType> = {
+  pawn: "pawn",
+  knight: "knight",
+  bishop: "bishop",
+  rook: "rook",
+  queen: "queen",
+  king: "king",
+};
+
 interface PostGameProps {
   status: GameStatus;
   playerName: string;
@@ -44,8 +38,6 @@ interface PostGameProps {
   onPlayAgain: () => void;
 }
 
-// Deterministic coach review — built from in-conversation signals,
-// no extra API call. Easy to upgrade to a Claude summary later.
 function buildReview(args: {
   status: GameStatus;
   playerName: string;
@@ -58,11 +50,7 @@ function buildReview(args: {
   const corrections = coachMessages.filter((m) => m.type === "correction").length;
   const tips = coachMessages.filter((m) => m.type === "tip").length;
 
-  const lengthNote = moves < 12
-    ? "a quick game"
-    : moves < 30
-    ? "a solid full-length game"
-    : "a long, thoughtful game";
+  const lengthNote = moves < 12 ? "a quick game" : moves < 30 ? "a solid full-length game" : "a long, thoughtful game";
 
   if (status === "white_wins") {
     const reason = praise > corrections
@@ -88,32 +76,63 @@ function buildReview(args: {
 function MissionProgress({ mission }: { mission: Mission | null }) {
   if (!mission) return null;
   return (
-    <div style={{
-      background: P.creamDeep,
-      border: `1px solid ${P.gold}40`,
-      borderRadius: 14,
-      padding: "14px 16px",
-    }}>
+    <div
+      style={{
+        background: "rgba(245,182,56,0.08)",
+        border: `1.5px solid rgba(245,182,56,0.32)`,
+        borderRadius: 16,
+        padding: "16px 18px",
+        boxShadow: "0 0 24px rgba(245,182,56,0.12)",
+      }}
+    >
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-        <span style={{
-          fontFamily: "var(--font-playfair), serif",
-          fontSize: 13, fontWeight: 900, color: P.gold,
-          letterSpacing: 0.3,
-        }}>03</span>
-        <span style={{
-          fontSize: 10, fontWeight: 800, color: P.gold,
-          letterSpacing: 1.4, textTransform: "uppercase",
-        }}>Current Quest</span>
+        <span
+          style={{
+            fontFamily: T.fontDisplay,
+            fontStyle: "italic",
+            fontSize: 14,
+            fontWeight: 600,
+            color: T.amberGlow,
+            letterSpacing: 0.3,
+          }}
+        >
+          03
+        </span>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            color: T.amberGlow,
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+            fontFamily: T.fontUI,
+          }}
+        >
+          Current Quest
+        </span>
       </div>
-      <p style={{
-        margin: 0, fontSize: 14, fontWeight: 700, color: P.ink,
-        fontFamily: "var(--font-nunito), sans-serif", lineHeight: 1.5,
-      }}>{mission.description}</p>
-      <div style={{
-        marginTop: 6, fontSize: 11, color: P.inkLight,
-        fontFamily: "var(--font-nunito), sans-serif", fontWeight: 600,
-      }}>
-        Games attempted: {mission.gamesAttempted}{mission.maxGamesBeforeHint > 0 ? ` · hint after ${mission.maxGamesBeforeHint}` : ""}
+      <p
+        style={{
+          margin: 0,
+          fontSize: 14,
+          fontWeight: 600,
+          color: T.textHi,
+          fontFamily: T.fontUI,
+          lineHeight: 1.5,
+        }}
+      >
+        {mission.description}
+      </p>
+      <div
+        style={{
+          marginTop: 6,
+          fontSize: 11,
+          color: T.textLo,
+          fontFamily: T.fontMono,
+        }}
+      >
+        Games attempted: {mission.gamesAttempted}
+        {mission.maxGamesBeforeHint > 0 ? ` · hint after ${mission.maxGamesBeforeHint}` : ""}
       </div>
     </div>
   );
@@ -124,7 +143,7 @@ export default function PostGameScreen({
 }: PostGameProps) {
   const review = useMemo(
     () => buildReview({ status, playerName, moveHistory, coachMessages }),
-    [status, playerName, moveHistory, coachMessages]
+    [status, playerName, moveHistory, coachMessages],
   );
 
   const rank = getRankByXP(progression.xp);
@@ -135,15 +154,12 @@ export default function PostGameScreen({
   const xpToNext = next ? Math.max(0, ceil - progression.xp) : 0;
 
   const kingdom = KINGDOMS.find((k) => k.id === progression.currentKingdom) ?? KINGDOMS[0];
+  const kingdomColor = KINGDOM_COLORS[kingdom.id] ?? T.amber;
 
   const isWin = status === "white_wins";
-  const accent = isWin ? P.emerald : status === "black_wins" ? "#9A3412" : P.gold;
+  const accent = isWin ? T.emeraldGlow : status === "black_wins" ? T.rubyGlow : T.amberGlow;
 
-  // Conversion trigger: free-tier player has done enough Pawn Village
-  // work to feel boxed in. Show upgrade pitch in place of "Current Quest".
-  const showUpgradePitch =
-    progression.tier === "free" &&
-    isReadyForNextKingdom(progression.masteredStrategies);
+  const showUpgradePitch = progression.tier === "free" && isReadyForNextKingdom(progression.masteredStrategies);
   const forkForest = KINGDOMS.find((k) => k.id === "fork_forest");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
@@ -153,244 +169,330 @@ export default function PostGameScreen({
       aria-modal="false"
       aria-label="Game complete"
       style={{
-        background: "white",
+        background: "linear-gradient(180deg, rgba(36,24,69,0.85) 0%, rgba(14,10,31,0.95) 100%)",
         borderRadius: 24,
-        border: `1px solid ${P.inkGhost}`,
-        boxShadow: `0 0 0 4px ${P.parchment}, 0 24px 64px rgba(26,18,16,0.14), 0 8px 20px rgba(26,18,16,0.08)`,
+        border: `1.5px solid ${T.borderStrong}`,
+        boxShadow: T.shadowDeep,
         padding: "28px 24px",
-        animation: "postGameAppear 0.55s cubic-bezier(0.16,1,0.3,1) both",
+        animation: "postGameIn 0.55s cubic-bezier(0.16,1,0.3,1) both",
+        backdropFilter: "blur(12px)",
       }}
     >
-      {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: 22 }}>
-        <span style={{
-          fontFamily: "'Caveat', cursive", fontSize: 18, color: P.gold,
-          display: "block", marginBottom: 4,
-        }}>well played →</span>
-        <h2 style={{
-          fontSize: 26, fontWeight: 900,
-          fontFamily: "var(--font-playfair), serif",
-          color: accent, margin: "0 0 4px", letterSpacing: -0.6,
-        }}>{review.headline}</h2>
-        <div style={{
-          fontSize: 11, fontWeight: 800, color: P.inkLight,
-          letterSpacing: 1.4, textTransform: "uppercase",
-          fontFamily: "var(--font-nunito), sans-serif",
-        }}>Game Complete</div>
-      </div>
-
-      {/* 01: Coach review */}
-      <div style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8, padding: "0 4px" }}>
-          <span style={{
-            fontFamily: "var(--font-playfair), serif",
-            fontSize: 13, fontWeight: 900, color: P.emerald,
-            letterSpacing: 0.3,
-          }}>01</span>
-          <span style={{
-            fontSize: 10, fontWeight: 800, color: P.emerald,
-            letterSpacing: 1.4, textTransform: "uppercase",
-          }}>Coach Pawn&apos;s Review</span>
-        </div>
-        <div style={{
-          background: P.emeraldPale,
-          border: `1.5px solid ${P.emerald}40`,
-          borderRadius: "4px 16px 16px 16px",
-          padding: "14px 16px",
-          display: "flex", gap: 10, alignItems: "flex-start",
-        }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: "50%",
-            background: "white", border: `1.5px solid ${P.emerald}40`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, flexShrink: 0,
-          }}>♟</div>
-          <p style={{
-            margin: 0, fontSize: 14, lineHeight: 1.65, color: P.inkSoft,
-            fontFamily: "var(--font-nunito), sans-serif",
-          }}>{review.body}</p>
+      {/* Header — coach + result headline */}
+      <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
+        <CoachPawn size={72} expression={isWin ? "cheer" : status === "black_wins" ? "sad" : "idle"} />
+        <div>
+          <span
+            style={{
+              fontFamily: T.fontHand,
+              fontSize: 16,
+              color: T.amberGlow,
+              display: "block",
+              transform: "rotate(-2deg)",
+              marginBottom: 4,
+            }}
+          >
+            well played →
+          </span>
+          <h2
+            style={{
+              fontFamily: T.fontDisplay,
+              fontStyle: "italic",
+              fontSize: 28,
+              fontWeight: 600,
+              color: accent,
+              margin: 0,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.1,
+            }}
+          >
+            {review.headline}
+          </h2>
         </div>
       </div>
 
-      {/* 02: XP + rank progress */}
+      {/* 01 Coach review */}
       <div style={{ marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8, padding: "0 4px" }}>
-          <span style={{
-            fontFamily: "var(--font-playfair), serif",
-            fontSize: 13, fontWeight: 900, color: P.inkMed,
-            letterSpacing: 0.3,
-          }}>02</span>
-          <span style={{
-            fontSize: 10, fontWeight: 800, color: P.inkMed,
-            letterSpacing: 1.4, textTransform: "uppercase",
-          }}>Your Progress</span>
+        <SectionLabel num="01" text="Coach Pawn's Review" tone={T.amberGlow} />
+        <div
+          style={{
+            background: "linear-gradient(180deg, rgba(245,182,56,0.08) 0%, rgba(245,182,56,0.02) 100%)",
+            border: "1.5px solid rgba(245,182,56,0.28)",
+            borderRadius: 18,
+            padding: "16px 18px",
+            position: "relative",
+          }}
+        >
+          <div
+            aria-hidden
+            style={{
+              position: "absolute",
+              left: -10,
+              top: 18,
+              width: 0,
+              height: 0,
+              borderTop: "10px solid transparent",
+              borderBottom: "10px solid transparent",
+              borderRight: "12px solid rgba(245,182,56,0.28)",
+            }}
+          />
+          <p style={{ margin: 0, fontFamily: T.fontUI, fontSize: 15, lineHeight: 1.55, color: T.textHi }}>
+            {review.body}
+          </p>
         </div>
-        <div style={{
-          background: "white",
-          border: `1px solid ${P.inkGhost}`,
-          borderRadius: 14, padding: "14px 16px",
-          boxShadow: `0 1px 4px rgba(26,18,16,0.04)`,
-        }}>
+      </div>
+
+      {/* 02 XP + rank progress */}
+      <div style={{ marginBottom: 14 }}>
+        <SectionLabel num="02" text="Your Progress" tone={T.textMed} />
+        <div
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: `1px solid ${T.border}`,
+            borderRadius: 16,
+            padding: "14px 16px",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: "50%",
-              background: `radial-gradient(circle at 35% 30%, ${rank.color} 0%, ${P.parchment} 90%)`,
-              border: `2px solid ${rank.color}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 22, color: P.ink, flexShrink: 0,
-            }}>{rank.icon}</div>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 12,
+                background: "linear-gradient(135deg, #F5E2B8, #B07A0E)",
+                border: `1.5px solid ${rank.color}`,
+                boxShadow: T.glowAmber,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Piece type={RANK_PIECE[rank.id] ?? "pawn"} color="white" size={32} />
+            </div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{
-                fontSize: 16, fontWeight: 900, color: P.ink,
-                fontFamily: "var(--font-playfair), serif", letterSpacing: -0.3,
-              }}>{rank.name}</div>
-              <div style={{ fontSize: 12, color: P.inkLight, fontFamily: "var(--font-nunito), sans-serif" }}>
-                {progression.xp.toLocaleString()} XP{next ? ` · ${xpToNext} to ${next.name}` : " · max rank"}
+              <div
+                style={{
+                  fontFamily: T.fontDisplay,
+                  fontStyle: "italic",
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: T.textHi,
+                }}
+              >
+                {rank.name}
+              </div>
+              <div
+                style={{
+                  fontFamily: T.fontMono,
+                  fontSize: 12,
+                  color: T.textLo,
+                }}
+              >
+                {progression.xp.toLocaleString()} XP
+                {next ? ` · ${xpToNext} to ${next.name}` : " · max rank"}
               </div>
             </div>
           </div>
-          <div style={{
-            height: 6, borderRadius: 3,
-            background: P.parchment, overflow: "hidden",
-          }}>
-            <div style={{
-              width: `${pct}%`, height: "100%",
-              background: `linear-gradient(90deg, ${rank.color}, ${next?.color ?? rank.color})`,
-              transition: "width 0.8s cubic-bezier(0.16,1,0.3,1)",
-            }} />
+          <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+            <div
+              style={{
+                width: `${pct}%`,
+                height: "100%",
+                background: T.goldFoil,
+                boxShadow: "0 0 8px rgba(245,182,56,0.6)",
+                transition: "width 800ms cubic-bezier(0.16,1,0.3,1)",
+              }}
+            />
           </div>
         </div>
       </div>
 
-      {/* 03: Current quest — OR upgrade pitch when ready for the next kingdom */}
+      {/* 03 Quest / Upgrade pitch */}
       {showUpgradePitch && forkForest ? (
         <button
           onClick={() => setUpgradeOpen(true)}
           aria-label="Unlock the Fork Forest with Champion"
           style={{
-            width: "100%", textAlign: "left", cursor: "pointer",
-            marginBottom: 18,
-            padding: "16px 18px", borderRadius: 14,
-            background: `linear-gradient(135deg, ${P.goldPale} 0%, ${P.emeraldPale} 100%)`,
-            border: `1.5px solid ${P.gold}`,
-            boxShadow: `0 0 0 3px ${P.goldPale}, 0 6px 20px rgba(199,148,10,0.18)`,
-            fontFamily: "inherit", color: "inherit",
-            transition: "transform 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+            width: "100%",
+            textAlign: "left",
+            cursor: "pointer",
+            marginBottom: 20,
+            padding: "16px 18px",
+            borderRadius: 16,
+            background: "linear-gradient(135deg, rgba(245,182,56,0.18) 0%, rgba(192,132,252,0.12) 100%)",
+            border: `1.5px solid ${T.amber}`,
+            boxShadow: T.glowAmber,
+            fontFamily: "inherit",
+            color: "inherit",
+            transition: "transform 200ms cubic-bezier(0.34,1.56,0.64,1)",
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+          }}
         >
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-            <span style={{
-              fontFamily: "var(--font-playfair), serif",
-              fontSize: 13, fontWeight: 900, color: P.gold, letterSpacing: 0.3,
-            }}>03</span>
-            <span style={{
-              fontSize: 10, fontWeight: 800, color: P.gold,
-              letterSpacing: 1.4, textTransform: "uppercase",
-            }}>Next Adventure</span>
-            <span style={{
-              marginLeft: "auto",
-              fontSize: 9, fontWeight: 800, color: P.gold,
-              background: "white", border: `1px solid ${P.gold}40`,
-              padding: "2px 6px", borderRadius: 6,
-              letterSpacing: 0.6,
-            }}>🔒 CHAMPION</span>
+            <span style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: 14, fontWeight: 600, color: T.amberGlow }}>
+              03
+            </span>
+            <span style={{ fontFamily: T.fontUI, fontSize: 10, fontWeight: 800, color: T.amberGlow, letterSpacing: "0.2em", textTransform: "uppercase" }}>
+              Next Adventure
+            </span>
+            <span
+              style={{
+                marginLeft: "auto",
+                fontFamily: T.fontUI,
+                fontSize: 9,
+                fontWeight: 800,
+                color: T.amberGlow,
+                background: "rgba(7,5,15,0.7)",
+                border: `1px solid ${T.amber}80`,
+                padding: "2px 8px",
+                borderRadius: 6,
+                letterSpacing: "0.18em",
+              }}
+            >
+              🔒 CHAMPION
+            </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <span style={{ fontSize: 32, lineHeight: 1, flexShrink: 0 }}>🌲</span>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{
-                fontSize: 16, fontWeight: 900, color: P.ink,
-                fontFamily: "var(--font-playfair), serif", letterSpacing: -0.3,
-              }}>The Fork Forest awaits!</div>
-              <div style={{
-                fontSize: 12, lineHeight: 1.55, color: P.inkSoft, marginTop: 2,
-                fontFamily: "var(--font-nunito), sans-serif",
-              }}>
-                You&apos;ve outgrown Pawn Village. Face the <strong style={{ color: P.ink }}>Knight Twins</strong> and earn the Fork Master power →
+              <div
+                style={{
+                  fontFamily: T.fontDisplay,
+                  fontStyle: "italic",
+                  fontSize: 18,
+                  fontWeight: 600,
+                  color: T.textHi,
+                }}
+              >
+                The Fork Forest awaits!
+              </div>
+              <div style={{ fontFamily: T.fontUI, fontSize: 13, color: T.textMed, marginTop: 2 }}>
+                Face the <strong style={{ color: T.amberGlow }}>Knight Twins</strong> and earn the Fork Master power →
               </div>
             </div>
           </div>
         </button>
       ) : progression.activeMission ? (
-        <div style={{ marginBottom: 18 }}>
+        <div style={{ marginBottom: 20 }}>
           <MissionProgress mission={progression.activeMission} />
         </div>
       ) : (
-        <div style={{
-          marginBottom: 18,
-          padding: "14px 16px", borderRadius: 14,
-          background: P.creamDeep, border: `1px solid ${P.inkGhost}`,
-          display: "flex", alignItems: "center", gap: 10,
-        }}>
-          <span style={{ fontSize: 22 }}>{KINGDOM_ICONS[kingdom.id] ?? "♟"}</span>
+        <div
+          style={{
+            marginBottom: 20,
+            padding: "14px 16px",
+            borderRadius: 16,
+            background: "rgba(255,255,255,0.04)",
+            border: `1px solid ${T.border}`,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <span style={{ fontSize: 24 }}>{KINGDOM_ICONS[kingdom.id] ?? "♟"}</span>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{
-              fontSize: 13, fontWeight: 800, color: P.ink,
-              fontFamily: "var(--font-playfair), serif",
-            }}>{kingdom.name}</div>
-            <div style={{ fontSize: 12, color: P.inkLight }}>{kingdom.subtitle}</div>
+            <div style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: 16, color: T.textHi }}>
+              {kingdom.name}
+            </div>
+            <div style={{ fontFamily: T.fontUI, fontSize: 12, color: T.textLo }}>{kingdom.subtitle}</div>
           </div>
         </div>
       )}
 
       {/* Three actions */}
-      <div style={{
-        display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8,
-      }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
         <button
           onClick={onPlayAgain}
           style={{
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3,
-            background: P.emerald, color: "white", border: "none",
-            borderRadius: 12, minHeight: 52, cursor: "pointer",
-            fontFamily: "var(--font-nunito), sans-serif",
-            boxShadow: "0 6px 20px rgba(27,115,64,0.25)",
-            transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+            background: T.goldFoil,
+            color: T.inkDeep,
+            border: "none",
+            borderRadius: 14,
+            minHeight: 56,
+            cursor: "pointer",
+            fontFamily: T.fontUI,
+            boxShadow: T.glowAmber,
+            transition: "transform 200ms cubic-bezier(0.34,1.56,0.64,1)",
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
         >
-          <span style={{ fontSize: 16 }}>♟</span>
-          <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.3 }}>Play Again</span>
+          <span style={{ fontSize: 18 }}>♟</span>
+          <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em" }}>Play Again</span>
         </button>
-        <Link href="/kingdom" style={{
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3,
-          background: "white", color: P.inkSoft,
-          border: `1.5px solid ${P.inkGhost}`,
-          borderRadius: 12, minHeight: 52,
-          textDecoration: "none",
-          fontFamily: "var(--font-nunito), sans-serif",
-          boxShadow: "0 2px 8px rgba(26,18,16,0.05)",
-          transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-        }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = P.gold; (e.currentTarget as HTMLElement).style.color = P.gold; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = P.inkGhost; (e.currentTarget as HTMLElement).style.color = P.inkSoft; }}
+        <Link
+          href="/kingdom"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+            background: "rgba(255,255,255,0.04)",
+            color: T.textMed,
+            border: `1.5px solid ${T.border}`,
+            borderRadius: 14,
+            minHeight: 56,
+            textDecoration: "none",
+            fontFamily: T.fontUI,
+            transition: "all 200ms cubic-bezier(0.34,1.56,0.64,1)",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = T.amber;
+            (e.currentTarget as HTMLElement).style.color = T.amberGlow;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = T.border;
+            (e.currentTarget as HTMLElement).style.color = T.textMed;
+          }}
         >
-          <span style={{ fontSize: 16 }}>🗺</span>
-          <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.3 }}>Kingdom Map</span>
+          <span style={{ fontSize: 18 }}>🗺</span>
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em" }}>Kingdom Map</span>
         </Link>
-        <Link href="/card" style={{
-          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3,
-          background: "white", color: P.inkSoft,
-          border: `1.5px solid ${P.inkGhost}`,
-          borderRadius: 12, minHeight: 52,
-          textDecoration: "none",
-          fontFamily: "var(--font-nunito), sans-serif",
-          boxShadow: "0 2px 8px rgba(26,18,16,0.05)",
-          transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-        }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = P.emerald; (e.currentTarget as HTMLElement).style.color = P.emerald; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = P.inkGhost; (e.currentTarget as HTMLElement).style.color = P.inkSoft; }}
+        <Link
+          href="/card"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 4,
+            background: "rgba(255,255,255,0.04)",
+            color: T.textMed,
+            border: `1.5px solid ${T.border}`,
+            borderRadius: 14,
+            minHeight: 56,
+            textDecoration: "none",
+            fontFamily: T.fontUI,
+            transition: "all 200ms cubic-bezier(0.34,1.56,0.64,1)",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = T.amethyst;
+            (e.currentTarget as HTMLElement).style.color = T.amethystGlow;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = T.border;
+            (e.currentTarget as HTMLElement).style.color = T.textMed;
+          }}
         >
-          <span style={{ fontSize: 16 }}>🃏</span>
-          <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: 0.3 }}>Knight Card</span>
+          <span style={{ fontSize: 18 }}>🃏</span>
+          <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em" }}>Knight Card</span>
         </Link>
       </div>
 
       <style>{`
-        @keyframes postGameAppear {
+        @keyframes postGameIn {
           from { opacity: 0; transform: translateY(20px) scale(0.97); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
@@ -402,6 +504,37 @@ export default function PostGameScreen({
         blockedKingdomName={forkForest?.name}
         blockedKingdomIcon="🌲"
       />
+    </div>
+  );
+}
+
+function SectionLabel({ num, text, tone }: { num: string; text: string; tone: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 8, padding: "0 4px" }}>
+      <span
+        style={{
+          fontFamily: T.fontDisplay,
+          fontStyle: "italic",
+          fontSize: 14,
+          fontWeight: 600,
+          color: tone,
+          letterSpacing: 0.3,
+        }}
+      >
+        {num}
+      </span>
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 800,
+          color: tone,
+          letterSpacing: "0.2em",
+          textTransform: "uppercase",
+          fontFamily: T.fontUI,
+        }}
+      >
+        {text}
+      </span>
     </div>
   );
 }

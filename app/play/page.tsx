@@ -307,7 +307,7 @@ export default function PlayPage() {
     chess, selected, legalHighlights, lastMove, moveHistory,
     stateHistory, status, playerName, playerAge, difficulty,
     coachMessages, coachLoading, showPromo, botThinking, screen,
-    progression, lastXPGain, justRankedUp, ahaCelebration, boardAnnotation,
+    progression, lastXPGain, justRankedUp, ahaCelebration, boardAnnotation, voicePlayback,
   } = store;
 
   useEffect(() => {
@@ -320,6 +320,45 @@ export default function PlayPage() {
     store.hydrateProgression();
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Voice-synced annotation reveal:
+  // - `pendingAnnotationRef` holds the annotation we generated for the
+  //   current move but haven't yet shown — we want it to appear at the
+  //   exact moment Coach Pawn starts speaking, not when the move was made.
+  // - `annotationFallbackTimerRef` fires the annotation if voice never
+  //   reaches "playing" (voice disabled, audio failed, etc.).
+  // - `annotationClearTimerRef` is the post-show fade-out timer.
+  const pendingAnnotationRef = useRef<typeof boardAnnotation>(null);
+  const annotationFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const annotationClearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // When voice transitions to "playing", promote the pending annotation
+  // to the live store slot so it reveals in sync with Coach Pawn's voice.
+  useEffect(() => {
+    if (voicePlayback !== "playing") return;
+    const a = pendingAnnotationRef.current;
+    if (!a) return;
+    pendingAnnotationRef.current = null;
+    if (annotationFallbackTimerRef.current) {
+      clearTimeout(annotationFallbackTimerRef.current);
+      annotationFallbackTimerRef.current = null;
+    }
+    store.setBoardAnnotation(a);
+    if (annotationClearTimerRef.current) clearTimeout(annotationClearTimerRef.current);
+    annotationClearTimerRef.current = setTimeout(
+      () => store.setBoardAnnotation(null),
+      a.duration ?? 5000,
+    );
+  }, [voicePlayback, store]);
+
+  // Cleanup pending timers on unmount so a stale annotation doesn't pop
+  // onto the board after the user navigates away.
+  useEffect(() => {
+    return () => {
+      if (annotationFallbackTimerRef.current) clearTimeout(annotationFallbackTimerRef.current);
+      if (annotationClearTimerRef.current) clearTimeout(annotationClearTimerRef.current);
+    };
   }, []);
 
   // Diagnostic: press `a` while on /play?debug=annotations to fire a
@@ -466,16 +505,36 @@ export default function PlayPage() {
     // Visual annotation — illustrate what just happened on the board.
     // Tactics ALWAYS annotate (a fork is a teaching moment whether or
     // not Coach Pawn happened to roll a "speak" this turn). Non-tactic
-    // annotations only fire when Coach is also speaking, so the visual
-    // doesn't show up out of nowhere on routine moves.
+    // annotations only fire when Coach is also speaking.
+    //
+    // Reveal timing is voice-synced: stash the annotation as "pending",
+    // then push it to the store the moment audio actually starts
+    // playing. If voice is off/disabled or never starts, push it after
+    // a short fallback so the visual still shows up.
     if (analysis) {
       const hasTactic = analysis.tactics?.some((t) => t.detected);
       if (hasTactic || willCoach) {
         const annotation = generateAnnotation(analysis, analysis.tactics ?? [], move);
         if (annotation) {
-          store.setBoardAnnotation(annotation);
-          const dur = annotation.duration ?? 5000;
-          setTimeout(() => store.setBoardAnnotation(null), dur);
+          pendingAnnotationRef.current = annotation;
+          // Fallback timer: if voice never reaches "playing" within
+          // 1.6s (audio failed, voice disabled, or coach silent), show
+          // the annotation anyway so the kid isn't left wondering.
+          if (annotationFallbackTimerRef.current) {
+            clearTimeout(annotationFallbackTimerRef.current);
+          }
+          annotationFallbackTimerRef.current = setTimeout(() => {
+            if (pendingAnnotationRef.current) {
+              const a = pendingAnnotationRef.current;
+              pendingAnnotationRef.current = null;
+              store.setBoardAnnotation(a);
+              if (annotationClearTimerRef.current) clearTimeout(annotationClearTimerRef.current);
+              annotationClearTimerRef.current = setTimeout(
+                () => store.setBoardAnnotation(null),
+                a.duration ?? 5000,
+              );
+            }
+          }, 1600);
         }
       }
     }
@@ -763,6 +822,7 @@ export default function PlayPage() {
             status={status}
             botThinking={botThinking}
             annotation={boardAnnotation}
+            voicePlaying={voicePlayback === "playing"}
             onSquareClick={handleSquareClick}
             onPromo={handlePromo}
           />

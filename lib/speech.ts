@@ -26,17 +26,6 @@ function pickFallbackVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice
   return local ?? pool[0];
 }
 
-function speakViaBrowser(text: string, voice: SpeechSynthesisVoice | null) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  if (voice) utter.voice = voice;
-  utter.rate = 0.95;
-  utter.pitch = 1.05;
-  utter.volume = 1;
-  window.speechSynthesis.speak(utter);
-}
-
 export function useSpeech() {
   const [enabled, setEnabled] = useState(false);
   const [supported, setSupported] = useState(false);
@@ -46,6 +35,7 @@ export function useSpeech() {
   // when a newer message arrives.
   const playTokenRef = useRef(0);
   const recordVoiceUsage = useGameStore((s) => s.recordVoiceUsage);
+  const setVoicePlayback = useGameStore((s) => s.setVoicePlayback);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -95,7 +85,8 @@ export function useSpeech() {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
-  }, []);
+    setVoicePlayback("idle");
+  }, [setVoicePlayback]);
 
   const toggle = useCallback(() => {
     setEnabled((prev) => {
@@ -110,10 +101,11 @@ export function useSpeech() {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
         }
+        setVoicePlayback("idle");
       }
       return next;
     });
-  }, []);
+  }, [setVoicePlayback]);
 
   const speak = useCallback(async (text: string) => {
     if (!enabled || typeof window === "undefined") return;
@@ -121,6 +113,7 @@ export function useSpeech() {
     if (!clean) return;
 
     const myToken = ++playTokenRef.current;
+    setVoicePlayback("loading");
 
     // Try ElevenLabs first.
     try {
@@ -145,8 +138,24 @@ export function useSpeech() {
       // Free the old object URL when a new one replaces it.
       const prevSrc = audio.src;
       audio.src = url;
-      audio.onended = () => URL.revokeObjectURL(url);
-      audio.onerror = () => URL.revokeObjectURL(url);
+      // Lifecycle wiring — annotation reveal hooks onto these states.
+      // onplaying fires the moment audio leaves the speaker, which is
+      // what we mean by "voice is playing now"; loadeddata/canplay are
+      // too eager (audio is ready but not yet audible).
+      const handlePlaying = () => {
+        if (myToken === playTokenRef.current) setVoicePlayback("playing");
+      };
+      const handleEnded = () => {
+        URL.revokeObjectURL(url);
+        if (myToken === playTokenRef.current) setVoicePlayback("idle");
+      };
+      const handleError = () => {
+        URL.revokeObjectURL(url);
+        if (myToken === playTokenRef.current) setVoicePlayback("idle");
+      };
+      audio.onplaying = handlePlaying;
+      audio.onended = handleEnded;
+      audio.onerror = handleError;
       if (prevSrc && prevSrc.startsWith("blob:")) URL.revokeObjectURL(prevSrc);
 
       await audio.play();
@@ -160,10 +169,30 @@ export function useSpeech() {
 
     if (myToken !== playTokenRef.current) return;
     if ("speechSynthesis" in window) {
-      speakViaBrowser(clean, fallbackVoiceRef.current);
+      // Browser TTS doesn't expose a reliable per-utterance "playing"
+      // event across browsers, so we approximate: state goes to
+      // "playing" when speak() returns, and to "idle" when the
+      // utterance ends.
+      const utter = new SpeechSynthesisUtterance(clean);
+      if (fallbackVoiceRef.current) utter.voice = fallbackVoiceRef.current;
+      utter.rate = 0.95;
+      utter.pitch = 1.05;
+      utter.volume = 1;
+      utter.onstart = () => {
+        if (myToken === playTokenRef.current) setVoicePlayback("playing");
+      };
+      utter.onend = () => {
+        if (myToken === playTokenRef.current) setVoicePlayback("idle");
+      };
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(utter);
       recordVoiceUsage(clean.length, "fallback");
+      return;
     }
-  }, [enabled, recordVoiceUsage]);
+
+    // No usable voice anywhere — clear the loading state.
+    setVoicePlayback("idle");
+  }, [enabled, recordVoiceUsage, setVoicePlayback]);
 
   return { enabled, supported, toggle, speak, stop };
 }

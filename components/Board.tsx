@@ -24,13 +24,14 @@ interface BoardProps {
   status: string;
   botThinking: boolean;
   annotation?: BoardAnnotation | null;
+  voicePlaying?: boolean;
   onSquareClick: (r: number, c: number) => void;
   onPromo: (piece: string) => void;
 }
 
 export default function Board({
   chess, selected, legalHighlights, lastMove,
-  showPromo, status, botThinking, annotation, onSquareClick, onPromo,
+  showPromo, status, botThinking, annotation, voicePlaying, onSquareClick, onPromo,
 }: BoardProps) {
   const board = chess.board();
   const inCheck = chess.isCheck();
@@ -190,7 +191,7 @@ export default function Board({
         </div>
         {/* Coach annotation overlay — arrows, circles, square highlights.
             Sits inside the rounded clip so it never spills past the board. */}
-        <BoardAnnotations annotation={annotation ?? null} />
+        <BoardAnnotations annotation={annotation ?? null} voicePlaying={voicePlaying} />
       </div>
 
       {/* Promotion modal */}

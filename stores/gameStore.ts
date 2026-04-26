@@ -128,6 +128,11 @@ interface GameStore {
   // on the next move so old arrows don't linger over a fresh position)
   boardAnnotation: BoardAnnotation | null;
 
+  // Coach Pawn audio playback state — drives voice-synced annotation
+  // reveal. "loading" = TTS fetch in flight, "playing" = audio is
+  // actually coming out of the speaker, "idle" = nothing to hear.
+  voicePlayback: "idle" | "loading" | "playing";
+
   // Actions
   setSettings: (name: string, age: number, difficulty: Difficulty) => void;
   selectSquare: (square: Square, moves: Move[]) => void;
@@ -154,6 +159,7 @@ interface GameStore {
   setTier: (tier: import("@/lib/progression/types").Tier) => void;
   recordVoiceUsage: (chars: number, kind: "tts" | "fallback") => void;
   setBoardAnnotation: (annotation: BoardAnnotation | null) => void;
+  setVoicePlayback: (state: "idle" | "loading" | "playing") => void;
   ensureMission: () => void;
   handleTacticDetected: (tactic: TacticDetection) => void;
   dismissAha: () => void;
@@ -184,6 +190,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   ahaCelebration: null,
   voiceUsage: DEFAULT_VOICE_USAGE,
   boardAnnotation: null,
+  voicePlayback: "idle",
 
   setSettings: (name, age, difficulty) => {
     // Update streak on session start
@@ -451,6 +458,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   setBoardAnnotation: (annotation) => set({ boardAnnotation: annotation }),
+  setVoicePlayback: (state) => set({ voicePlayback: state }),
 
   recordVoiceUsage: (chars, kind) => {
     const today = todayISO();

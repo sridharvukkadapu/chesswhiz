@@ -21,7 +21,7 @@ export default function OG() {
           justifyContent: "center",
           padding: "60px",
           background:
-            "radial-gradient(ellipse at 50% 30%, #2D1B5C 0%, #15102A 45%, #07050F 100%)",
+            "radial-gradient(ellipse at 50% 20%, #FFF8E8 0%, #F5ECDC 50%, #EDE0C8 100%)",
           fontFamily: "system-ui, sans-serif",
           position: "relative",
         }}
@@ -41,10 +41,10 @@ export default function OG() {
               top: y,
               width: r as number,
               height: r as number,
-              background: "#FCD34D",
+              background: "#FF6B5A",
               borderRadius: "50%",
-              opacity: 0.7,
-              boxShadow: "0 0 8px rgba(252,211,77,0.9)",
+              opacity: 0.35,
+              boxShadow: "0 0 8px rgba(255,107,90,0.5)",
             }}
           />
         ))}
@@ -54,7 +54,7 @@ export default function OG() {
           style={{
             display: "flex",
             filter:
-              "drop-shadow(0 0 60px rgba(245,182,56,0.55)) drop-shadow(0 12px 24px rgba(0,0,0,0.5))",
+              "drop-shadow(0 0 60px rgba(255,107,90,0.40)) drop-shadow(0 12px 24px rgba(31,42,68,0.25))",
             marginBottom: 30,
           }}
         >
@@ -108,7 +108,7 @@ export default function OG() {
             fontStyle: "italic",
             letterSpacing: -2,
             background:
-              "linear-gradient(135deg, #C7940A 0%, #FCD34D 25%, #F5B638 50%, #FFE9A8 65%, #C7940A 100%)",
+              "linear-gradient(135deg, #C8441A 0%, #FF6B5A 25%, #FF8E70 50%, #F2C94C 75%, #C8441A 100%)",
             backgroundClip: "text",
             color: "transparent",
             lineHeight: 1,
@@ -123,7 +123,7 @@ export default function OG() {
             display: "flex",
             marginTop: 22,
             fontSize: 26,
-            color: "#D6C8A8",
+            color: "#5C6580",
             letterSpacing: 8,
             textTransform: "uppercase",
             paddingLeft: 8,
@@ -139,7 +139,7 @@ export default function OG() {
             position: "absolute",
             bottom: 50,
             fontSize: 18,
-            color: "#9A8FB5",
+            color: "#9BA1B5",
             letterSpacing: 1.5,
           }}
         >

@@ -5,6 +5,7 @@ import type { TacticDetection, Power } from "@/lib/progression/types";
 import { T } from "@/lib/design/tokens";
 import { useTime, StarField } from "@/lib/design/atmosphere";
 import CoachPawn from "@/components/CoachPawn";
+import { sfx } from "@/lib/audio/sfx";
 
 interface AhaCelebrationProps {
   celebration: { tactic: TacticDetection; power: Power } | null;
@@ -43,6 +44,7 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
 
   useEffect(() => {
     if (!celebration) return;
+    sfx.aha();
     const t = setTimeout(onDismiss, 6000);
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" || e.key === " " || e.key === "Enter") onDismiss();

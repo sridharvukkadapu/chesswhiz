@@ -23,6 +23,7 @@ import PlayerBar from "@/components/PlayerBar";
 import GameStatusBar from "@/components/GameStatus";
 import { Piece } from "@/components/ChessPieces";
 import { GoldFoilText, StarField, MoteField, useTime } from "@/lib/design/atmosphere";
+import { sfx } from "@/lib/audio/sfx";
 import { T } from "@/lib/design/tokens";
 import type { Move } from "@/lib/chess/types";
 import type { PlayerProgression, RankId } from "@/lib/progression/types";
@@ -36,6 +37,7 @@ function XPToast({
   onDone: () => void;
 }) {
   useEffect(() => {
+    sfx.xp();
     const t = setTimeout(onDone, 2200);
     return () => clearTimeout(t);
   }, [gain.timestamp, onDone]);
@@ -82,6 +84,7 @@ function XPToast({
 function RankUpToast({ rankId, onDone }: { rankId: RankId; onDone: () => void }) {
   const rank = RANKS.find((r) => r.id === rankId)!;
   useEffect(() => {
+    sfx.unlock();
     const t = setTimeout(onDone, 4000);
     return () => clearTimeout(t);
   }, [rankId, onDone]);
@@ -429,7 +432,14 @@ export default function PlayPage() {
   useEffect(() => {
     if (coachMessages.length > spokenCount.current) {
       const latest = coachMessages[coachMessages.length - 1];
-      if (latest) speech.speak(latest.text);
+      if (latest) {
+        speech.speak(latest.text);
+        // Cue: gentle chime for each new coach message (skip the first
+        // intro on game start so the kid doesn't get a chime out of nowhere)
+        if (spokenCount.current > 0 || latest.type !== "intro") {
+          sfx.coach();
+        }
+      }
       spokenCount.current = coachMessages.length;
     }
   }, [coachMessages, speech]);
@@ -502,6 +512,23 @@ export default function PlayPage() {
 
     store.makeMove(san, newChess, prevChess, { from: move.from, to: move.to }, newStatus);
 
+    // Pick the most "important" sound for what just happened.
+    // Order matters: end-of-game and check trump capture trump castle
+    // trump promotion trump plain move.
+    if (newStatus === "white_wins" || newStatus === "black_wins") {
+      // The win/lose cue is fired below from grantGameEndXP path.
+    } else if (newChess.isCheck()) {
+      sfx.check();
+    } else if (san.includes("O-O")) {
+      sfx.castle();
+    } else if (san.includes("=")) {
+      sfx.promotion();
+    } else if (san.includes("x")) {
+      sfx.capture();
+    } else {
+      sfx.move();
+    }
+
     if (newStatus !== "playing") {
       const text =
         newStatus === "white_wins"
@@ -514,6 +541,10 @@ export default function PlayPage() {
         text,
       });
       store.grantGameEndXP(newStatus);
+      // End-game cue
+      if (newStatus === "white_wins") sfx.win();
+      else if (newStatus === "black_wins") sfx.lose();
+      else sfx.draw();
       return;
     }
 
@@ -569,6 +600,15 @@ export default function PlayPage() {
           const botStatus = getGameStatus(afterBot);
           store.makeMove(botSAN, afterBot, newChess, { from: botMove.from, to: botMove.to }, botStatus);
 
+          // Bot move cue (same priority order as the player's path)
+          if (botStatus === "playing") {
+            if (afterBot.isCheck()) sfx.check();
+            else if (botSAN.includes("O-O")) sfx.castle();
+            else if (botSAN.includes("=")) sfx.promotion();
+            else if (botSAN.includes("x")) sfx.capture();
+            else sfx.move();
+          }
+
           const botAnalysis = analyzeMoveQuality(newChess, afterBot, botMove);
           const botTactics = botAnalysis?.tactics?.filter((t) => t.detected) ?? [];
           if (botTactics.length > 0 && botAnalysis) {
@@ -601,6 +641,8 @@ export default function PlayPage() {
               text,
             });
             store.grantGameEndXP(botStatus);
+            if (botStatus === "black_wins") sfx.lose();
+            else sfx.draw();
           }
         }
         store.setBotThinking(false);

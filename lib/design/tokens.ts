@@ -101,6 +101,22 @@ export const T = {
   shadowCard: "0 12px 40px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35)",
   shadowDeep: "0 30px 80px rgba(0,0,0,0.65), 0 4px 12px rgba(0,0,0,0.45)",
 
+  // ── Elevation scale ──
+  // Five-step shadow ladder. Use these instead of inventing per-component
+  // shadow strings.
+  //   e0 — flush, no shadow
+  //   e1 — chip, micro-card                 (small lift, e.g. captured pieces)
+  //   e2 — card, primary surface             (default for content cards)
+  //   e3 — sticky bar, header                (low blur, contact shadow)
+  //   e4 — modal, sheet, post-game            (shadowCard tier)
+  //   e5 — peak overlay, AhaCelebration       (shadowDeep tier)
+  e0: "none",
+  e1: "0 2px 6px rgba(0,0,0,0.18)",
+  e2: "0 6px 18px rgba(0,0,0,0.32), 0 2px 4px rgba(0,0,0,0.18)",
+  e3: "0 8px 24px rgba(0,0,0,0.40), 0 2px 6px rgba(0,0,0,0.22)",
+  e4: "0 12px 40px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.35)",
+  e5: "0 30px 80px rgba(0,0,0,0.65), 0 4px 12px rgba(0,0,0,0.45)",
+
   // ── Gradients ──
   bgRadial:        "radial-gradient(ellipse at 50% 30%, #2D1B5C 0%, #15102A 45%, #07050F 100%)",
   bgRadialAmber:   "radial-gradient(ellipse at 50% 40%, #4A2E0F 0%, #1A1238 50%, #07050F 100%)",

@@ -249,7 +249,7 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
                 border: `1.5px solid ${s.border}`,
                 borderRadius: 18,
                 padding: "14px 18px",
-                boxShadow: "inset 0 1px 0 rgba(252,211,77,0.05), 0 8px 22px rgba(0,0,0,0.32)",
+                boxShadow: `inset 0 1px 0 rgba(252,211,77,0.05), ${T.e2}`,
               }}
             >
               {/* tail */}

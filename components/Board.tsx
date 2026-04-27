@@ -185,10 +185,10 @@ export default function Board({
         style={{
           position: "absolute",
           inset: 0,
-          background: "linear-gradient(135deg, #5C3A1F 0%, #3D2615 50%, #2A180A 100%)",
+          background: "linear-gradient(135deg, #5C3A22 0%, #3D2A1B 50%, #2A1A0A 100%)",
           borderRadius: 12,
           boxShadow:
-            "0 30px 90px rgba(0,0,0,0.7), 0 0 0 2px rgba(245,182,56,0.25), inset 0 2px 4px rgba(255,200,120,0.15), inset 0 -2px 4px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(252,211,77,0.4)",
+            "0 16px 50px rgba(31,42,68,0.28), 0 0 0 2px rgba(192,154,110,0.40), inset 0 2px 4px rgba(255,220,160,0.18), inset 0 -2px 4px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(242,201,76,0.35)",
         }}
       />
 
@@ -231,8 +231,8 @@ export default function Board({
               !!slide && slide.toR === r && slide.toC === c && slideProgress < 1;
 
             const baseGradient = isLight
-              ? "linear-gradient(180deg, #F5E2B8 0%, #E8CD9C 100%)"
-              : "linear-gradient(180deg, #B88652 0%, #9C6E3C 100%)";
+              ? "linear-gradient(180deg, #F2E2C2 0%, #E8D3A8 100%)"
+              : "linear-gradient(180deg, #C99A6E 0%, #B0824A 100%)";
 
             const overlays: React.ReactNode[] = [];
             if (isLast) {
@@ -242,7 +242,7 @@ export default function Board({
                   style={{
                     position: "absolute",
                     inset: 0,
-                    background: "rgba(245,182,56,0.32)",
+                    background: "rgba(242,201,76,0.38)",
                     pointerEvents: "none",
                   }}
                 />,
@@ -411,8 +411,8 @@ export default function Board({
             justifyContent: "center",
             zIndex: Z.overlay,
             borderRadius: 12,
-            background: "rgba(7,5,15,0.78)",
-            backdropFilter: "blur(8px)",
+            background: "rgba(31,42,68,0.55)",
+            backdropFilter: "blur(10px)",
           }}
         >
           <div
@@ -423,8 +423,8 @@ export default function Board({
               gap: 16,
               padding: "24px 28px",
               borderRadius: 22,
-              background: T.velvet,
-              border: `1.5px solid ${T.borderStrong}`,
+              background: "#FFFCF5",
+              border: `1.5px solid ${T.borderCard}`,
               boxShadow: T.shadowDeep,
               animation: "promoAppear 0.4s cubic-bezier(0.34,1.56,0.64,1) both",
             }}
@@ -435,7 +435,7 @@ export default function Board({
                 fontWeight: 700,
                 letterSpacing: "0.2em",
                 textTransform: "uppercase",
-                color: T.textLo,
+                color: T.inkLow,
                 fontFamily: T.fontUI,
               }}
             >
@@ -454,19 +454,19 @@ export default function Board({
                     width: 64,
                     height: 64,
                     borderRadius: 14,
-                    background: T.amethystBg,
+                    background: "#F5ECDC",
                     border: `1.5px solid ${T.border}`,
                     cursor: "pointer",
                     transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = T.amber;
-                    (e.currentTarget as HTMLElement).style.boxShadow = T.glowAmber;
+                    (e.currentTarget as HTMLElement).style.borderColor = T.coral;
+                    (e.currentTarget as HTMLElement).style.boxShadow = T.glowCoral;
                     (e.currentTarget as HTMLElement).style.transform = "scale(1.08)";
                   }}
                   onFocus={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = T.amber;
-                    (e.currentTarget as HTMLElement).style.boxShadow = T.glowAmber;
+                    (e.currentTarget as HTMLElement).style.borderColor = T.coral;
+                    (e.currentTarget as HTMLElement).style.boxShadow = T.glowCoral;
                     (e.currentTarget as HTMLElement).style.transform = "scale(1.08)";
                   }}
                   onMouseLeave={(e) => {

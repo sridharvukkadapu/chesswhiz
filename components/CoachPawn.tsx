@@ -4,16 +4,11 @@ import React from "react";
 import { useTime } from "@/lib/design/atmosphere";
 
 // ═══════════════════════════════════════════════════════════════
-// Coach Pawn — the brand mascot.
-// Direct port of coach-pawn.jsx from the design handoff.
-// Animations preserved exactly:
-//   - gentle breathing bob (sin wave on Y)
-//   - blink every ~3.5s
-//   - talking mouth opens to audio rhythm
-//   - eye tracks slightly (sin/cos drift)
-//   - cape sways
-//   - cheer mode: eye sparkles, joyful smile, orbiting sparkles
-//   - sad mode: downturned eyes + brows + frown
+// Coach Pawn — Warm Character redesign.
+// Ported from the v2/warm/coach.jsx design handoff.
+// Two modes: 'kid' (rounded beanie, bright, friendly) and
+//            'adult' (glasses, distinguished).
+// Expressions: idle | talking | cheer | sad | aha
 // ═══════════════════════════════════════════════════════════════
 
 export type CoachExpression = "idle" | "talking" | "cheer" | "sad" | "aha";
@@ -23,32 +18,28 @@ interface Props {
   expression?: CoachExpression;
   glow?: boolean;
   style?: React.CSSProperties;
+  mode?: "kid" | "adult";
 }
 
 export default function CoachPawn({
-  size = 220, expression = "idle", glow = true, style = {},
+  size = 220, expression = "idle", glow = true, style = {}, mode = "kid",
 }: Props) {
   const time = useTime();
 
-  // gentle breathing bob (~1.6 Hz)
-  const bob = Math.sin(time * 1.6) * 2;
-  // eye blink cycle every ~3.5s, with a brief 5% blink window
+  // gentle breathing bob
+  const bob = Math.sin(time * 1.6) * 2.5;
+  // blink every ~3.5s
   const blinkPhase = (time % 3.5) / 3.5;
   const blinking = blinkPhase > 0.94 && blinkPhase < 0.99;
-  // talking mouth animation
+  // talking mouth
   const talking = expression === "talking";
-  const mouthOpen = talking ? 0.5 + 0.5 * Math.abs(Math.sin(time * 9)) : 0;
+  const mouthOpen = talking ? 0.5 + 0.5 * Math.abs(Math.sin(time * 6)) : 0.15;
 
   const isCheer = expression === "cheer" || expression === "aha";
-  const isSad = expression === "sad";
+  const isSad   = expression === "sad";
 
-  // Eye direction (tracks slightly)
-  const eyeOffsetX = isCheer ? 0 : Math.sin(time * 0.7) * 1.2;
-  const eyeOffsetY = isCheer ? -1.5 : isSad ? 1.5 : Math.cos(time * 0.5) * 0.8;
-
-  const pupilR = isCheer ? 5 : isSad ? 3 : 4;
-  const cheekAlpha = isCheer ? 0.85 : 0.55;
-  const capeSwayDeg = Math.sin(time * 1.2) * 4 + (isCheer ? 6 : 0);
+  // Speaking ring pulse
+  const ringR = talking ? (75 + Math.sin(time * 4) * 4) : 0;
 
   return (
     <div
@@ -57,131 +48,138 @@ export default function CoachPawn({
         height: size,
         transform: `translateY(${bob}px)`,
         filter: glow
-          ? "drop-shadow(0 0 24px rgba(252,211,77,0.45)) drop-shadow(0 8px 16px rgba(0,0,0,0.5))"
+          ? "drop-shadow(0 4px 20px rgba(255,107,90,0.30)) drop-shadow(0 8px 24px rgba(31,42,68,0.18))"
           : "none",
         ...style,
       }}
       aria-hidden
     >
-      <svg viewBox="0 0 200 200" width="100%" height="100%" style={{ overflow: "visible" }}>
+      <svg viewBox="0 0 220 220" width="100%" height="100%" style={{ overflow: "visible" }}>
         <defs>
-          <radialGradient id="cpBody" cx="0.4" cy="0.35" r="0.7">
-            <stop offset="0%" stopColor="#FFFAEB" />
-            <stop offset="60%" stopColor="#F5E2B0" />
-            <stop offset="100%" stopColor="#B8923D" />
+          <radialGradient id="cpBodyWarm" cx="0.4" cy="0.35" r="0.7">
+            <stop offset="0%" stopColor={mode === "kid" ? "#FFE7C9" : "#EAD8C0"} />
+            <stop offset="70%" stopColor={mode === "kid" ? "#F5C896" : "#D9C0A0"} />
+            <stop offset="100%" stopColor="#C8965A" />
           </radialGradient>
-          <radialGradient id="cpHead" cx="0.4" cy="0.3" r="0.7">
-            <stop offset="0%" stopColor="#FFFEF6" />
-            <stop offset="55%" stopColor="#F8EDC7" />
-            <stop offset="100%" stopColor="#C29A45" />
+          <radialGradient id="cpHeadWarm" cx="0.38" cy="0.30" r="0.7">
+            <stop offset="0%" stopColor={mode === "kid" ? "#FFF3DC" : "#F5ECDC"} />
+            <stop offset="60%" stopColor={mode === "kid" ? "#FFDFA8" : "#E8D5AA"} />
+            <stop offset="100%" stopColor="#C8965A" />
           </radialGradient>
-          <linearGradient id="cpCape" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#9333EA" />
-            <stop offset="60%" stopColor="#5B1AA0" />
-            <stop offset="100%" stopColor="#2E0A5C" />
+          <radialGradient id="cpCheekWarm" cx="0.5" cy="0.5" r="0.5">
+            <stop offset="0%" stopColor="#F4A6B8" stopOpacity="0.9" />
+            <stop offset="100%" stopColor="#F4A6B8" stopOpacity="0" />
+          </radialGradient>
+          <linearGradient id="cpCoralGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FF8E70" />
+            <stop offset="100%" stopColor="#E04A3A" />
           </linearGradient>
-          <linearGradient id="cpGold" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#FCD34D" />
-            <stop offset="100%" stopColor="#B07A0E" />
+          <linearGradient id="cpBeanieGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#FF8E70" />
+            <stop offset="100%" stopColor="#FF6B5A" />
           </linearGradient>
-          <radialGradient id="cpCheek" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0%" stopColor="#FF8FA8" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#FF8FA8" stopOpacity="0" />
-          </radialGradient>
         </defs>
 
         {/* shadow */}
-        <ellipse cx="100" cy="186" rx="45" ry="6" fill="rgba(0,0,0,0.35)" filter="blur(2px)" />
+        <ellipse cx="110" cy="208" rx="55" ry="8" fill="rgba(31,42,68,0.15)" />
 
-        {/* CAPE - behind body */}
-        <g style={{ transformOrigin: "100px 95px", transform: `rotate(${capeSwayDeg * 0.3}deg)` }}>
-          <path
-            d="M 60 95 Q 50 130 55 175 Q 100 165 145 175 Q 150 130 140 95 Z"
-            fill="url(#cpCape)"
-            stroke="#1F0A38"
-            strokeWidth="1.5"
-          />
-          {/* gold trim */}
-          <path
-            d="M 60 95 Q 50 130 55 175 Q 100 165 145 175 Q 150 130 140 95"
-            fill="none"
-            stroke="url(#cpGold)"
-            strokeWidth="2.5"
-          />
-          {/* embroidered star */}
-          <g transform="translate(100 145)">
-            <path
-              d="M 0 -8 L 2 -2 L 8 -2 L 3 2 L 5 8 L 0 4 L -5 8 L -3 2 L -8 -2 L -2 -2 Z"
-              fill="url(#cpGold)"
-              opacity="0.9"
-            />
-          </g>
-        </g>
-
-        {/* BODY (lower bulb) */}
+        {/* BODY — pawn-shaped pedestal */}
         <path
-          d="M 70 130 Q 65 105 80 95 Q 100 90 120 95 Q 135 105 130 130 Q 145 145 140 165 Q 100 175 60 165 Q 55 145 70 130 Z"
-          fill="url(#cpBody)"
-          stroke="#7A5418"
-          strokeWidth="1.8"
+          d="M50 210 Q50 188 62 182 L72 158 Q62 146 72 132 L80 118 Q62 96 110 90 Q158 96 140 118 L148 132 Q158 146 148 158 L158 182 Q170 188 170 210 Z"
+          fill="url(#cpBodyWarm)"
+          stroke="#3D2A1B"
+          strokeWidth="3"
           strokeLinejoin="round"
         />
 
-        {/* COLLAR ring (between head and body) */}
-        <ellipse cx="100" cy="92" rx="22" ry="6" fill="url(#cpGold)" stroke="#7A5418" strokeWidth="1" />
-        <ellipse cx="100" cy="91" rx="22" ry="3" fill="#FFE9A8" opacity="0.7" />
+        {/* HEAD */}
+        <circle
+          cx="110"
+          cy="78"
+          r="44"
+          fill="url(#cpHeadWarm)"
+          stroke="#3D2A1B"
+          strokeWidth="3"
+        />
+        {/* highlight */}
+        <ellipse cx="94" cy="60" rx="16" ry="10" fill="#FFFFFF" opacity="0.45" />
 
-        {/* HEAD (sphere) */}
-        <circle cx="100" cy="65" r="38" fill="url(#cpHead)" stroke="#7A5418" strokeWidth="1.8" />
-        <ellipse cx="86" cy="50" rx="14" ry="9" fill="#FFFFFF" opacity="0.55" />
+        {/* KID: beanie hat */}
+        {mode === "kid" && (
+          <g>
+            <path
+              d="M68 56 Q110 26 152 56 L152 48 Q110 18 68 48 Z"
+              fill="url(#cpBeanieGrad)"
+              stroke="#3D2A1B"
+              strokeWidth="3"
+              strokeLinejoin="round"
+            />
+            {/* pompom */}
+            <circle cx="110" cy="28" r="9" fill="#F2C94C" stroke="#3D2A1B" strokeWidth="2.5" />
+            <circle cx="110" cy="28" r="5" fill="#FDE27A" />
+          </g>
+        )}
 
-        {/* CROWN — tiny gold circlet */}
-        <g transform="translate(100 30)">
-          <path
-            d="M -16 0 L -10 -8 L -4 -2 L 0 -10 L 4 -2 L 10 -8 L 16 0 L 14 4 L -14 4 Z"
-            fill="url(#cpGold)"
-            stroke="#7A5418"
-            strokeWidth="1.2"
-            strokeLinejoin="round"
-          />
-          <circle cx="0" cy="-8" r="1.5" fill="#FF6B6B" />
-          <circle cx="-10" cy="-6" r="1" fill="#7DA8FF" />
-          <circle cx="10" cy="-6" r="1" fill="#34D399" />
-        </g>
+        {/* ADULT: glasses + hair */}
+        {mode === "adult" && (
+          <g>
+            <circle cx="90" cy="78" r="12" fill="none" stroke="#3D2A1B" strokeWidth="2.5" />
+            <circle cx="130" cy="78" r="12" fill="none" stroke="#3D2A1B" strokeWidth="2.5" />
+            <line x1="102" y1="78" x2="118" y2="78" stroke="#3D2A1B" strokeWidth="2.5" />
+            <line x1="78" y1="78" x2="72" y2="76" stroke="#3D2A1B" strokeWidth="2" />
+            <line x1="142" y1="78" x2="148" y2="76" stroke="#3D2A1B" strokeWidth="2" />
+            <path
+              d="M80 50 Q90 40 100 48 Q110 36 120 46 Q130 38 140 50"
+              fill="none"
+              stroke="#3D2A1B"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </g>
+        )}
 
         {/* CHEEKS */}
-        <ellipse cx="76" cy="76" rx="8" ry="5" fill="url(#cpCheek)" opacity={cheekAlpha} />
-        <ellipse cx="124" cy="76" rx="8" ry="5" fill="url(#cpCheek)" opacity={cheekAlpha} />
+        <ellipse cx="78" cy="92" rx="10" ry="7" fill="url(#cpCheekWarm)" opacity={isCheer ? 0.9 : 0.65} />
+        <ellipse cx="142" cy="92" rx="10" ry="7" fill="url(#cpCheekWarm)" opacity={isCheer ? 0.9 : 0.65} />
 
-        {/* EYES — big, expressive */}
+        {/* EYES */}
         {blinking ? (
           <>
-            <path d="M 78 64 Q 84 67 90 64" stroke="#1A1210" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-            <path d="M 110 64 Q 116 67 122 64" stroke="#1A1210" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <path d="M80 76 Q88 80 96 76" stroke="#3D2A1B" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <path d="M124 76 Q132 80 140 76" stroke="#3D2A1B" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+          </>
+        ) : mode === "adult" ? (
+          // Adult eyes through glasses
+          <>
+            <ellipse cx="90" cy="79" rx="4" ry={isSad ? 3.5 : 4.5} fill="#3D2A1B" />
+            <ellipse cx="130" cy="79" rx="4" ry={isSad ? 3.5 : 4.5} fill="#3D2A1B" />
+            <circle cx="91.5" cy="77" r="1.5" fill="#FFF" />
+            <circle cx="131.5" cy="77" r="1.5" fill="#FFF" />
           </>
         ) : isSad ? (
           <>
-            <ellipse cx="84" cy="65" rx="6" ry="7" fill="#FFFFFF" />
-            <ellipse cx="116" cy="65" rx="6" ry="7" fill="#FFFFFF" />
-            <circle cx={84 + eyeOffsetX} cy={67 + eyeOffsetY} r={pupilR} fill="#1A1210" />
-            <circle cx={116 + eyeOffsetX} cy={67 + eyeOffsetY} r={pupilR} fill="#1A1210" />
-            <circle cx={84 + eyeOffsetX + 1} cy={66 + eyeOffsetY} r="1.2" fill="#FFF" />
-            <circle cx={116 + eyeOffsetX + 1} cy={66 + eyeOffsetY} r="1.2" fill="#FFF" />
-            <path d="M 76 56 Q 82 58 90 57" stroke="#1A1210" strokeWidth="2" fill="none" strokeLinecap="round" />
-            <path d="M 110 57 Q 118 58 124 56" stroke="#1A1210" strokeWidth="2" fill="none" strokeLinecap="round" />
+            <ellipse cx="88" cy="80" rx="5" ry="6" fill="#FFFFFF" />
+            <ellipse cx="132" cy="80" rx="5" ry="6" fill="#FFFFFF" />
+            <ellipse cx="88" cy="82" rx="3.5" ry="4" fill="#3D2A1B" />
+            <ellipse cx="132" cy="82" rx="3.5" ry="4" fill="#3D2A1B" />
+            <circle cx="89" cy="80" r="1.2" fill="#FFF" />
+            <circle cx="133" cy="80" r="1.2" fill="#FFF" />
+            {/* sad brows */}
+            <path d="M80 68 Q86 70 94 69" stroke="#3D2A1B" strokeWidth="2" fill="none" strokeLinecap="round" />
+            <path d="M126 69 Q134 70 140 68" stroke="#3D2A1B" strokeWidth="2" fill="none" strokeLinecap="round" />
           </>
         ) : (
           <>
-            <ellipse cx="84" cy="64" rx="6.5" ry={isCheer ? 5 : 7.5} fill="#FFFFFF" />
-            <ellipse cx="116" cy="64" rx="6.5" ry={isCheer ? 5 : 7.5} fill="#FFFFFF" />
-            <circle cx={84 + eyeOffsetX} cy={64 + eyeOffsetY} r={pupilR} fill="#1A1210" />
-            <circle cx={116 + eyeOffsetX} cy={64 + eyeOffsetY} r={pupilR} fill="#1A1210" />
-            <circle cx={84 + eyeOffsetX + 1.5} cy={62.5 + eyeOffsetY} r="1.5" fill="#FFF" />
-            <circle cx={116 + eyeOffsetX + 1.5} cy={62.5 + eyeOffsetY} r="1.5" fill="#FFF" />
+            <ellipse cx="88" cy="78" rx={isCheer ? 5.5 : 5} ry={isCheer ? 6 : 7} fill="#FFFFFF" />
+            <ellipse cx="132" cy="78" rx={isCheer ? 5.5 : 5} ry={isCheer ? 6 : 7} fill="#FFFFFF" />
+            <ellipse cx="88" cy={isCheer ? 77 : 78} rx="3.5" ry={isCheer ? 4 : 4.5} fill="#3D2A1B" />
+            <ellipse cx="132" cy={isCheer ? 77 : 78} rx="3.5" ry={isCheer ? 4 : 4.5} fill="#3D2A1B" />
+            <circle cx="89.5" cy={isCheer ? 75.5 : 76.5} r="1.5" fill="#FFF" />
+            <circle cx="133.5" cy={isCheer ? 75.5 : 76.5} r="1.5" fill="#FFF" />
             {isCheer && (
               <>
-                <circle cx={87} cy={61} r="1" fill="#FCD34D" />
-                <circle cx={119} cy={61} r="1" fill="#FCD34D" />
+                <circle cx="91" cy="73" r="1.2" fill="#F2C94C" />
+                <circle cx="135" cy="73" r="1.2" fill="#F2C94C" />
               </>
             )}
           </>
@@ -189,25 +187,59 @@ export default function CoachPawn({
 
         {/* MOUTH */}
         {isCheer ? (
-          <path d="M 88 82 Q 100 95 112 82 Q 100 90 88 82 Z" fill="#5B1AA0" stroke="#1A1210" strokeWidth="1.5" />
+          <path
+            d="M90 102 Q110 120 130 102 Q110 114 90 102 Z"
+            fill="#3D2A1B"
+            stroke="#3D2A1B"
+            strokeWidth="1.5"
+          />
         ) : isSad ? (
-          <path d="M 90 88 Q 100 82 110 88" stroke="#1A1210" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-        ) : talking ? (
-          <ellipse cx="100" cy="84" rx="5" ry={3 + mouthOpen * 4} fill="#5B1AA0" stroke="#1A1210" strokeWidth="1.5" />
+          <path
+            d="M94 110 Q110 103 126 110"
+            stroke="#3D2A1B"
+            strokeWidth="2.5"
+            fill="none"
+            strokeLinecap="round"
+          />
         ) : (
-          <path d="M 92 84 Q 100 89 108 84" stroke="#1A1210" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          <ellipse
+            cx="110"
+            cy={102}
+            rx="8"
+            ry={3 + mouthOpen * 7}
+            fill="#3D2A1B"
+            opacity="0.85"
+          />
         )}
 
-        {/* aha sparkles around head when cheering */}
+        {/* Speaking ring (talking only) */}
+        {talking && (
+          <circle
+            cx="110"
+            cy="110"
+            r={ringR}
+            fill="none"
+            stroke="#FF6B5A"
+            strokeWidth="2.5"
+            strokeDasharray="4 6"
+            opacity="0.45"
+          />
+        )}
+
+        {/* Cheer sparkles orbiting */}
         {isCheer &&
           [...Array(6)].map((_, i) => {
             const angle = (i / 6) * Math.PI * 2 + time;
-            const r = 50 + Math.sin(time * 3 + i) * 5;
-            const cx = 100 + Math.cos(angle) * r;
-            const cy = 65 + Math.sin(angle) * r * 0.8;
+            const r = 58 + Math.sin(time * 3 + i) * 6;
+            const cx = 110 + Math.cos(angle) * r;
+            const cy = 75 + Math.sin(angle) * r * 0.75;
+            const colors = ["#FF6B5A", "#F2C94C", "#7CB69E", "#7FBFE8", "#F4A6B8", "#FF8E70"];
             return (
               <g key={i} transform={`translate(${cx} ${cy})`}>
-                <path d="M 0 -5 L 1 -1 L 5 0 L 1 1 L 0 5 L -1 1 L -5 0 L -1 -1 Z" fill="#FCD34D" />
+                <path
+                  d="M 0 -5 L 1.2 -1.2 L 5 0 L 1.2 1.2 L 0 5 L -1.2 1.2 L -5 0 L -1.2 -1.2 Z"
+                  fill={colors[i]}
+                />
               </g>
             );
           })}
@@ -216,7 +248,7 @@ export default function CoachPawn({
   );
 }
 
-// Speech bubble — used in landing/onboarding scenes (parchment on dark)
+// Speech bubble — warm parchment style
 export function SpeechBubble({
   text, width = 360, tail = "left", visible = true, opacity = 1, style = {},
 }: {
@@ -233,13 +265,14 @@ export function SpeechBubble({
       style={{
         position: "relative",
         width,
-        background: "linear-gradient(180deg, #FBF6E8 0%, #F5E9C9 100%)",
-        borderRadius: 20,
+        background: "linear-gradient(160deg, #FFFCF5 0%, #F5E9C9 100%)",
+        borderRadius: 22,
         padding: "18px 24px",
-        boxShadow: "0 8px 28px rgba(0,0,0,0.4), inset 0 0 0 2px rgba(245,182,56,0.4)",
-        fontFamily: 'var(--font-jakarta), sans-serif',
+        boxShadow:
+          "0 8px 28px rgba(31,42,68,0.14), inset 0 0 0 1.5px rgba(31,42,68,0.10)",
+        fontFamily: 'var(--font-jakarta), "Plus Jakarta Sans", sans-serif',
         fontSize: 17,
-        color: "#1A1210",
+        color: "#1F2A44",
         lineHeight: 1.5,
         opacity,
         transform: `scale(${0.95 + opacity * 0.05})`,
@@ -251,7 +284,7 @@ export function SpeechBubble({
         aria-hidden
         style={{
           position: "absolute",
-          [tail]: -10,
+          [tail]: -11,
           top: "50%",
           marginTop: -12,
           width: 0,

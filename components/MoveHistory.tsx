@@ -21,8 +21,8 @@ export default function MoveHistory({ moves }: MoveHistoryProps) {
   return (
     <div
       style={{
-        background: "rgba(255,255,255,0.03)",
-        border: `1px solid ${T.border}`,
+        background: "#FFFCF5",
+        border: `1.5px solid ${T.border}`,
         borderRadius: 18,
         padding: "16px 20px",
       }}
@@ -32,7 +32,7 @@ export default function MoveHistory({ moves }: MoveHistoryProps) {
           fontFamily: T.fontUI,
           fontSize: 11,
           fontWeight: 700,
-          color: T.textLo,
+          color: T.inkDim,
           letterSpacing: "0.18em",
           textTransform: "uppercase",
           marginBottom: 12,
@@ -47,7 +47,7 @@ export default function MoveHistory({ moves }: MoveHistoryProps) {
             fontFamily: T.fontUI,
             fontSize: 13,
             fontStyle: "italic",
-            color: T.textDim,
+            color: T.inkDim,
           }}
         >
           Your move first!
@@ -69,7 +69,7 @@ export default function MoveHistory({ moves }: MoveHistoryProps) {
                 style={{
                   fontFamily: T.fontMono,
                   fontSize: 12,
-                  color: T.textDim,
+                  color: T.inkDim,
                   width: 22,
                   textAlign: "right",
                 }}
@@ -81,7 +81,7 @@ export default function MoveHistory({ moves }: MoveHistoryProps) {
                   fontFamily: T.fontMono,
                   fontSize: 13,
                   fontWeight: idx === pairs.length - 1 && !p.b ? 700 : 500,
-                  color: idx === pairs.length - 1 && !p.b ? T.emerald : T.textHi,
+                  color: idx === pairs.length - 1 && !p.b ? T.sage : T.ink,
                 }}
               >
                 {p.w}
@@ -90,7 +90,7 @@ export default function MoveHistory({ moves }: MoveHistoryProps) {
                 style={{
                   fontFamily: T.fontMono,
                   fontSize: 13,
-                  color: T.textLo,
+                  color: T.inkDim,
                 }}
               >
                 {p.b || "—"}

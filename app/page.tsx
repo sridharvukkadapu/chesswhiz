@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { T, KINGDOM_COLORS } from "@/lib/design/tokens";
-import { GoldFoilText, StarField, MoteField, useTime, animate, Easing, usePrefersReducedMotion } from "@/lib/design/atmosphere";
+import { GoldFoilText, MoteField, WarmDust, useTime, animate, Easing, usePrefersReducedMotion } from "@/lib/design/atmosphere";
 import { Piece } from "@/components/ChessPieces";
 import CoachPawn, { SpeechBubble } from "@/components/CoachPawn";
 
@@ -35,11 +35,11 @@ function Reveal({
   const [ref, visible] = useInView();
   const reducedMotion = usePrefersReducedMotion();
   const transforms: Record<string, string> = {
-    up: "translateY(40px)",
-    down: "translateY(-30px)",
-    left: "translateX(50px)",
-    right: "translateX(-50px)",
-    scale: "scale(0.95)",
+    up: "translateY(32px)",
+    down: "translateY(-24px)",
+    left: "translateX(40px)",
+    right: "translateX(-40px)",
+    scale: "scale(0.96)",
   };
   if (reducedMotion) {
     return <div ref={ref} style={style}>{children}</div>;
@@ -50,7 +50,7 @@ function Reveal({
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translate(0) scale(1)" : transforms[direction],
-        transition: `opacity 0.6s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+        transition: `opacity 0.55s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.55s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
         willChange: "opacity, transform",
         ...style,
       }}
@@ -60,96 +60,154 @@ function Reveal({
   );
 }
 
-// ─── Hero — port of scene 1 ──────────────────────────────────────
+// ─── Hero ──────────────────────────────────────────────────────────
 const Hero = React.memo(function Hero() {
   const time = useTime();
-  const bgPulse = 1 + Math.sin(time * 0.6) * 0.02;
-  const kingY = Math.sin(time * 1.2) * 6;
-  const kingRot = Math.sin(time * 0.4) * 3;
+  const knightY = Math.sin(time * 1.1) * 7;
+  const knightRot = Math.sin(time * 0.45) * 4;
+  const queenY = Math.sin(time * 1.3 + 1) * 6;
 
   return (
     <section
       style={{
         position: "relative",
-        minHeight: "min(820px, 100dvh)",
-        padding: "100px 24px 80px",
+        minHeight: "min(860px, 100dvh)",
+        padding: "110px 24px 80px",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         textAlign: "center",
         zIndex: 1,
+        overflow: "hidden",
       }}
     >
-      {/* center vignette aura */}
+      {/* Warm radial glow behind content */}
       <div
         aria-hidden
         style={{
           position: "absolute",
           left: "50%",
-          top: "50%",
-          transform: `translate(-50%, -50%) scale(${bgPulse})`,
-          width: "min(95vw, 900px)",
-          height: "min(95vw, 900px)",
+          top: "45%",
+          transform: "translate(-50%, -50%)",
+          width: "min(95vw, 800px)",
+          height: "min(95vw, 600px)",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(245,182,56,0.30) 0%, rgba(192,132,252,0.15) 40%, transparent 70%)",
-          filter: "blur(20px)",
+            "radial-gradient(circle, rgba(255,180,122,0.22) 0%, rgba(255,107,90,0.10) 45%, transparent 70%)",
+          filter: "blur(30px)",
           pointerEvents: "none",
-          zIndex: 0,
         }}
       />
 
-      {/* King piece */}
-      <Reveal delay={100} direction="scale">
-        <div
+      {/* Floating pieces — left and right decoration */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: "max(5%, 24px)",
+          top: "28%",
+          transform: `translateY(${-knightY}px) rotate(${-knightRot - 8}deg)`,
+          opacity: 0.65,
+        }}
+      >
+        <Piece type="knight" color="white" size={110} />
+      </div>
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          right: "max(5%, 24px)",
+          top: "34%",
+          transform: `translateY(${queenY}px) rotate(${knightRot + 6}deg)`,
+          opacity: 0.65,
+        }}
+      >
+        <Piece type="bishop" color="black" size={95} />
+      </div>
+
+      {/* Eyebrow */}
+      <Reveal delay={100}>
+        <span
           style={{
-            transform: `translateY(${kingY}px) rotate(${kingRot}deg)`,
-            filter: "drop-shadow(0 0 60px rgba(245,182,56,0.55))",
+            display: "inline-block",
+            fontFamily: T.fontUI,
+            fontSize: 12,
+            fontWeight: 800,
+            color: T.coral,
+            letterSpacing: "0.36em",
+            textTransform: "uppercase",
+            paddingLeft: "0.4em",
             marginBottom: 18,
-            zIndex: 1,
+            background: "rgba(255,107,90,0.09)",
+            border: "1.5px solid rgba(255,107,90,0.28)",
+            borderRadius: 100,
+            padding: "6px 18px",
           }}
         >
-          <Piece type="king" color="white" size={180} />
-        </div>
+          Story Mode · 7 Kingdoms
+        </span>
       </Reveal>
 
       {/* Brand wordmark */}
-      <Reveal delay={400} style={{ zIndex: 1 }}>
-        <h1 style={{ margin: 0, lineHeight: 0.95 }}>
-          <GoldFoilText fontSize={92} italic>
-            ChessWhiz
-          </GoldFoilText>
+      <Reveal delay={250} style={{ zIndex: 1 }}>
+        <h1 style={{ margin: "0 0 4px", lineHeight: 0.95 }}>
+          <span
+            style={{
+              fontFamily: T.fontDisplay,
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(72px, 11vw, 140px)",
+              letterSpacing: "-0.03em",
+              color: T.ink,
+              lineHeight: 1,
+              display: "inline",
+            }}
+          >
+            Chess
+          </span>
+          <span
+            style={{
+              fontFamily: T.fontDisplay,
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(72px, 11vw, 140px)",
+              letterSpacing: "-0.03em",
+              color: T.coral,
+              lineHeight: 1,
+              display: "inline",
+            }}
+          >
+            Whiz
+          </span>
         </h1>
       </Reveal>
 
-      {/* Tagline */}
-      <Reveal delay={700} style={{ zIndex: 1 }}>
+      {/* Handwritten tagline */}
+      <Reveal delay={500} style={{ zIndex: 1 }}>
         <div
           style={{
-            marginTop: 20,
-            fontFamily: T.fontUI,
-            fontSize: 16,
-            fontWeight: 400,
-            color: T.textMed,
-            letterSpacing: "0.42em",
-            textTransform: "uppercase",
-            paddingLeft: "0.5em",
+            fontFamily: T.fontHand,
+            fontSize: "clamp(22px, 3.5vw, 40px)",
+            color: T.sageDeep,
+            marginTop: 8,
+            transform: "rotate(-1.5deg)",
+            display: "inline-block",
           }}
         >
-          Every move is a lesson
+          a coach for every age, every level.
         </div>
       </Reveal>
 
       {/* Sub-pitch */}
-      <Reveal delay={900} style={{ zIndex: 1 }}>
+      <Reveal delay={700} style={{ zIndex: 1 }}>
         <p
           style={{
-            marginTop: 26,
-            maxWidth: 560,
+            marginTop: 22,
+            maxWidth: 540,
             fontSize: 17,
-            lineHeight: 1.7,
-            color: T.textMed,
+            lineHeight: 1.72,
+            color: T.inkLow,
             fontFamily: T.fontUI,
           }}
         >
@@ -158,10 +216,10 @@ const Hero = React.memo(function Hero() {
       </Reveal>
 
       {/* CTA */}
-      <Reveal delay={1100} style={{ zIndex: 1 }}>
+      <Reveal delay={900} style={{ zIndex: 1 }}>
         <div
           style={{
-            marginTop: 36,
+            marginTop: 34,
             display: "flex",
             gap: 14,
             flexWrap: "wrap",
@@ -173,24 +231,33 @@ const Hero = React.memo(function Hero() {
             href="/onboard"
             style={{
               display: "inline-block",
-              padding: "18px 40px",
-              background: T.goldFoil,
-              borderRadius: 16,
+              padding: "18px 44px",
+              background: T.coral,
+              borderRadius: 100,
               fontFamily: T.fontUI,
               fontSize: 17,
               fontWeight: 800,
-              color: T.inkDeep,
-              letterSpacing: "0.06em",
+              color: "#FFFCF5",
+              letterSpacing: "0.02em",
               textDecoration: "none",
-              boxShadow: T.glowAmber,
+              boxShadow: T.glowCoral,
+              transition: "transform 150ms ease, box-shadow 150ms ease",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+              (e.currentTarget as HTMLElement).style.boxShadow = "0 0 28px rgba(255,107,90,0.65), 0 0 60px rgba(255,107,90,0.30)";
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+              (e.currentTarget as HTMLElement).style.boxShadow = T.glowCoral;
             }}
           >
-            ✦ Start playing free ✦
+            Start playing free →
           </Link>
           <span
             style={{
               fontSize: 13,
-              color: T.textLo,
+              color: T.inkDim,
               fontFamily: T.fontUI,
             }}
           >
@@ -199,12 +266,12 @@ const Hero = React.memo(function Hero() {
         </div>
       </Reveal>
 
-      {/* Hero badges */}
-      <Reveal delay={1300} style={{ zIndex: 1 }}>
+      {/* Trust badges */}
+      <Reveal delay={1100} style={{ zIndex: 1 }}>
         <div
           style={{
             display: "flex",
-            gap: 32,
+            gap: 28,
             marginTop: 44,
             flexWrap: "wrap",
             justifyContent: "center",
@@ -216,11 +283,11 @@ const Hero = React.memo(function Hero() {
             { icon: "🛡", label: "No ads · No strangers" },
           ].map((b, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 18, color: T.amberGlow }}>{b.icon}</span>
+              <span style={{ fontSize: 18, color: T.coral }}>{b.icon}</span>
               <span
                 style={{
                   fontSize: 13,
-                  color: T.textMed,
+                  color: T.inkLow,
                   fontWeight: 600,
                   fontFamily: T.fontUI,
                 }}
@@ -235,7 +302,7 @@ const Hero = React.memo(function Hero() {
   );
 });
 
-// ─── Coaching showcase — Coach Pawn + a sample message ───────────
+// ─── Coaching showcase ─────────────────────────────────────────────
 const CoachingShowcase = React.memo(function CoachingShowcase() {
   return (
     <section
@@ -247,17 +314,28 @@ const CoachingShowcase = React.memo(function CoachingShowcase() {
         margin: "0 auto",
       }}
     >
+      {/* Section divider */}
+      <div
+        style={{
+          width: 60,
+          height: 3,
+          background: T.coral,
+          borderRadius: 2,
+          margin: "0 auto 24px",
+          opacity: 0.7,
+        }}
+      />
       <Reveal>
-        <div style={{ textAlign: "center", marginBottom: 14 }}>
+        <div style={{ textAlign: "center", marginBottom: 10 }}>
           <span
             style={{
               fontFamily: T.fontUI,
-              fontSize: 13,
-              fontWeight: 700,
-              color: T.amberGlow,
-              letterSpacing: "0.4em",
+              fontSize: 12,
+              fontWeight: 800,
+              color: T.coral,
+              letterSpacing: "0.38em",
               textTransform: "uppercase",
-              paddingLeft: "0.5em",
+              paddingLeft: "0.4em",
             }}
           >
             Real-time coaching
@@ -269,12 +347,15 @@ const CoachingShowcase = React.memo(function CoachingShowcase() {
           style={{
             textAlign: "center",
             margin: "0 0 16px",
-            fontSize: "clamp(36px, 5.5vw, 60px)",
+            fontFamily: T.fontDisplay,
+            fontStyle: "italic",
+            fontWeight: 400,
+            fontSize: "clamp(34px, 5vw, 58px)",
+            letterSpacing: "-0.02em",
+            color: T.ink,
           }}
         >
-          <GoldFoilText fontSize={56} italic>
-            Coach Pawn talks back
-          </GoldFoilText>
+          Coach Pawn talks back
         </h2>
       </Reveal>
       <Reveal delay={200}>
@@ -282,11 +363,11 @@ const CoachingShowcase = React.memo(function CoachingShowcase() {
           style={{
             textAlign: "center",
             margin: "0 auto 56px",
-            maxWidth: 560,
+            maxWidth: 540,
             fontFamily: T.fontUI,
             fontSize: 16,
-            lineHeight: 1.7,
-            color: T.textMed,
+            lineHeight: 1.72,
+            color: T.inkLow,
           }}
         >
           Not pre-recorded. Not template lookup. Real AI that watches every move and explains why it mattered — at your kid&apos;s level.
@@ -303,43 +384,45 @@ const CoachingShowcase = React.memo(function CoachingShowcase() {
         }}
       >
         <Reveal delay={300}>
-          <CoachPawn size={240} expression="talking" />
+          <CoachPawn size={240} expression="talking" mode="kid" />
         </Reveal>
         <Reveal delay={500} direction="left">
           <div style={{ display: "flex", flexDirection: "column", gap: 14, maxWidth: 460 }}>
             <SpeechBubble
               text={
                 <>
-                  <strong style={{ color: T.emerald }}>Nice!</strong> Your bishop on c4 is aiming right at f7 — the square next to the black king. That&apos;s smart pressure!
+                  <strong style={{ color: T.sageDeep }}>Nice!</strong> Your bishop on c4 is aiming right at f7 — the square next to the black king. That&apos;s smart pressure!
                 </>
               }
               width={460}
               tail="left"
             />
+            {/* Correction bubble */}
             <div
               style={{
-                background: "linear-gradient(180deg, rgba(255,107,107,0.10) 0%, rgba(255,107,107,0.04) 100%)",
-                border: "1.5px solid rgba(255,107,107,0.28)",
+                background: "#FFFCF5",
+                border: `1.5px solid rgba(255,107,90,0.35)`,
                 borderRadius: 18,
                 padding: "16px 22px",
                 position: "relative",
+                boxShadow: "0 4px 14px rgba(255,107,90,0.12)",
               }}
             >
               <div
                 aria-hidden
                 style={{
                   position: "absolute",
-                  left: -10,
+                  left: -11,
                   top: 18,
                   width: 0,
                   height: 0,
                   borderTop: "10px solid transparent",
                   borderBottom: "10px solid transparent",
-                  borderRight: "12px solid rgba(255,107,107,0.28)",
+                  borderRight: "13px solid rgba(255,107,90,0.35)",
                 }}
               />
-              <p style={{ margin: 0, fontFamily: T.fontUI, fontSize: 15, lineHeight: 1.55, color: T.textHi }}>
-                <strong style={{ color: T.rubyGlow }}>Uh oh!</strong> The black knight is eyeing your e5 pawn. Defend or move it.
+              <p style={{ margin: 0, fontFamily: T.fontUI, fontSize: 15, lineHeight: 1.55, color: T.ink }}>
+                <strong style={{ color: T.coral }}>Uh oh!</strong> The black knight is eyeing your e5 pawn. Defend or move it.
               </p>
             </div>
           </div>
@@ -349,9 +432,8 @@ const CoachingShowcase = React.memo(function CoachingShowcase() {
   );
 });
 
-// ─── Journey section — direct port of scene 5's energy ───────────
+// ─── Journey section ───────────────────────────────────────────────
 const JourneySection = React.memo(function JourneySection() {
-  const time = useTime();
   const KINGDOMS_PREVIEW = [
     { id: "village", emoji: "🏘️", label: "Village" },
     { id: "fork_forest", emoji: "🌲", label: "Forks" },
@@ -368,20 +450,31 @@ const JourneySection = React.memo(function JourneySection() {
         padding: "100px 24px",
         position: "relative",
         zIndex: 1,
+        background: "linear-gradient(180deg, #FBF6EC 0%, #F5ECDC 100%)",
       }}
     >
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+        <div
+          style={{
+            width: 60,
+            height: 3,
+            background: T.sage,
+            borderRadius: 2,
+            margin: "0 auto 24px",
+            opacity: 0.7,
+          }}
+        />
         <Reveal>
-          <div style={{ textAlign: "center", marginBottom: 12 }}>
+          <div style={{ textAlign: "center", marginBottom: 10 }}>
             <span
               style={{
                 fontFamily: T.fontUI,
-                fontSize: 13,
-                fontWeight: 700,
-                color: T.amberGlow,
-                letterSpacing: "0.4em",
+                fontSize: 12,
+                fontWeight: 800,
+                color: T.sageDeep,
+                letterSpacing: "0.38em",
                 textTransform: "uppercase",
-                paddingLeft: "0.5em",
+                paddingLeft: "0.4em",
               }}
             >
               More than a chess app
@@ -393,12 +486,15 @@ const JourneySection = React.memo(function JourneySection() {
             style={{
               textAlign: "center",
               margin: "0 0 16px",
-              fontSize: "clamp(36px, 5.5vw, 64px)",
+              fontFamily: T.fontDisplay,
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: "clamp(32px, 5vw, 60px)",
+              letterSpacing: "-0.02em",
+              color: T.ink,
             }}
           >
-            <GoldFoilText fontSize={60} italic>
-              An adventure from Pawn to King
-            </GoldFoilText>
+            An adventure from Pawn to King
           </h2>
         </Reveal>
         <Reveal delay={200}>
@@ -406,18 +502,18 @@ const JourneySection = React.memo(function JourneySection() {
             style={{
               textAlign: "center",
               margin: "0 auto 56px",
-              maxWidth: 580,
+              maxWidth: 560,
               fontFamily: T.fontUI,
               fontSize: 16,
-              lineHeight: 1.7,
-              color: T.textMed,
+              lineHeight: 1.72,
+              color: T.inkLow,
             }}
           >
             Your kid travels through 7 kingdoms, defeats boss characters, earns Powers, and levels up — all while learning real chess.
           </p>
         </Reveal>
 
-        {/* Kingdom path — pill cards with connector lines */}
+        {/* Kingdom path */}
         <Reveal delay={300}>
           <div
             style={{
@@ -425,28 +521,25 @@ const JourneySection = React.memo(function JourneySection() {
               alignItems: "center",
               justifyContent: "center",
               flexWrap: "wrap",
-              gap: 10,
+              gap: 8,
               marginBottom: 56,
             }}
           >
             {KINGDOMS_PREVIEW.map((k, i) => {
               const active = i === 0;
-              const accent = KINGDOM_COLORS[k.id] ?? T.amber;
+              const accent = KINGDOM_COLORS[k.id] ?? T.coral;
               return (
                 <React.Fragment key={k.id}>
                   <div
                     style={{
                       borderRadius: 14,
                       padding: "14px 16px",
-                      background: active
-                        ? `linear-gradient(180deg, ${accent}33 0%, ${accent}11 100%)`
-                        : "rgba(26,18,56,0.6)",
+                      background: active ? "#FFFCF5" : "rgba(31,42,68,0.04)",
                       border: `2px solid ${active ? accent : T.border}`,
-                      boxShadow: active ? `0 0 24px ${accent}55` : "none",
+                      boxShadow: active ? `0 0 18px ${accent}40` : "none",
                       textAlign: "center",
                       minWidth: 88,
-                      opacity: active ? 1 : 0.55,
-                      animation: active ? "kingdomPulse 2.4s ease-in-out infinite" : "none",
+                      opacity: active ? 1 : 0.5,
                     }}
                   >
                     <div style={{ fontSize: 26, lineHeight: 1 }}>{k.emoji}</div>
@@ -456,7 +549,7 @@ const JourneySection = React.memo(function JourneySection() {
                         fontFamily: T.fontUI,
                         fontSize: 11,
                         fontWeight: 700,
-                        color: active ? accent : T.textLo,
+                        color: active ? accent : T.inkDim,
                         letterSpacing: "0.1em",
                       }}
                     >
@@ -467,10 +560,11 @@ const JourneySection = React.memo(function JourneySection() {
                     <div
                       aria-hidden
                       style={{
-                        width: 18,
+                        width: 16,
                         height: 2,
-                        background: i === 0 ? T.amberGlow : T.border,
-                        opacity: i === 0 ? 0.8 : 0.4,
+                        background: i === 0 ? T.coral : T.border,
+                        opacity: i === 0 ? 0.7 : 0.35,
+                        borderRadius: 1,
                       }}
                     />
                   )}
@@ -480,7 +574,7 @@ const JourneySection = React.memo(function JourneySection() {
           </div>
         </Reveal>
 
-        {/* Three pillars */}
+        {/* Three feature pillars */}
         <div
           style={{
             display: "grid",
@@ -491,27 +585,27 @@ const JourneySection = React.memo(function JourneySection() {
           {[
             {
               title: "Boss Battles",
-              tone: T.ruby,
-              icon: "♞♞",
+              tone: T.coral,
+              icon: "♞",
               copy: "Each region has a boss who uses that tactic against your kid. Defeat them to master the skill.",
               quote: "Hehe! We got your rook AND your queen!",
               quoteSpeaker: "The Knight Twins",
             },
             {
               title: "Earn Powers",
-              tone: T.amber,
+              tone: T.butter,
               icon: "⚡",
               copy: "Apply a tactic in a real game to earn a Power — not a badge, an ability you proved.",
               chips: [
-                { icon: "🍴", label: "Fork Master", color: T.emerald },
-                { icon: "📌", label: "Pin Wizard", color: T.sapphire },
-                { icon: "💀", label: "Back Rank Hero", color: T.ruby },
-                { icon: "⚡", label: "Double Trouble", color: T.amber },
+                { icon: "🍴", label: "Fork Master", color: T.sage },
+                { icon: "📌", label: "Pin Wizard", color: T.sky },
+                { icon: "💀", label: "Back Rank Hero", color: T.coral },
+                { icon: "⚡", label: "Double Trouble", color: T.butter },
               ],
             },
             {
               title: "Knight Card",
-              tone: T.amethyst,
+              tone: T.sage,
               icon: "🃏",
               copy: "Your kid's shareable chess identity — rank, bosses defeated, powers earned. The new playground flex.",
               card: { name: "Aarav", rank: "Knight" },
@@ -520,24 +614,24 @@ const JourneySection = React.memo(function JourneySection() {
             <Reveal key={p.title} delay={100 * i}>
               <div
                 style={{
-                  background: "rgba(26,18,56,0.70)",
-                  border: `1.5px solid ${p.tone}55`,
-                  borderRadius: 22,
-                  padding: 24,
+                  background: "#FFFCF5",
+                  border: `1.5px solid ${T.border}`,
+                  borderRadius: 24,
+                  padding: 26,
                   height: "100%",
-                  backdropFilter: "blur(8px)",
-                  boxShadow: `0 8px 32px rgba(0,0,0,0.4)`,
+                  boxShadow: T.shadowSoft,
                 }}
               >
-                <div style={{ fontSize: 28, lineHeight: 1, marginBottom: 12 }}>{p.icon}</div>
+                <div style={{ fontSize: 28, lineHeight: 1, marginBottom: 10 }}>{p.icon}</div>
                 <h3
                   style={{
                     fontFamily: T.fontDisplay,
                     fontStyle: "italic",
+                    fontWeight: 400,
                     fontSize: 24,
-                    fontWeight: 600,
                     color: p.tone,
                     margin: "0 0 10px",
+                    letterSpacing: "-0.01em",
                   }}
                 >
                   {p.title}
@@ -546,8 +640,8 @@ const JourneySection = React.memo(function JourneySection() {
                   style={{
                     fontFamily: T.fontUI,
                     fontSize: 14,
-                    lineHeight: 1.65,
-                    color: T.textMed,
+                    lineHeight: 1.68,
+                    color: T.inkLow,
                     margin: "0 0 16px",
                   }}
                 >
@@ -556,21 +650,20 @@ const JourneySection = React.memo(function JourneySection() {
                 {p.quote && (
                   <div
                     style={{
-                      background: "rgba(7,5,15,0.5)",
+                      background: "rgba(255,107,90,0.07)",
                       borderRadius: 12,
-                      padding: 12,
+                      padding: "12px 14px",
                       border: `1px solid ${T.border}`,
                     }}
                   >
-                    <div style={{ fontFamily: T.fontUI, fontSize: 13, fontWeight: 700, color: T.textHi }}>
+                    <div style={{ fontFamily: T.fontUI, fontSize: 12, fontWeight: 700, color: T.ink }}>
                       {p.quoteSpeaker}
                     </div>
                     <div
                       style={{
-                        fontFamily: T.fontUI,
-                        fontSize: 12,
-                        color: T.textLo,
-                        fontStyle: "italic",
+                        fontFamily: T.fontHand,
+                        fontSize: 17,
+                        color: T.inkLow,
                         marginTop: 4,
                       }}
                     >
@@ -584,14 +677,14 @@ const JourneySection = React.memo(function JourneySection() {
                       <span
                         key={c.label}
                         style={{
-                          padding: "5px 9px",
-                          borderRadius: 8,
-                          background: `${c.color}18`,
-                          border: `1px solid ${c.color}55`,
+                          padding: "5px 10px",
+                          borderRadius: 100,
+                          background: `${c.color}22`,
+                          border: `1.5px solid ${c.color}66`,
                           fontFamily: T.fontUI,
                           fontSize: 11,
                           fontWeight: 700,
-                          color: c.color,
+                          color: c.color === T.butter ? T.butterDeep : c.color,
                           letterSpacing: "0.04em",
                         }}
                       >
@@ -603,14 +696,14 @@ const JourneySection = React.memo(function JourneySection() {
                 {p.card && (
                   <div
                     style={{
-                      background: "linear-gradient(135deg, #FBF6E8 0%, #F5E9C9 100%)",
-                      borderRadius: 12,
-                      padding: 12,
-                      border: `1px solid ${T.amberGlow}`,
+                      background: "linear-gradient(160deg, #FFFCF5 0%, #F5E9C9 100%)",
+                      borderRadius: 14,
+                      padding: "12px 14px",
+                      border: `1px solid ${T.borderCard}`,
                       display: "flex",
                       alignItems: "center",
                       gap: 12,
-                      boxShadow: "0 6px 18px rgba(0,0,0,0.4)",
+                      boxShadow: T.shadowSoft,
                     }}
                   >
                     <Piece type="knight" color="white" size={36} />
@@ -620,7 +713,7 @@ const JourneySection = React.memo(function JourneySection() {
                           fontFamily: T.fontUI,
                           fontSize: 9,
                           fontWeight: 800,
-                          color: "#7A5418",
+                          color: T.inkLow,
                           letterSpacing: "0.18em",
                           textTransform: "uppercase",
                         }}
@@ -631,10 +724,9 @@ const JourneySection = React.memo(function JourneySection() {
                         style={{
                           fontFamily: T.fontDisplay,
                           fontStyle: "italic",
-                          fontSize: 18,
-                          fontWeight: 600,
-                          color: T.inkDeep,
-                          letterSpacing: "-0.01em",
+                          fontSize: 20,
+                          fontWeight: 400,
+                          color: T.ink,
                         }}
                       >
                         {p.card.name}
@@ -652,7 +744,7 @@ const JourneySection = React.memo(function JourneySection() {
             <Link
               href="/journey"
               style={{
-                color: T.amberGlow,
+                color: T.coral,
                 fontFamily: T.fontUI,
                 fontSize: 14,
                 fontWeight: 700,
@@ -665,31 +757,38 @@ const JourneySection = React.memo(function JourneySection() {
           </div>
         </Reveal>
       </div>
-      <style>{`
-        @keyframes kingdomPulse {
-          0%, 100% { transform: translateY(0); }
-          50%      { transform: translateY(-3px); }
-        }
-      `}</style>
     </section>
   );
 });
 
-// ─── Comparison ──────────────────────────────────────────────────
+// ─── Comparison section ────────────────────────────────────────────
 const ComparisonSection = React.memo(function ComparisonSection() {
   return (
-    <section style={{ padding: "100px 24px", maxWidth: 980, margin: "0 auto", position: "relative", zIndex: 1 }}>
+    <section style={{ padding: "100px 24px", maxWidth: 960, margin: "0 auto", position: "relative", zIndex: 1 }}>
+      <div
+        style={{
+          width: 60,
+          height: 3,
+          background: T.sky,
+          borderRadius: 2,
+          margin: "0 auto 24px",
+          opacity: 0.7,
+        }}
+      />
       <Reveal>
         <h2
           style={{
             textAlign: "center",
             margin: "0 0 48px",
-            fontSize: "clamp(28px, 4vw, 44px)",
+            fontFamily: T.fontDisplay,
+            fontStyle: "italic",
+            fontWeight: 400,
+            fontSize: "clamp(28px, 4vw, 46px)",
+            letterSpacing: "-0.02em",
+            color: T.ink,
           }}
         >
-          <GoldFoilText fontSize={42} italic>
-            The moment that matters most
-          </GoldFoilText>
+          The moment that matters most
         </h2>
       </Reveal>
 
@@ -704,11 +803,11 @@ const ComparisonSection = React.memo(function ComparisonSection() {
           {/* Other apps */}
           <div
             style={{
-              background: "rgba(26,18,56,0.6)",
+              background: "rgba(31,42,68,0.04)",
               border: `1px solid ${T.border}`,
               borderRadius: 22,
               padding: "26px 24px",
-              opacity: 0.75,
+              opacity: 0.72,
             }}
           >
             <div
@@ -716,7 +815,7 @@ const ComparisonSection = React.memo(function ComparisonSection() {
                 fontFamily: T.fontUI,
                 fontSize: 11,
                 fontWeight: 700,
-                color: T.textLo,
+                color: T.inkDim,
                 letterSpacing: "0.2em",
                 textTransform: "uppercase",
                 marginBottom: 14,
@@ -726,14 +825,14 @@ const ComparisonSection = React.memo(function ComparisonSection() {
             </div>
             <div
               style={{
-                background: "rgba(7,5,15,0.5)",
+                background: "#FFFCF5",
                 border: `1px solid ${T.border}`,
                 borderRadius: 12,
                 padding: "14px 16px",
                 fontFamily: T.fontUI,
                 fontSize: 14,
                 lineHeight: 1.6,
-                color: T.textMed,
+                color: T.inkLow,
                 fontStyle: "italic",
               }}
             >
@@ -744,7 +843,7 @@ const ComparisonSection = React.memo(function ComparisonSection() {
                 marginTop: 14,
                 fontFamily: T.fontUI,
                 fontSize: 12,
-                color: T.textDim,
+                color: T.inkDim,
               }}
             >
               🤷 Same canned response. Every time.
@@ -754,8 +853,8 @@ const ComparisonSection = React.memo(function ComparisonSection() {
           {/* ChessWhiz */}
           <div
             style={{
-              background: "linear-gradient(135deg, rgba(52,211,153,0.10) 0%, rgba(245,182,56,0.06) 100%)",
-              border: `2px solid ${T.emerald}`,
+              background: "linear-gradient(160deg, rgba(124,182,158,0.08) 0%, rgba(124,182,158,0.04) 100%)",
+              border: `2px solid ${T.sage}`,
               borderRadius: 22,
               padding: "26px 24px",
               boxShadow: T.glowEmerald,
@@ -766,7 +865,7 @@ const ComparisonSection = React.memo(function ComparisonSection() {
                 fontFamily: T.fontUI,
                 fontSize: 11,
                 fontWeight: 700,
-                color: T.emeraldGlow,
+                color: T.sageDeep,
                 letterSpacing: "0.2em",
                 textTransform: "uppercase",
                 marginBottom: 14,
@@ -779,14 +878,14 @@ const ComparisonSection = React.memo(function ComparisonSection() {
             </div>
             <div
               style={{
-                background: "rgba(7,5,15,0.5)",
-                border: "1px solid rgba(52,211,153,0.4)",
+                background: "#FFFCF5",
+                border: `1px solid rgba(124,182,158,0.4)`,
                 borderRadius: 12,
                 padding: "14px 16px",
                 fontFamily: T.fontUI,
                 fontSize: 14,
                 lineHeight: 1.65,
-                color: T.textHi,
+                color: T.ink,
               }}
             >
               &ldquo;Your knight is doing two jobs at once — protecting your pawn AND watching the center. That&apos;s called coordination! 🤝&rdquo;
@@ -796,7 +895,7 @@ const ComparisonSection = React.memo(function ComparisonSection() {
                 marginTop: 14,
                 fontFamily: T.fontUI,
                 fontSize: 12,
-                color: T.emeraldGlow,
+                color: T.sageDeep,
                 fontWeight: 600,
               }}
             >
@@ -809,14 +908,14 @@ const ComparisonSection = React.memo(function ComparisonSection() {
   );
 });
 
-// ─── Note from the maker ────────────────────────────────────────
+// ─── Note from the maker ───────────────────────────────────────────
 const MakerNote = React.memo(function MakerNote() {
   return (
     <section style={{ padding: "80px 24px", maxWidth: 720, margin: "0 auto", position: "relative", zIndex: 1 }}>
       <Reveal>
         <div
           style={{
-            background: "rgba(26,18,56,0.7)",
+            background: "#FFFCF5",
             border: `1.5px solid ${T.border}`,
             borderRadius: 24,
             padding: "44px 36px",
@@ -827,11 +926,11 @@ const MakerNote = React.memo(function MakerNote() {
           <span
             style={{
               fontFamily: T.fontHand,
-              fontSize: 20,
-              color: T.amberGlow,
+              fontSize: 22,
+              color: T.coral,
               transform: "rotate(-1.5deg)",
               display: "inline-block",
-              marginBottom: 8,
+              marginBottom: 10,
             }}
           >
             a note from the maker →
@@ -841,39 +940,39 @@ const MakerNote = React.memo(function MakerNote() {
               fontFamily: T.fontUI,
               fontSize: 17,
               lineHeight: 1.8,
-              color: T.textHi,
+              color: T.ink,
               margin: "8px 0 22px",
             }}
           >
-            ChessWhiz launched in <strong style={{ color: T.amberGlow }}>April 2026</strong>. Built by a chess dad in Texas for his own kids — and now for yours. No fake testimonials. No paid reviews. Just a tool I wish I&apos;d had.
+            ChessWhiz launched in <strong style={{ color: T.coral }}>April 2026</strong>. Built by a chess dad in Texas for his own kids — and now for yours. No fake testimonials. No paid reviews. Just a tool I wish I&apos;d had.
           </p>
           <Link
             href="/onboard"
             style={{
               display: "inline-block",
-              background: T.goldFoil,
-              color: T.inkDeep,
-              borderRadius: 14,
+              background: T.coral,
+              color: "#FFFCF5",
+              borderRadius: 100,
               padding: "14px 32px",
               fontSize: 15,
               fontWeight: 800,
               textDecoration: "none",
               fontFamily: T.fontUI,
-              letterSpacing: "0.05em",
-              boxShadow: T.glowAmber,
+              letterSpacing: "0.03em",
+              boxShadow: T.glowCoral,
             }}
           >
             Try it free — be an early family
           </Link>
           <div
             style={{
-              marginTop: 12,
+              marginTop: 14,
               fontSize: 12,
-              color: T.textLo,
+              color: T.inkDim,
               fontFamily: T.fontUI,
             }}
           >
-            <a href="mailto:hello@chesswhiz.com" style={{ color: T.textLo, textDecoration: "underline" }}>
+            <a href="mailto:hello@chesswhiz.com" style={{ color: T.inkLow, textDecoration: "underline" }}>
               hello@chesswhiz.com
             </a>{" "}
             · I read every email
@@ -884,7 +983,7 @@ const MakerNote = React.memo(function MakerNote() {
   );
 });
 
-// ─── Pricing ────────────────────────────────────────────────────
+// ─── Pricing ──────────────────────────────────────────────────────
 const Pricing = React.memo(function Pricing() {
   return (
     <section style={{ padding: "80px 24px", maxWidth: 580, margin: "0 auto", position: "relative", zIndex: 1 }}>
@@ -892,20 +991,23 @@ const Pricing = React.memo(function Pricing() {
         <h2
           style={{
             textAlign: "center",
-            margin: "0 0 12px",
+            margin: "0 0 10px",
+            fontFamily: T.fontDisplay,
+            fontStyle: "italic",
+            fontWeight: 400,
             fontSize: "clamp(28px, 4vw, 40px)",
+            letterSpacing: "-0.02em",
+            color: T.ink,
           }}
         >
-          <GoldFoilText fontSize={36} italic>
-            Start free. Unlock the kingdom.
-          </GoldFoilText>
+          Start free. Unlock the kingdom.
         </h2>
         <p
           style={{
             textAlign: "center",
-            color: T.textLo,
+            color: T.inkDim,
             fontSize: 14,
-            margin: "0 0 36px",
+            margin: "0 0 34px",
             fontFamily: T.fontUI,
           }}
         >
@@ -916,14 +1018,14 @@ const Pricing = React.memo(function Pricing() {
       <Reveal delay={150}>
         <div
           style={{
-            background: "rgba(26,18,56,0.85)",
+            background: "#FFFCF5",
             borderRadius: 26,
             overflow: "hidden",
-            border: `1.5px solid ${T.borderStrong}`,
+            border: `1.5px solid ${T.border}`,
             boxShadow: T.shadowDeep,
           }}
         >
-          {/* Free */}
+          {/* Free tier */}
           <div style={{ padding: "26px 30px", borderBottom: `1px solid ${T.border}` }}>
             <div
               style={{
@@ -938,22 +1040,15 @@ const Pricing = React.memo(function Pricing() {
                   style={{
                     fontFamily: T.fontDisplay,
                     fontStyle: "italic",
+                    fontWeight: 400,
                     fontSize: 22,
-                    fontWeight: 600,
-                    color: T.textHi,
+                    color: T.ink,
                     margin: "0 0 4px",
                   }}
                 >
                   Free
                 </h3>
-                <p
-                  style={{
-                    margin: 0,
-                    fontFamily: T.fontUI,
-                    fontSize: 13,
-                    color: T.textLo,
-                  }}
-                >
+                <p style={{ margin: 0, fontFamily: T.fontUI, fontSize: 13, color: T.inkLow }}>
                   A taste of the kingdom — perfect for getting started
                 </p>
               </div>
@@ -961,9 +1056,9 @@ const Pricing = React.memo(function Pricing() {
                 style={{
                   fontFamily: T.fontDisplay,
                   fontStyle: "italic",
-                  fontWeight: 700,
+                  fontWeight: 400,
                   fontSize: 32,
-                  color: T.textHi,
+                  color: T.ink,
                   lineHeight: 1,
                 }}
               >
@@ -987,17 +1082,17 @@ const Pricing = React.memo(function Pricing() {
                     gap: 8,
                     fontFamily: T.fontUI,
                     fontSize: 13,
-                    color: f.ok ? T.textHi : T.textDim,
+                    color: f.ok ? T.ink : T.inkDim,
                   }}
                 >
                   <span
                     style={{
-                      width: 16,
-                      height: 16,
+                      width: 18,
+                      height: 18,
                       borderRadius: "50%",
                       flexShrink: 0,
-                      background: f.ok ? T.emerald : "rgba(255,255,255,0.06)",
-                      color: f.ok ? T.obsidian : T.textDim,
+                      background: f.ok ? T.sage : "rgba(31,42,68,0.07)",
+                      color: f.ok ? "#FFFCF5" : T.inkDim,
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1013,25 +1108,25 @@ const Pricing = React.memo(function Pricing() {
             </ul>
           </div>
 
-          {/* Champion */}
+          {/* Champion tier */}
           <div
             style={{
               padding: "32px",
-              background: "linear-gradient(135deg, rgba(245,182,56,0.18) 0%, rgba(192,132,252,0.14) 100%)",
+              background: "linear-gradient(160deg, rgba(255,107,90,0.07) 0%, rgba(242,201,76,0.06) 100%)",
             }}
           >
             <div
               style={{
                 display: "inline-block",
-                background: T.goldFoil,
-                color: T.inkDeep,
-                borderRadius: 8,
-                padding: "4px 12px",
+                background: T.coral,
+                color: "#FFFCF5",
+                borderRadius: 100,
+                padding: "4px 14px",
                 fontSize: 11,
                 fontWeight: 800,
                 marginBottom: 16,
                 fontFamily: T.fontUI,
-                letterSpacing: "0.18em",
+                letterSpacing: "0.14em",
               }}
             >
               UNLOCK THE FULL JOURNEY
@@ -1042,22 +1137,15 @@ const Pricing = React.memo(function Pricing() {
                   style={{
                     fontFamily: T.fontDisplay,
                     fontStyle: "italic",
+                    fontWeight: 400,
                     fontSize: 22,
-                    fontWeight: 600,
-                    color: T.textHi,
+                    color: T.ink,
                     margin: "0 0 4px",
                   }}
                 >
                   Champion
                 </h3>
-                <p
-                  style={{
-                    margin: 0,
-                    fontFamily: T.fontUI,
-                    fontSize: 13,
-                    color: T.textLo,
-                  }}
-                >
+                <p style={{ margin: 0, fontFamily: T.fontUI, fontSize: 13, color: T.inkLow }}>
                   The full Chess Kingdom — all 7 regions, all bosses
                 </p>
               </div>
@@ -1066,14 +1154,14 @@ const Pricing = React.memo(function Pricing() {
                   style={{
                     fontFamily: T.fontDisplay,
                     fontStyle: "italic",
-                    fontWeight: 700,
+                    fontWeight: 400,
                     fontSize: 36,
-                    color: T.amberGlow,
+                    color: T.coral,
                   }}
                 >
                   $4.99
                 </span>
-                <span style={{ fontSize: 13, color: T.textLo, fontFamily: T.fontUI }}>/mo</span>
+                <span style={{ fontSize: 13, color: T.inkLow, fontFamily: T.fontUI }}>/mo</span>
               </div>
             </div>
             <ul style={{ margin: "18px 0 0", padding: 0, listStyle: "none", display: "grid", gap: 6 }}>
@@ -1096,17 +1184,17 @@ const Pricing = React.memo(function Pricing() {
                     gap: 8,
                     fontFamily: T.fontUI,
                     fontSize: 13,
-                    color: T.textHi,
+                    color: T.ink,
                   }}
                 >
                   <span
                     style={{
-                      width: 16,
-                      height: 16,
+                      width: 18,
+                      height: 18,
                       borderRadius: "50%",
                       flexShrink: 0,
-                      background: T.emerald,
-                      color: T.obsidian,
+                      background: T.coral,
+                      color: "#FFFCF5",
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1127,20 +1215,20 @@ const Pricing = React.memo(function Pricing() {
                 width: "100%",
                 marginTop: 22,
                 padding: "16px 0",
-                borderRadius: 14,
-                background: T.goldFoil,
-                color: T.inkDeep,
+                borderRadius: 100,
+                background: T.coral,
+                color: "#FFFCF5",
                 border: "none",
                 fontSize: 16,
                 fontWeight: 800,
                 fontFamily: T.fontUI,
                 textDecoration: "none",
                 textAlign: "center",
-                boxShadow: T.glowAmber,
-                letterSpacing: "0.05em",
+                boxShadow: T.glowCoral,
+                letterSpacing: "0.04em",
               }}
             >
-              ✦ Start 7-day free trial ✦
+              Start 7-day free trial →
             </Link>
           </div>
         </div>
@@ -1149,7 +1237,7 @@ const Pricing = React.memo(function Pricing() {
   );
 });
 
-// ─── FAQ ────────────────────────────────────────────────────────
+// ─── FAQ ──────────────────────────────────────────────────────────
 function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -1170,7 +1258,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
       >
         <span
           style={{
-            color: T.textHi,
+            color: T.ink,
             fontSize: 15,
             fontWeight: 600,
             fontFamily: T.fontUI,
@@ -1181,8 +1269,8 @@ function FAQItem({ q, a }: { q: string; a: string }) {
         </span>
         <span
           style={{
-            color: T.amberGlow,
-            fontSize: 18,
+            color: T.coral,
+            fontSize: 20,
             transform: open ? "rotate(45deg)" : "rotate(0)",
             transition: "0.2s",
             flexShrink: 0,
@@ -1196,8 +1284,8 @@ function FAQItem({ q, a }: { q: string; a: string }) {
           style={{
             margin: "10px 0 0",
             fontSize: 14,
-            color: T.textMed,
-            lineHeight: 1.7,
+            color: T.inkLow,
+            lineHeight: 1.72,
             fontFamily: T.fontUI,
           }}
         >
@@ -1215,13 +1303,16 @@ const FAQ = React.memo(function FAQ() {
         <h2
           style={{
             textAlign: "center",
-            margin: "0 0 24px",
-            fontSize: "clamp(24px, 3.5vw, 32px)",
+            margin: "0 0 28px",
+            fontFamily: T.fontDisplay,
+            fontStyle: "italic",
+            fontWeight: 400,
+            fontSize: "clamp(24px, 3.5vw, 34px)",
+            letterSpacing: "-0.02em",
+            color: T.ink,
           }}
         >
-          <GoldFoilText fontSize={28} italic>
-            Questions? We&apos;ve got answers.
-          </GoldFoilText>
+          Questions? We&apos;ve got answers.
         </h2>
       </Reveal>
       {[
@@ -1240,10 +1331,10 @@ const FAQ = React.memo(function FAQ() {
   );
 });
 
-// ─── Final CTA — port of scene 7 ────────────────────────────────
+// ─── Final CTA ─────────────────────────────────────────────────────
 const FinalCTA = React.memo(function FinalCTA() {
   const time = useTime();
-  const kingY = Math.sin(time * 1.2) * 4;
+  const knightY = Math.sin(time * 1.1) * 5;
   return (
     <section
       style={{
@@ -1251,61 +1342,96 @@ const FinalCTA = React.memo(function FinalCTA() {
         textAlign: "center",
         position: "relative",
         zIndex: 1,
+        background: "linear-gradient(180deg, #FBF6EC 0%, #F5ECDC 100%)",
       }}
     >
       <Reveal>
-        <div style={{ display: "inline-block", marginBottom: 22, transform: `translateY(${kingY}px)`, filter: "drop-shadow(0 0 32px rgba(252,211,77,0.6))" }}>
-          <Piece type="king" color="white" size={140} />
+        <div
+          style={{
+            display: "inline-block",
+            marginBottom: 20,
+            transform: `translateY(${knightY}px)`,
+            filter: "drop-shadow(0 6px 20px rgba(255,107,90,0.35))",
+          }}
+        >
+          <Piece type="king" color="white" size={130} />
         </div>
       </Reveal>
       <Reveal delay={150}>
-        <h2 style={{ margin: "0 0 18px" }}>
-          <GoldFoilText fontSize={86} italic>
-            ChessWhiz
-          </GoldFoilText>
+        <h2
+          style={{
+            margin: "0 0 6px",
+            fontFamily: T.fontDisplay,
+            fontStyle: "italic",
+            fontWeight: 400,
+            fontSize: "clamp(60px, 10vw, 120px)",
+            letterSpacing: "-0.03em",
+            color: T.ink,
+            lineHeight: 1,
+          }}
+        >
+          Chess<span style={{ color: T.coral }}>Whiz</span>
         </h2>
       </Reveal>
       <Reveal delay={300}>
-        <p
+        <div
           style={{
-            color: T.textMed,
-            fontSize: 18,
-            margin: "0 auto 36px",
-            maxWidth: 560,
-            lineHeight: 1.7,
-            fontFamily: T.fontUI,
-            letterSpacing: "0.06em",
+            fontFamily: T.fontHand,
+            fontSize: "clamp(22px, 3vw, 38px)",
+            color: T.sageDeep,
+            marginBottom: 36,
+            transform: "rotate(-1deg)",
+            display: "inline-block",
           }}
         >
-          The chess coach your kid always wanted.
-        </p>
+          Chess that meets you where you are.
+        </div>
       </Reveal>
       <Reveal delay={450}>
-        <Link
-          href="/onboard"
-          style={{
-            display: "inline-block",
-            background: T.goldFoil,
-            color: T.inkDeep,
-            borderRadius: 16,
-            padding: "20px 44px",
-            fontSize: 18,
-            fontWeight: 800,
-            textDecoration: "none",
-            fontFamily: T.fontUI,
-            letterSpacing: "0.06em",
-            boxShadow: T.glowAmber,
-          }}
-        >
-          ✦ Start playing free ✦
-        </Link>
+        <div style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}>
+          <Link
+            href="/onboard"
+            style={{
+              display: "inline-block",
+              background: T.coral,
+              color: "#FFFCF5",
+              borderRadius: 100,
+              padding: "18px 44px",
+              fontSize: 18,
+              fontWeight: 800,
+              textDecoration: "none",
+              fontFamily: T.fontUI,
+              letterSpacing: "0.03em",
+              boxShadow: T.glowCoral,
+            }}
+          >
+            Start free →
+          </Link>
+          <Link
+            href="/journey"
+            style={{
+              display: "inline-block",
+              border: `2px solid ${T.ink}`,
+              color: T.ink,
+              borderRadius: 100,
+              padding: "18px 44px",
+              fontSize: 18,
+              fontWeight: 800,
+              textDecoration: "none",
+              fontFamily: T.fontUI,
+            }}
+          >
+            Watch a lesson
+          </Link>
+        </div>
         <div
           style={{
             marginTop: 18,
             fontFamily: T.fontHand,
             fontSize: 22,
-            color: T.amberSoft,
+            color: T.inkLow,
             transform: "rotate(-1deg)",
+            display: "inline-block",
           }}
         >
           $4.99/mo · cancel anytime · safe for kids
@@ -1315,7 +1441,7 @@ const FinalCTA = React.memo(function FinalCTA() {
   );
 });
 
-// ─── Top nav ─────────────────────────────────────────────────────
+// ─── Nav ───────────────────────────────────────────────────────────
 function Nav({ scrolled }: { scrolled: boolean }) {
   return (
     <nav
@@ -1336,7 +1462,7 @@ function Nav({ scrolled }: { scrolled: boolean }) {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          background: scrolled ? "rgba(7,5,15,0.78)" : "transparent",
+          background: scrolled ? "rgba(251,246,236,0.88)" : "transparent",
           backdropFilter: scrolled ? "blur(20px) saturate(1.4)" : "none",
           borderBottom: scrolled ? `1px solid ${T.border}` : "none",
           borderRadius: scrolled ? "0 0 18px 18px" : 0,
@@ -1357,43 +1483,53 @@ function Nav({ scrolled }: { scrolled: boolean }) {
               width: 34,
               height: 34,
               borderRadius: 10,
-              background: T.goldFoil,
+              background: T.coral,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: T.glowAmber,
+              boxShadow: T.glowCoral,
             }}
           >
-            <Piece type="king" color="white" size={26} />
+            <Piece type="king" color="white" size={24} />
           </div>
-          <GoldFoilText fontSize={22} italic>
-            ChessWhiz
-          </GoldFoilText>
+          <span
+            style={{
+              fontFamily: T.fontDisplay,
+              fontStyle: "italic",
+              fontWeight: 400,
+              fontSize: 22,
+              letterSpacing: "-0.02em",
+              color: T.ink,
+              lineHeight: 1,
+            }}
+          >
+            Chess<span style={{ color: T.coral }}>Whiz</span>
+          </span>
         </Link>
         <Link
           href="/onboard"
           style={{
-            background: T.goldFoil,
-            color: T.inkDeep,
+            background: T.coral,
+            color: "#FFFCF5",
             border: "none",
-            borderRadius: 12,
+            borderRadius: 100,
             padding: "10px 22px",
             fontSize: 13,
             fontWeight: 800,
             textDecoration: "none",
             fontFamily: T.fontUI,
-            boxShadow: "0 4px 14px rgba(245,182,56,0.4)",
-            letterSpacing: "0.05em",
+            boxShadow: "0 4px 14px rgba(255,107,90,0.35)",
+            letterSpacing: "0.04em",
           }}
         >
-          ✦ Play Free
+          Play Free →
         </Link>
       </div>
     </nav>
   );
 }
 
-// ─── Main page ───────────────────────────────────────────────────
+// ─── Main page ──────────────────────────────────────────────────────
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -1406,16 +1542,14 @@ export default function LandingPage() {
     <div
       style={{
         background: T.bgRadial,
-        color: T.textHi,
+        color: T.ink,
         fontFamily: T.fontUI,
         minHeight: "100vh",
         position: "relative",
         overflowX: "hidden",
       }}
     >
-      {/* Schema.org structured data — improves Google rich snippets
-          and gives AI search crawlers (GPTBot, ClaudeBot, PerplexityBot)
-          a structured product description to cite. */}
+      {/* Schema.org structured data */}
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
@@ -1460,9 +1594,9 @@ export default function LandingPage() {
         }}
       />
 
-      {/* Cosmic atmosphere — global, behind everything */}
-      <StarField count={120} seed={1} opacity={0.55} />
-      <MoteField count={20} seed={2} color={T.amberGlow} />
+      {/* Warm ambient floating motes */}
+      <MoteField count={16} seed={2} color={T.coral} />
+      <WarmDust count={25} seed={8} opacity={0.035} />
 
       <Nav scrolled={scrolled} />
       <Hero />
@@ -1491,32 +1625,33 @@ export default function LandingPage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Piece type="king" color="white" size={26} />
-          <GoldFoilText fontSize={18} italic>
-            ChessWhiz
-          </GoldFoilText>
+          <Piece type="king" color="white" size={24} />
+          <span
+            style={{
+              fontFamily: T.fontDisplay,
+              fontStyle: "italic",
+              fontSize: 20,
+              color: T.ink,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Chess<span style={{ color: T.coral }}>Whiz</span>
+          </span>
         </div>
         <div style={{ display: "flex", gap: 22 }}>
-          <Link href="/journey" style={{ color: T.textLo, fontSize: 13, textDecoration: "none", fontFamily: T.fontUI }}>
-            Journey
-          </Link>
-          <Link href="/how-it-works" style={{ color: T.textLo, fontSize: 13, textDecoration: "none", fontFamily: T.fontUI }}>
-            How it works
-          </Link>
-          <Link href="/privacy" style={{ color: T.textLo, fontSize: 13, textDecoration: "none", fontFamily: T.fontUI }}>
-            Privacy
-          </Link>
-          <Link href="/terms" style={{ color: T.textLo, fontSize: 13, textDecoration: "none", fontFamily: T.fontUI }}>
-            Terms
-          </Link>
-          <a
-            href="mailto:hello@chesswhiz.com"
-            style={{ color: T.textLo, fontSize: 13, textDecoration: "none", fontFamily: T.fontUI }}
-          >
-            Contact
-          </a>
+          {[
+            { href: "/journey", label: "Journey" },
+            { href: "/how-it-works", label: "How it works" },
+            { href: "/privacy", label: "Privacy" },
+            { href: "/terms", label: "Terms" },
+            { href: "mailto:hello@chesswhiz.com", label: "Contact" },
+          ].map((l) => (
+            <Link key={l.href} href={l.href} style={{ color: T.inkDim, fontSize: 13, textDecoration: "none", fontFamily: T.fontUI }}>
+              {l.label}
+            </Link>
+          ))}
         </div>
-        <div style={{ color: T.textDim, fontSize: 12, fontFamily: T.fontUI }}>
+        <div style={{ color: T.inkDim, fontSize: 12, fontFamily: T.fontUI }}>
           Made with ♟ in Texas · © 2026
         </div>
       </footer>

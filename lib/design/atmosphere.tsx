@@ -7,18 +7,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 // component. Every useTime() consumer subscribes; the loop runs only
 // while there's at least one subscriber AND the tab is visible AND
 // the user hasn't requested reduced motion.
-//
-// Without this, every CoachPawn / StarField / KnightCard / Board
-// would hold its own rAF and re-render every frame independently,
-// burning CPU on low-end phones.
-//
-// API stays the same: useTime() returns elapsed seconds since the
-// loop started.
 
 type Subscriber = (t: number) => void;
 const _subs = new Set<Subscriber>();
 let _start: number | null = null;
-let _last = 0; // last published time (so new subscribers get a sane value)
+let _last = 0;
 let _rafId: number | null = null;
 let _reducedMotion = false;
 let _hidden = false;
@@ -47,7 +40,6 @@ function _stop() {
   }
 }
 
-// Wire visibility + reduced-motion once per page load
 if (typeof window !== "undefined") {
   document.addEventListener("visibilitychange", () => {
     _hidden = document.hidden;
@@ -64,11 +56,9 @@ if (typeof window !== "undefined") {
 }
 
 export function useTime(): number {
-  // Fast path on the server / during SSR.
   const [t, setT] = useState(_last);
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // If reduced motion is on, freeze at 0 — no subscriber registered.
     if (_reducedMotion) {
       setT(0);
       return;
@@ -84,7 +74,7 @@ export function useTime(): number {
   return t;
 }
 
-// ─── animate: piecewise linear/eased reveal between [start, end] seconds ───
+// ─── animate: piecewise eased reveal ─────────────────────────────
 type EaseFn = (x: number) => number;
 export const Easing = {
   linear: ((x: number) => x) as EaseFn,
@@ -115,13 +105,13 @@ export function animate(opts: {
   };
 }
 
-// ─── StarField: twinkling stars across the viewport ───
-// Seeded so positions are stable across renders (React.useMemo on count+seed).
+// ─── StarField: warm floating dust motes (replaces dark stars) ───
+// On the warm theme, "stars" become soft sunlit dust specks.
 export function StarField({
   count = 60, seed = 1, opacity = 0.6,
 }: { count?: number; seed?: number; opacity?: number }) {
   const time = useTime();
-  const stars = useMemo(() => {
+  const motes = useMemo(() => {
     const out: { x: number; y: number; size: number; phase: number; speed: number }[] = [];
     let s = seed * 9301;
     for (let i = 0; i < count; i++) {
@@ -130,11 +120,11 @@ export function StarField({
       s = (s * 9301 + 49297) % 233280;
       const y = (s / 233280) * 100;
       s = (s * 9301 + 49297) % 233280;
-      const size = 1 + (s / 233280) * 2.5;
+      const size = 1.5 + (s / 233280) * 3;
       s = (s * 9301 + 49297) % 233280;
       const phase = (s / 233280) * 6.28;
       s = (s * 9301 + 49297) % 233280;
-      const speed = 0.5 + (s / 233280) * 1.5;
+      const speed = 0.3 + (s / 233280) * 1.0;
       out.push({ x, y, size, phase, speed });
     }
     return out;
@@ -147,17 +137,17 @@ export function StarField({
       preserveAspectRatio="none"
       viewBox="0 0 100 100"
     >
-      {stars.map((st, i) => {
-        const tw = 0.4 + 0.6 * Math.abs(Math.sin(time * st.speed + st.phase));
+      {motes.map((m, i) => {
+        const tw = 0.25 + 0.45 * Math.abs(Math.sin(time * m.speed + m.phase));
         return (
           <circle
             key={i}
-            cx={st.x}
-            cy={st.y}
-            r={st.size * 0.05}
-            fill="#FCD34D"
-            opacity={tw * opacity}
-            style={{ filter: "drop-shadow(0 0 2px rgba(252,211,77,0.9))" }}
+            cx={m.x}
+            cy={m.y}
+            r={m.size * 0.04}
+            fill="#FF6B5A"
+            opacity={tw * opacity * 0.55}
+            style={{ filter: "blur(0.3px)" }}
           />
         );
       })}
@@ -165,9 +155,9 @@ export function StarField({
   );
 }
 
-// ─── MoteField: floating warm light motes drifting upward ───
+// ─── MoteField: floating warm paper motes drifting upward ───
 export function MoteField({
-  count = 18, seed = 5, color = "#FCD34D",
+  count = 18, seed = 5, color = "#FF6B5A",
 }: { count?: number; seed?: number; color?: string }) {
   const time = useTime();
   const motes = useMemo(() => {
@@ -179,9 +169,9 @@ export function MoteField({
       s = (s * 9301 + 49297) % 233280;
       const yBase = (s / 233280) * 100;
       s = (s * 9301 + 49297) % 233280;
-      const size = 3 + (s / 233280) * 6;
+      const size = 4 + (s / 233280) * 8;
       s = (s * 9301 + 49297) % 233280;
-      const speed = 0.6 + (s / 233280) * 1.8;
+      const speed = 0.4 + (s / 233280) * 1.2;
       s = (s * 9301 + 49297) % 233280;
       const phase = (s / 233280) * 6.28;
       out.push({ x, yBase, size, speed, phase });
@@ -195,9 +185,9 @@ export function MoteField({
       style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden" }}
     >
       {motes.map((m, i) => {
-        const yPct = ((m.yBase - time * m.speed) % 100 + 100) % 100;
-        const xPct = m.x + Math.sin(time * 0.4 + m.phase) * 2;
-        const alpha = 0.3 + 0.4 * Math.abs(Math.sin(time * 0.6 + m.phase));
+        const yPct = ((m.yBase - time * m.speed * 0.6) % 100 + 100) % 100;
+        const xPct = m.x + Math.sin(time * 0.35 + m.phase) * 1.5;
+        const alpha = 0.12 + 0.14 * Math.abs(Math.sin(time * 0.5 + m.phase));
         return (
           <div
             key={i}
@@ -210,7 +200,7 @@ export function MoteField({
               borderRadius: "50%",
               background: color,
               opacity: alpha,
-              boxShadow: `0 0 ${m.size * 3}px ${color}`,
+              filter: `blur(${m.size * 0.8}px)`,
               transform: "translate(-50%, -50%)",
             }}
           />
@@ -220,9 +210,53 @@ export function MoteField({
   );
 }
 
-// ─── GoldFoilText: brand wordmark with shimmer sweep ───
-// The bundle's brand mark uses goldFoil gradient on text. This adds the
-// horizontal shimmer that crosses the wordmark every ~6 seconds.
+// ─── WarmDust: subtle paper-grain background texture ─────────────
+// Scattered tiny ink dots that give warmth like aged parchment.
+export function WarmDust({
+  count = 30, seed = 7, opacity = 0.06,
+}: { count?: number; seed?: number; opacity?: number }) {
+  const shapes = useMemo(() => {
+    const out: { x: number; y: number; r: number; rot: number }[] = [];
+    let s = seed * 7919;
+    for (let i = 0; i < count; i++) {
+      s = (s * 7919 + 35149) % 174763;
+      const x = (s / 174763) * 100;
+      s = (s * 7919 + 35149) % 174763;
+      const y = (s / 174763) * 100;
+      s = (s * 7919 + 35149) % 174763;
+      const r = 6 + (s / 174763) * 28;
+      s = (s * 7919 + 35149) % 174763;
+      const rot = (s / 174763) * 360;
+      out.push({ x, y, r, rot });
+    }
+    return out;
+  }, [count, seed]);
+
+  return (
+    <svg
+      aria-hidden
+      style={{ position: "absolute", inset: 0, pointerEvents: "none", width: "100%", height: "100%" }}
+      preserveAspectRatio="none"
+      viewBox="0 0 100 100"
+    >
+      {shapes.map((sh, i) => (
+        <ellipse
+          key={i}
+          cx={sh.x}
+          cy={sh.y}
+          rx={sh.r * 0.06}
+          ry={sh.r * 0.03}
+          fill="#1F2A44"
+          opacity={opacity}
+          transform={`rotate(${sh.rot}, ${sh.x}, ${sh.y})`}
+        />
+      ))}
+    </svg>
+  );
+}
+
+// ─── GoldFoilText: coral/warm shimmer text ────────────────────────
+// In the warm theme the "gold foil" becomes a warm coral-amber sweep.
 export function GoldFoilText({
   children, fontSize = 64, italic = true, style = {},
 }: {
@@ -232,20 +266,20 @@ export function GoldFoilText({
   style?: React.CSSProperties;
 }) {
   const time = useTime();
-  const sweep = ((time * 8) % 200) - 50; // % position
+  const sweep = ((time * 6) % 200) - 50;
   return (
     <span
       style={{
         position: "relative",
         display: "inline-block",
-        fontFamily: 'var(--font-cormorant), Georgia, serif',
+        fontFamily: 'var(--font-dm-serif), "DM Serif Display", Georgia, serif',
         fontStyle: italic ? "italic" : "normal",
-        fontWeight: 600,
+        fontWeight: 400,
         fontSize,
         letterSpacing: "-0.02em",
         lineHeight: 1,
         background:
-          "linear-gradient(135deg, #C7940A 0%, #FCD34D 25%, #F5B638 50%, #FFE9A8 65%, #C7940A 100%)",
+          "linear-gradient(135deg, #E04A3A 0%, #FF6B5A 30%, #FF8E70 50%, #F2C94C 70%, #E04A3A 100%)",
         WebkitBackgroundClip: "text",
         WebkitTextFillColor: "transparent",
         backgroundClip: "text",
@@ -259,7 +293,7 @@ export function GoldFoilText({
         style={{
           position: "absolute",
           inset: 0,
-          background: `linear-gradient(120deg, transparent ${sweep - 8}%, rgba(255,255,255,0.55) ${sweep}%, transparent ${sweep + 8}%)`,
+          background: `linear-gradient(120deg, transparent ${sweep - 8}%, rgba(255,255,255,0.5) ${sweep}%, transparent ${sweep + 8}%)`,
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
           backgroundClip: "text",
@@ -272,11 +306,37 @@ export function GoldFoilText({
   );
 }
 
-// ─── useBreakpoint: returns the current named breakpoint ───
-// Mobile-first: returns the largest matching tier. Use sparingly —
-// prefer CSS media queries via flex / grid wherever possible. This
-// hook exists for cases where the layout structure itself needs to
-// branch (e.g. wrap the side panel inside vs. outside the main flow).
+// ─── SeriffText: DM Serif headline in warm ink ────────────────────
+// Convenience wrapper for the display serif font in the warm theme.
+export function SeriffText({
+  children, fontSize = 64, italic = false, color = "#1F2A44", style = {},
+}: {
+  children: React.ReactNode;
+  fontSize?: number;
+  italic?: boolean;
+  color?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        fontFamily: 'var(--font-dm-serif), "DM Serif Display", Georgia, serif',
+        fontStyle: italic ? "italic" : "normal",
+        fontWeight: 400,
+        fontSize,
+        letterSpacing: "-0.02em",
+        lineHeight: 1.05,
+        color,
+        ...style,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+// ─── useBreakpoint ────────────────────────────────────────────────
 export type Breakpoint = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 const BP: Array<[Breakpoint, number]> = [
   ["xs", 0],
@@ -309,7 +369,7 @@ export function bpAtLeast(current: Breakpoint, target: Breakpoint): boolean {
   return order.indexOf(current) >= order.indexOf(target);
 }
 
-// ─── usePrefersReducedMotion: respect user OS preference ───
+// ─── usePrefersReducedMotion ──────────────────────────────────────
 export function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {

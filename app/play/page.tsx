@@ -67,8 +67,8 @@ function XPToast({
         gap: 8,
         padding: "10px 22px",
         borderRadius: 14,
-        background: T.goldFoil,
-        color: T.inkDeep,
+        background: T.butter,
+        color: T.butterDeep,
         fontFamily: T.fontUI,
         fontWeight: 800,
         fontSize: 15,
@@ -115,9 +115,9 @@ function RankUpToast({ rankId, onDone }: { rankId: RankId; onDone: () => void })
         alignItems: "center",
         padding: "32px 48px",
         borderRadius: 26,
-        background: "linear-gradient(180deg, rgba(36,24,69,0.95) 0%, rgba(14,10,31,0.99) 100%)",
-        border: `2px solid ${T.amber}`,
-        boxShadow: `0 0 0 6px rgba(245,182,56,0.18), ${T.shadowDeep}, 0 0 60px rgba(252,211,77,0.4)`,
+        background: "linear-gradient(180deg, #FFFCF5 0%, #F5ECDC 100%)",
+        border: `2px solid ${T.butter}`,
+        boxShadow: `0 0 0 6px rgba(242,201,76,0.18), ${T.shadowDeep}, 0 0 60px rgba(242,201,76,0.30)`,
         animation: "rankUp 4s cubic-bezier(0.34,1.56,0.64,1) forwards",
       }}
     >
@@ -126,7 +126,7 @@ function RankUpToast({ rankId, onDone }: { rankId: RankId; onDone: () => void })
           fontFamily: T.fontUI,
           fontSize: 11,
           fontWeight: 800,
-          color: T.amberGlow,
+          color: T.butterDeep,
           letterSpacing: "0.4em",
         }}
       >
@@ -141,7 +141,7 @@ function RankUpToast({ rankId, onDone }: { rankId: RankId; onDone: () => void })
           fontStyle: "italic",
           fontSize: 28,
           fontWeight: 600,
-          color: T.textHi,
+          color: T.ink,
         }}
       >
         {rank.name}
@@ -174,12 +174,12 @@ function VoiceToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => 
         width: 44,
         height: 44,
         borderRadius: 12,
-        background: enabled ? "rgba(245,182,56,0.15)" : "rgba(255,255,255,0.04)",
-        border: `1.5px solid ${enabled ? T.amber : T.border}`,
-        color: enabled ? T.amberGlow : T.textLo,
+        background: enabled ? "rgba(255,107,90,0.10)" : "#FFFCF5",
+        border: `1.5px solid ${enabled ? T.coral : T.border}`,
+        color: enabled ? T.coral : T.inkLow,
         cursor: "pointer",
         transition: "all 200ms cubic-bezier(0.34,1.56,0.64,1)",
-        boxShadow: enabled ? T.glowAmber : "none",
+        boxShadow: enabled ? T.glowCoral : "none",
       }}
     >
       {enabled ? <Volume2 aria-hidden size={18} strokeWidth={2.2} /> : <VolumeX aria-hidden size={18} strokeWidth={2.2} />}
@@ -197,9 +197,9 @@ function MissionBanner({ mission }: { mission: import("@/lib/progression/types")
         gap: 12,
         padding: "12px 18px",
         borderRadius: 16,
-        background: "linear-gradient(135deg, rgba(245,182,56,0.14) 0%, rgba(192,132,252,0.10) 100%)",
-        border: `1.5px solid rgba(245,182,56,0.4)`,
-        boxShadow: `0 0 24px rgba(245,182,56,0.18)`,
+        background: "linear-gradient(135deg, rgba(242,201,76,0.12) 0%, rgba(124,182,158,0.08) 100%)",
+        border: `1.5px solid rgba(242,201,76,0.45)`,
+        boxShadow: `0 0 24px rgba(242,201,76,0.18)`,
       }}
     >
       <div
@@ -207,14 +207,14 @@ function MissionBanner({ mission }: { mission: import("@/lib/progression/types")
           width: 36,
           height: 36,
           borderRadius: 12,
-          background: "rgba(7,5,15,0.4)",
-          border: `1.5px solid ${T.amber}`,
+          background: "rgba(242,201,76,0.12)",
+          border: `1.5px solid ${T.butter}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
-          color: T.amberGlow,
-          boxShadow: T.glowAmber,
+          color: T.butterDeep,
+          boxShadow: "none",
         }}
       >
         <Target aria-hidden size={20} strokeWidth={2.2} />
@@ -225,7 +225,7 @@ function MissionBanner({ mission }: { mission: import("@/lib/progression/types")
             fontFamily: T.fontUI,
             fontSize: 10,
             fontWeight: 800,
-            color: T.amberGlow,
+            color: T.butterDeep,
             letterSpacing: "0.2em",
             textTransform: "uppercase",
           }}
@@ -237,7 +237,7 @@ function MissionBanner({ mission }: { mission: import("@/lib/progression/types")
             fontFamily: T.fontDisplay,
             fontStyle: "italic",
             fontSize: 16,
-            color: T.textHi,
+            color: T.ink,
             marginTop: 2,
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -282,7 +282,7 @@ function CapturedStrip({ chess, perspective }: { chess: Chess; perspective: "w" 
           alignItems: "center",
           fontFamily: T.fontUI,
           fontSize: 11,
-          color: T.textDim,
+          color: T.inkDim,
           fontStyle: "italic",
           paddingLeft: 4,
         }}
@@ -334,9 +334,9 @@ function CapturedStrip({ chess, perspective }: { chess: Chess; perspective: "w" 
             fontFamily: T.fontMono,
             fontSize: 11,
             fontWeight: 800,
-            color: diff > 0 ? T.emeraldGlow : T.rubyGlow,
-            background: diff > 0 ? "rgba(52,211,153,0.10)" : "rgba(255,107,107,0.10)",
-            border: `1px solid ${diff > 0 ? "rgba(52,211,153,0.4)" : "rgba(255,107,107,0.4)"}`,
+            color: diff > 0 ? T.sageDeep : T.coralDeep,
+            background: diff > 0 ? "rgba(124,182,158,0.12)" : "rgba(255,107,90,0.10)",
+            border: `1px solid ${diff > 0 ? "rgba(124,182,158,0.40)" : "rgba(255,107,90,0.35)"}`,
             padding: "2px 8px",
             borderRadius: 6,
             marginLeft: "auto",
@@ -715,7 +715,7 @@ export default function PlayPage() {
       style={{
         minHeight: "100dvh",
         background: T.bgRadial,
-        color: T.textHi,
+        color: T.ink,
         position: "relative",
         overflow: "hidden",
       }}
@@ -733,7 +733,7 @@ export default function PlayPage() {
 
       {/* Cosmic atmosphere */}
       <StarField count={70} seed={5} opacity={0.5} />
-      <MoteField count={14} seed={6} color={T.amberGlow} />
+      <MoteField count={14} seed={6} color={T.coral} />
 
       {/* Header */}
       <header
@@ -745,7 +745,7 @@ export default function PlayPage() {
           alignItems: "center",
           justifyContent: "space-between",
           padding: `calc(12px + env(safe-area-inset-top)) 24px 12px 24px`,
-          background: "rgba(7,5,15,0.6)",
+          background: "rgba(251,246,236,0.88)",
           backdropFilter: "blur(20px) saturate(1.4)",
           WebkitBackdropFilter: "blur(20px) saturate(1.4)",
           borderBottom: `1px solid ${T.border}`,
@@ -757,11 +757,11 @@ export default function PlayPage() {
               width: 38,
               height: 38,
               borderRadius: 11,
-              background: T.goldFoil,
+              background: T.coral,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: T.glowAmber,
+              boxShadow: T.glowCoral,
             }}
           >
             <Piece type="king" color="white" size={28} />
@@ -778,8 +778,8 @@ export default function PlayPage() {
               fontFamily: T.fontUI,
               fontSize: 11,
               fontWeight: 700,
-              color: T.textMed,
-              background: "rgba(255,255,255,0.04)",
+              color: T.inkLow,
+              background: "rgba(31,42,68,0.04)",
               border: `1px solid ${T.border}`,
               borderRadius: 8,
               padding: "5px 12px",
@@ -800,8 +800,8 @@ export default function PlayPage() {
               display: "flex",
               alignItems: "center",
               gap: 6,
-              background: T.amethystBg,
-              color: T.textHi,
+              background: "rgba(31,42,68,0.04)",
+              color: T.ink,
               border: `1.5px solid ${T.border}`,
               borderRadius: 10,
               padding: "8px 16px",
@@ -812,20 +812,20 @@ export default function PlayPage() {
               transition: "all 200ms cubic-bezier(0.34,1.56,0.64,1)",
             }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = T.amber;
-              (e.currentTarget as HTMLElement).style.color = T.amberGlow;
+              (e.currentTarget as HTMLElement).style.borderColor = T.coral;
+              (e.currentTarget as HTMLElement).style.color = T.coral;
             }}
             onFocus={(e) => {
-              (e.currentTarget as HTMLElement).style.borderColor = T.amber;
-              (e.currentTarget as HTMLElement).style.color = T.amberGlow;
+              (e.currentTarget as HTMLElement).style.borderColor = T.coral;
+              (e.currentTarget as HTMLElement).style.color = T.coral;
             }}
             onMouseLeave={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = T.border;
-              (e.currentTarget as HTMLElement).style.color = T.textHi;
+              (e.currentTarget as HTMLElement).style.color = T.ink;
             }}
             onBlur={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = T.border;
-              (e.currentTarget as HTMLElement).style.color = T.textHi;
+              (e.currentTarget as HTMLElement).style.color = T.ink;
             }}
           >
             <RefreshCw aria-hidden size={13} strokeWidth={2.5} />
@@ -887,7 +887,7 @@ export default function PlayPage() {
                   style={{
                     fontFamily: T.fontHand,
                     fontSize: 18,
-                    color: T.amberGlow,
+                    color: T.coral,
                     transform: "rotate(-2deg)",
                     display: "inline-block",
                   }}
@@ -899,7 +899,7 @@ export default function PlayPage() {
                     fontFamily: T.fontUI,
                     fontSize: 10,
                     fontWeight: 800,
-                    color: T.textLo,
+                    color: T.inkDim,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
                   }}
@@ -910,7 +910,7 @@ export default function PlayPage() {
                       fontFamily: T.fontDisplay,
                       fontStyle: "italic",
                       fontSize: 14,
-                      color: T.textHi,
+                      color: T.ink,
                       fontWeight: 700,
                       marginLeft: 2,
                     }}
@@ -955,7 +955,7 @@ export default function PlayPage() {
                         borderRadius: 14,
                         pointerEvents: "none",
                         zIndex: 5,
-                        boxShadow: `0 0 0 2px ${T.amber}66, 0 0 28px 4px ${T.amber}44`,
+                        boxShadow: `0 0 0 2px ${T.coral}66, 0 0 28px 4px ${T.coral}44`,
                         animation: "botThinkPulse 1.4s ease-in-out infinite",
                       }}
                     />
@@ -1028,7 +1028,7 @@ export default function PlayPage() {
               zIndex: 5,
               padding: "8px 0",
               background:
-                "linear-gradient(180deg, transparent 0%, rgba(7,5,15,0.65) 30%, rgba(7,5,15,0.85) 100%)",
+                "linear-gradient(180deg, transparent 0%, rgba(251,246,236,0.65) 30%, rgba(251,246,236,0.92) 100%)",
               backdropFilter: "blur(6px)",
               WebkitBackdropFilter: "blur(6px)",
               marginInline: -4,
@@ -1044,32 +1044,32 @@ export default function PlayPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 6,
-                background: "rgba(255,255,255,0.04)",
+                background: "#FFFCF5",
                 border: `1.5px solid ${T.border}`,
                 borderRadius: 12,
                 minHeight: 52,
                 fontSize: 13,
                 fontWeight: 700,
-                color: T.textMed,
+                color: T.inkLow,
                 cursor: "pointer",
                 fontFamily: T.fontUI,
                 transition: "all 200ms cubic-bezier(0.34,1.56,0.64,1)",
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = T.emerald;
-                (e.currentTarget as HTMLElement).style.color = T.emeraldGlow;
+                (e.currentTarget as HTMLElement).style.borderColor = T.sage;
+                (e.currentTarget as HTMLElement).style.color = T.sageDeep;
               }}
               onFocus={(e) => {
-                (e.currentTarget as HTMLElement).style.borderColor = T.emerald;
-                (e.currentTarget as HTMLElement).style.color = T.emeraldGlow;
+                (e.currentTarget as HTMLElement).style.borderColor = T.sage;
+                (e.currentTarget as HTMLElement).style.color = T.sageDeep;
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = T.border;
-                (e.currentTarget as HTMLElement).style.color = T.textMed;
+                (e.currentTarget as HTMLElement).style.color = T.inkLow;
               }}
               onBlur={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = T.border;
-                (e.currentTarget as HTMLElement).style.color = T.textMed;
+                (e.currentTarget as HTMLElement).style.color = T.inkLow;
               }}
             >
               <RefreshCw aria-hidden size={14} strokeWidth={2.5} />
@@ -1084,13 +1084,13 @@ export default function PlayPage() {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 6,
-                background: "rgba(255,255,255,0.04)",
+                background: "#FFFCF5",
                 border: `1.5px solid ${T.border}`,
                 borderRadius: 12,
                 minHeight: 52,
                 fontSize: 13,
                 fontWeight: 700,
-                color: T.textMed,
+                color: T.inkLow,
                 cursor: "pointer",
                 fontFamily: T.fontUI,
                 transition: "all 200ms cubic-bezier(0.34,1.56,0.64,1)",
@@ -1098,23 +1098,23 @@ export default function PlayPage() {
               }}
               onMouseEnter={(e) => {
                 if (stateHistory.length >= 2 && status === "playing") {
-                  (e.currentTarget as HTMLElement).style.borderColor = T.amber;
-                  (e.currentTarget as HTMLElement).style.color = T.amberGlow;
+                  (e.currentTarget as HTMLElement).style.borderColor = T.coral;
+                  (e.currentTarget as HTMLElement).style.color = T.coral;
                 }
               }}
               onFocus={(e) => {
                 if (stateHistory.length >= 2 && status === "playing") {
-                  (e.currentTarget as HTMLElement).style.borderColor = T.amber;
-                  (e.currentTarget as HTMLElement).style.color = T.amberGlow;
+                  (e.currentTarget as HTMLElement).style.borderColor = T.coral;
+                  (e.currentTarget as HTMLElement).style.color = T.coral;
                 }
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = T.border;
-                (e.currentTarget as HTMLElement).style.color = T.textMed;
+                (e.currentTarget as HTMLElement).style.color = T.inkLow;
               }}
               onBlur={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = T.border;
-                (e.currentTarget as HTMLElement).style.color = T.textMed;
+                (e.currentTarget as HTMLElement).style.color = T.inkLow;
               }}
             >
               <Undo2 aria-hidden size={14} strokeWidth={2.5} />
@@ -1138,7 +1138,7 @@ export default function PlayPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            background: "rgba(7,5,15,0.78)",
+            background: "rgba(31,42,68,0.55)",
             backdropFilter: "blur(8px)",
           }}
           onClick={() => setResetConfirmOpen(false)}
@@ -1150,17 +1150,17 @@ export default function PlayPage() {
               width: "calc(100% - 40px)",
               padding: "24px 26px",
               borderRadius: 22,
-              background: T.velvet,
-              border: `1.5px solid ${T.borderStrong}`,
+              background: "#FFFCF5",
+              border: `1.5px solid ${T.border}`,
               boxShadow: T.shadowDeep,
               fontFamily: T.fontUI,
-              color: T.textHi,
+              color: T.ink,
             }}
           >
             <div style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
               Restart this game?
             </div>
-            <div style={{ fontSize: 14, color: T.textMed, lineHeight: 1.5, marginBottom: 18 }}>
+            <div style={{ fontSize: 14, color: T.inkLow, lineHeight: 1.5, marginBottom: 18 }}>
               You'll lose your current position and start a fresh board. Your XP and progress are safe.
             </div>
             <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
@@ -1168,8 +1168,8 @@ export default function PlayPage() {
                 type="button"
                 onClick={() => setResetConfirmOpen(false)}
                 style={{
-                  background: "rgba(255,255,255,0.04)",
-                  color: T.textMed,
+                  background: "rgba(31,42,68,0.04)",
+                  color: T.inkLow,
                   border: `1.5px solid ${T.border}`,
                   borderRadius: 12,
                   padding: "10px 16px",
@@ -1188,15 +1188,15 @@ export default function PlayPage() {
                   store.resetGame();
                 }}
                 style={{
-                  background: T.goldFoil,
-                  color: T.inkDeep,
+                  background: T.coral,
+                  color: "#FFFCF5",
                   border: "none",
                   borderRadius: 12,
                   padding: "10px 18px",
                   fontSize: 13,
                   fontWeight: 800,
                   cursor: "pointer",
-                  boxShadow: T.glowAmber,
+                  boxShadow: T.glowCoral,
                   fontFamily: T.fontUI,
                   letterSpacing: "0.04em",
                 }}

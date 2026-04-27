@@ -7,9 +7,6 @@ import CoachPawn from "@/components/CoachPawn";
 import VoiceWave from "@/components/VoiceWave";
 import { usePrefersReducedMotion } from "@/lib/design/atmosphere";
 
-// Typewriter — reveals text char-by-char at ~28 chars/sec when first
-// mounted. Older coach messages re-render fully (no replay). Used only
-// on the most-recent message so back-scroll stays readable.
 function Typewriter({ text, speed = 28 }: { text: string; speed?: number }) {
   const reduced = usePrefersReducedMotion();
   const [n, setN] = useState(reduced ? text.length : 0);
@@ -46,7 +43,7 @@ function Typewriter({ text, speed = 28 }: { text: string; speed?: number }) {
             display: "inline-block",
             width: 2,
             height: "0.95em",
-            background: T.amberGlow,
+            background: T.coral,
             marginLeft: 3,
             verticalAlign: "middle",
             animation: "tpCursor 0.85s ease-in-out infinite",
@@ -68,34 +65,34 @@ const MSG_STYLES: Record<
   { bg: string; border: string; tail: string; tone: string }
 > = {
   intro: {
-    bg: "linear-gradient(180deg, rgba(245,182,56,0.10) 0%, rgba(245,182,56,0.04) 100%)",
-    border: "rgba(245,182,56,0.28)",
-    tail: "rgba(245,182,56,0.28)",
-    tone: T.amberGlow,
+    bg: "linear-gradient(180deg, rgba(242,201,76,0.10) 0%, rgba(242,201,76,0.04) 100%)",
+    border: "rgba(242,201,76,0.35)",
+    tail: "rgba(242,201,76,0.35)",
+    tone: T.butterDeep,
   },
   praise: {
-    bg: "linear-gradient(180deg, rgba(52,211,153,0.10) 0%, rgba(52,211,153,0.04) 100%)",
-    border: "rgba(52,211,153,0.28)",
-    tail: "rgba(52,211,153,0.28)",
-    tone: T.emeraldGlow,
+    bg: "linear-gradient(180deg, rgba(124,182,158,0.10) 0%, rgba(124,182,158,0.04) 100%)",
+    border: "rgba(124,182,158,0.35)",
+    tail: "rgba(124,182,158,0.35)",
+    tone: T.sageDeep,
   },
   tip: {
-    bg: "rgba(255,255,255,0.04)",
+    bg: "#FFFCF5",
     border: T.border,
     tail: T.border,
-    tone: T.textMed,
+    tone: T.inkLow,
   },
   correction: {
-    bg: "linear-gradient(180deg, rgba(255,107,107,0.10) 0%, rgba(255,107,107,0.04) 100%)",
-    border: "rgba(255,107,107,0.28)",
-    tail: "rgba(255,107,107,0.28)",
-    tone: T.rubyGlow,
+    bg: "linear-gradient(180deg, rgba(255,107,90,0.10) 0%, rgba(255,107,90,0.04) 100%)",
+    border: "rgba(255,107,90,0.30)",
+    tail: "rgba(255,107,90,0.30)",
+    tone: T.coral,
   },
   celebration: {
-    bg: "linear-gradient(180deg, rgba(245,182,56,0.18) 0%, rgba(245,182,56,0.06) 100%)",
-    border: "rgba(252,211,77,0.5)",
-    tail: "rgba(252,211,77,0.5)",
-    tone: T.amberGlow,
+    bg: "linear-gradient(180deg, rgba(255,107,90,0.14) 0%, rgba(242,201,76,0.08) 100%)",
+    border: "rgba(255,107,90,0.35)",
+    tail: "rgba(255,107,90,0.35)",
+    tone: T.coral,
   },
 };
 
@@ -111,8 +108,6 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
     if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
   }, [messages]);
 
-  // Coach expression: cheer if last message is celebration/intro praise,
-  // talking if voice is playing, sad on correction-only state, idle otherwise.
   const last = messages[messages.length - 1];
   const expression = voicePlaying
     ? "talking"
@@ -128,19 +123,24 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
         display: "flex",
         flexDirection: "column",
         gap: 16,
+        background: "#FFFCF5",
+        borderRadius: 22,
+        padding: "18px 18px 16px",
+        border: `1.5px solid ${T.border}`,
+        boxShadow: T.shadowSoft,
       }}
     >
-      {/* Coach Pawn header — character + name + status */}
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <CoachPawn size={84} expression={expression} />
+      {/* Coach Pawn header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <CoachPawn size={78} expression={expression} mode="kid" />
         <div style={{ minWidth: 0, flex: 1 }}>
           <div
             style={{
               fontFamily: T.fontDisplay,
               fontStyle: "italic",
-              fontSize: 26,
-              fontWeight: 600,
-              color: T.textHi,
+              fontWeight: 400,
+              fontSize: 24,
+              color: T.ink,
               letterSpacing: "-0.01em",
               lineHeight: 1,
             }}
@@ -150,12 +150,12 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 6 }}>
             {voicePlaying ? (
               <>
-                <VoiceWave scale={0.55} color={T.amberGlow} speaking />
+                <VoiceWave scale={0.55} color={T.coral} speaking />
                 <span
                   style={{
                     fontFamily: T.fontUI,
                     fontSize: 11,
-                    color: T.amberGlow,
+                    color: T.coral,
                     fontWeight: 700,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
@@ -174,7 +174,7 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
                         width: 5,
                         height: 5,
                         borderRadius: "50%",
-                        background: T.amberGlow,
+                        background: T.coral,
                         animation: `cpDotPulse 1.4s ease-in-out ${i * 0.18}s infinite`,
                       }}
                     />
@@ -184,7 +184,7 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
                   style={{
                     fontFamily: T.fontUI,
                     fontSize: 11,
-                    color: T.amberGlow,
+                    color: T.coral,
                     fontWeight: 600,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
@@ -200,15 +200,15 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
                     width: 8,
                     height: 8,
                     borderRadius: "50%",
-                    background: T.emerald,
-                    boxShadow: `0 0 8px ${T.emerald}`,
+                    background: T.sage,
+                    boxShadow: `0 0 6px ${T.sage}`,
                   }}
                 />
                 <span
                   style={{
                     fontFamily: T.fontUI,
                     fontSize: 11,
-                    color: T.textLo,
+                    color: T.inkLow,
                     fontWeight: 500,
                     letterSpacing: "0.18em",
                     textTransform: "uppercase",
@@ -222,7 +222,7 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
         </div>
       </div>
 
-      {/* Messages list */}
+      {/* Messages */}
       <div
         ref={ref}
         aria-live="polite"
@@ -231,9 +231,9 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
           display: "flex",
           flexDirection: "column",
           gap: 10,
-          maxHeight: 360,
+          maxHeight: 340,
           overflowY: "auto",
-          paddingRight: 4,
+          paddingRight: 2,
         }}
       >
         {messages.map((msg, i) => {
@@ -247,18 +247,17 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
                 position: "relative",
                 background: s.bg,
                 border: `1.5px solid ${s.border}`,
-                borderRadius: 18,
-                padding: "14px 18px",
-                boxShadow: `inset 0 1px 0 rgba(252,211,77,0.05), ${T.e2}`,
+                borderRadius: 16,
+                padding: "13px 16px",
+                boxShadow: T.e1,
               }}
             >
-              {/* tail */}
               <div
                 aria-hidden
                 style={{
                   position: "absolute",
-                  left: -10,
-                  top: 18,
+                  left: -11,
+                  top: 16,
                   width: 0,
                   height: 0,
                   borderTop: "10px solid transparent",
@@ -270,10 +269,9 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
                 style={{
                   margin: 0,
                   fontSize: 15,
-                  lineHeight: 1.55,
-                  color: T.textHi,
+                  lineHeight: 1.58,
+                  color: T.ink,
                   fontFamily: T.fontUI,
-                  // typed-text container is anchored here
                   fontWeight: 500,
                   letterSpacing: "-0.005em",
                 }}
@@ -290,36 +288,36 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
             className="cp-msg"
             style={{
               position: "relative",
-              background: MSG_STYLES.tip.bg,
-              border: `1.5px solid ${MSG_STYLES.tip.border}`,
-              borderRadius: 18,
-              padding: "14px 18px",
-              width: 80,
-              boxShadow: `inset 0 1px 0 rgba(252,211,77,0.05), ${T.e2}`,
+              background: "#FFFCF5",
+              border: `1.5px solid ${T.border}`,
+              borderRadius: 16,
+              padding: "13px 16px",
+              width: 72,
+              boxShadow: T.e1,
             }}
           >
             <div
               aria-hidden
               style={{
                 position: "absolute",
-                left: -10,
-                top: 18,
+                left: -11,
+                top: 16,
                 width: 0,
                 height: 0,
                 borderTop: "10px solid transparent",
                 borderBottom: "10px solid transparent",
-                borderRight: `12px solid ${MSG_STYLES.tip.tail}`,
+                borderRight: `12px solid ${T.border}`,
               }}
             />
-            <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: 5, alignItems: "center", justifyContent: "center" }}>
               {[0, 1, 2].map((i) => (
                 <span
                   key={i}
                   style={{
-                    width: 8,
-                    height: 8,
+                    width: 7,
+                    height: 7,
                     borderRadius: "50%",
-                    background: T.amberGlow,
+                    background: T.coral,
                     animation: `cpDotPulse 1.2s ${i * 0.15}s infinite ease-in-out`,
                   }}
                 />
@@ -332,9 +330,9 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
           <p
             style={{
               fontSize: 13,
-              color: T.textDim,
+              color: T.inkDim,
               textAlign: "center",
-              marginTop: 16,
+              marginTop: 14,
               fontStyle: "italic",
               fontFamily: T.fontUI,
             }}
@@ -350,10 +348,10 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
           40% { opacity: 1; transform: scale(1); }
         }
         .cp-msg {
-          animation: cpMsgIn 0.4s cubic-bezier(0.22,1,0.36,1) both;
+          animation: cpMsgIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
         }
         @keyframes cpMsgIn {
-          from { opacity: 0; transform: translateY(6px); }
+          from { opacity: 0; transform: translateY(5px); }
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>

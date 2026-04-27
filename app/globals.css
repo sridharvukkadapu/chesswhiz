@@ -4,10 +4,11 @@
   box-sizing: border-box;
 }
 
-/* Tabular figures globally — keeps timers, scores, XP, and
-   ranks from jiggling as digits change width. Body inherits. */
+/* Tabular figures globally */
 body {
   font-variant-numeric: tabular-nums;
+  background: #FBF6EC;
+  color: #1F2A44;
 }
 
 /* ── Coach message entrance ──────────────────────── */
@@ -17,7 +18,7 @@ body {
 }
 .coach-fade { animation: coach-fade 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/* ── Thinking dots ───────────────────────────────── */
+/* ── Thinking dots (warm coral) ──────────────────── */
 @keyframes dot-pulse {
   0%, 80%, 100% { opacity: 0.2; transform: scale(0.7); }
   40%            { opacity: 1;   transform: scale(1); }
@@ -26,7 +27,7 @@ body {
   display: inline-block;
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: #FCD34D;
+  background: #FF6B5A;
   animation: dot-pulse 1.4s infinite ease-in-out;
   will-change: transform, opacity;
 }
@@ -41,14 +42,14 @@ body {
 }
 .card-enter { animation: card-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/* ── Active player pulse ─────────────────────────── */
+/* ── Active player pulse (warm coral) ───────────── */
 @keyframes player-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.4); }
-  50%       { box-shadow: 0 0 0 6px rgba(252, 211, 77, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 90, 0.35); }
+  50%       { box-shadow: 0 0 0 6px rgba(255, 107, 90, 0); }
 }
 .player-active { animation: player-pulse 2s infinite ease-in-out; }
 
-/* ── Game over banner entrance ───────────────────── */
+/* ── Game over banner ────────────────────────────── */
 @keyframes status-enter {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -61,33 +62,27 @@ body {
   will-change: transform;
 }
 .btn-press:active:not(:disabled) { transform: scale(0.95); }
-.btn-press:hover:not(:disabled) { filter: brightness(1.08); }
+.btn-press:hover:not(:disabled) { filter: brightness(1.05); }
 
-/* ── Focus rings (gold, WCAG AA) ─────────────────────
-   Universal — every focusable element gets a clearly visible
-   amber ring on keyboard focus. The 3px ring + offset keeps it
-   readable on both light and dark surfaces. */
+/* ── Focus rings (coral, WCAG AA) ─────────────────
+   Warm amber-coral ring on all focusable elements. */
 :focus-visible {
-  outline: 3px solid #FCD34D;
+  outline: 3px solid #FF6B5A;
   outline-offset: 3px;
   border-radius: 6px;
 }
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible {
-  outline: 3px solid #FCD34D;
+  outline: 3px solid #FF6B5A;
   outline-offset: 3px;
-  box-shadow: 0 0 0 6px rgba(252, 211, 77, 0.18);
+  box-shadow: 0 0 0 6px rgba(255, 107, 90, 0.15);
 }
 
-/* ── Tabular figures for stat slots ──────────────────
-   Apply to anything with .nums or to containers explicitly.
-   Stops layout shift when XP / counts tick. */
+/* ── Tabular figures ──────────────────────────────── */
 .tabular-nums { font-variant-numeric: tabular-nums; }
 
-/* ── Bottom-nav press feedback ──────────────────────
-   Brief scale + opacity flash on tap so kids know the tap
-   landed even before the route transition finishes. */
+/* ── Bottom-nav press feedback ────────────────────── */
 .bn-tap { transition: transform 120ms ease, opacity 120ms ease; }
 .bn-tap:active { transform: scale(0.93); opacity: 0.7; }
 
@@ -100,35 +95,35 @@ a:focus-visible,
   }
 }
 
-/* ── Scrollbar (dark theme) ──────────────────────── */
+/* ── Scrollbar (warm light theme) ───────────────── */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: rgba(245, 230, 200, 0.04); }
+::-webkit-scrollbar-track { background: rgba(31, 42, 68, 0.04); }
 ::-webkit-scrollbar-thumb {
-  background: rgba(245, 230, 200, 0.18);
+  background: rgba(31, 42, 68, 0.18);
   border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(245, 230, 200, 0.32); }
+::-webkit-scrollbar-thumb:hover { background: rgba(31, 42, 68, 0.32); }
 
 /* ── Skip link (a11y) ──────────────────────────────
-   Hidden by default, visible + amber ring on keyboard focus. */
+   Warm background, coral outline. */
 .skip-link {
   position: fixed;
   top: -100px;
   left: 12px;
   padding: 12px 20px;
-  background: #FCD34D;
-  color: #1A1210;
+  background: #FF6B5A;
+  color: #FFFCF5;
   font-weight: 800;
   border-radius: 0 0 12px 12px;
   z-index: 9999;
   text-decoration: none;
   font-family: var(--font-jakarta), system-ui, sans-serif;
   transition: top 0.18s ease;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
 }
 .skip-link:focus,
 .skip-link:focus-visible {
   top: 12px;
-  outline: 3px solid #FFFFFF;
+  outline: 3px solid #1F2A44;
   outline-offset: 2px;
 }

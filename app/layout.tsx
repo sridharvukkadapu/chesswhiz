@@ -1,18 +1,18 @@
 import type { Metadata, Viewport } from "next";
-import { Caveat, Cormorant_Garamond, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { Caveat, DM_Serif_Display, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
-// ChessWhiz Reimagined — fonts match the design handoff bundle.
-//   Cormorant Garamond — premium fantasy serif (display, brand, italics)
+// ChessWhiz Warm Character — fonts from v2/warm design handoff.
+//   DM Serif Display   — warm serif display (headlines, brand)
 //   Plus Jakarta Sans  — friendly modern UI sans
 //   Caveat             — handwritten coach annotations
 //   JetBrains Mono     — move history, stat labels, FEN
 
-const cormorant = Cormorant_Garamond({
+const dmSerif = DM_Serif_Display({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400"],
   style: ["normal", "italic"],
-  variable: "--font-cormorant",
+  variable: "--font-dm-serif",
   display: "swap",
 });
 
@@ -82,15 +82,15 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#07050F",
+  themeColor: "#FBF6EC",
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${jakarta.variable} ${caveat.variable} ${jetbrainsMono.variable}`}>
-      <body style={{ margin: 0, background: "#07050F" }}>
+    <html lang="en" className={`${dmSerif.variable} ${jakarta.variable} ${caveat.variable} ${jetbrainsMono.variable}`}>
+      <body style={{ margin: 0, background: "#FBF6EC" }}>
         <a href="#main-content" className="skip-link">Skip to content</a>
         <noscript>
           <div style={{
@@ -98,9 +98,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             margin: "40px auto",
             maxWidth: 480,
             borderRadius: 16,
-            background: "#1A1238",
-            border: "1.5px solid rgba(245,230,200,0.22)",
-            color: "#FBF6E8",
+            background: "#FFFCF5",
+            border: "1.5px solid rgba(31,42,68,0.18)",
+            color: "#1F2A44",
             fontFamily: "Georgia, serif",
             fontStyle: "italic",
             textAlign: "center",

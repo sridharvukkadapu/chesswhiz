@@ -2,24 +2,83 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-// ─── useTime: a per-frame elapsed-seconds clock for ambient animation ───
-// All animated atmosphere (stars, motes, breathing characters, glow
-// pulses) reads from this so a single rAF loop drives everything. The
-// hook tears down its loop when the component unmounts.
+// ─── Shared rAF time source ───────────────────────────────────────
+// One requestAnimationFrame loop for the whole app, not one per
+// component. Every useTime() consumer subscribes; the loop runs only
+// while there's at least one subscriber AND the tab is visible AND
+// the user hasn't requested reduced motion.
+//
+// Without this, every CoachPawn / StarField / KnightCard / Board
+// would hold its own rAF and re-render every frame independently,
+// burning CPU on low-end phones.
+//
+// API stays the same: useTime() returns elapsed seconds since the
+// loop started.
+
+type Subscriber = (t: number) => void;
+const _subs = new Set<Subscriber>();
+let _start: number | null = null;
+let _last = 0; // last published time (so new subscribers get a sane value)
+let _rafId: number | null = null;
+let _reducedMotion = false;
+let _hidden = false;
+
+function _shouldRun(): boolean {
+  return _subs.size > 0 && !_hidden && !_reducedMotion;
+}
+
+function _tick(now: number) {
+  if (_start == null) _start = now;
+  _last = (now - _start) / 1000;
+  for (const sub of _subs) sub(_last);
+  _rafId = _shouldRun() ? requestAnimationFrame(_tick) : null;
+}
+
+function _kick() {
+  if (_rafId != null) return;
+  if (!_shouldRun()) return;
+  _rafId = requestAnimationFrame(_tick);
+}
+
+function _stop() {
+  if (_rafId != null) {
+    cancelAnimationFrame(_rafId);
+    _rafId = null;
+  }
+}
+
+// Wire visibility + reduced-motion once per page load
+if (typeof window !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    _hidden = document.hidden;
+    if (_hidden) _stop();
+    else _kick();
+  });
+  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+  _reducedMotion = mq.matches;
+  mq.addEventListener?.("change", (e) => {
+    _reducedMotion = e.matches;
+    if (_reducedMotion) _stop();
+    else _kick();
+  });
+}
+
 export function useTime(): number {
-  const [t, setT] = useState(0);
-  const start = useRef<number | null>(null);
-  const raf = useRef<number | null>(null);
+  // Fast path on the server / during SSR.
+  const [t, setT] = useState(_last);
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const tick = (now: number) => {
-      if (start.current == null) start.current = now;
-      setT((now - start.current) / 1000);
-      raf.current = requestAnimationFrame(tick);
-    };
-    raf.current = requestAnimationFrame(tick);
+    // If reduced motion is on, freeze at 0 — no subscriber registered.
+    if (_reducedMotion) {
+      setT(0);
+      return;
+    }
+    const sub: Subscriber = (now) => setT(now);
+    _subs.add(sub);
+    _kick();
     return () => {
-      if (raf.current != null) cancelAnimationFrame(raf.current);
+      _subs.delete(sub);
+      if (_subs.size === 0) _stop();
     };
   }, []);
   return t;

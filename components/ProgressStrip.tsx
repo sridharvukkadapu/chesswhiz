@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Flame } from "lucide-react";
 import { getRankByXP, getNextRank, KINGDOMS } from "@/lib/progression/data";
 import type { PlayerProgression } from "@/lib/progression/types";
 import { T, KINGDOM_COLORS } from "@/lib/design/tokens";
@@ -187,7 +188,7 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
                 flexShrink: 0,
               }}
             >
-              <span style={{ fontSize: 14 }}>🔥</span>
+              <Flame aria-hidden size={14} color={T.amberGlow} strokeWidth={2.4} fill={T.amberGlow} fillOpacity={0.3} />
               <span
                 style={{
                   fontFamily: T.fontUI,

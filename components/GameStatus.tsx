@@ -2,6 +2,7 @@
 
 import type { GameStatus } from "@/lib/chess/types";
 import { T } from "@/lib/design/tokens";
+import { Trophy, Handshake, Bot, type LucideIcon } from "lucide-react";
 
 interface GameStatusProps {
   status: GameStatus;
@@ -15,14 +16,16 @@ export default function GameStatusBar({ status, playerName, onReset }: GameStatu
   const isWin = status === "white_wins";
   const isDraw = status === "stalemate" || status === "draw";
 
-  const config = isWin
+  const config: {
+    label: string; color: string; bg: string; border: string; glow: string; Icon: LucideIcon;
+  } = isWin
     ? {
         label: `${playerName} wins!`,
         color: T.emeraldGlow,
         bg: "rgba(52,211,153,0.10)",
         border: "rgba(52,211,153,0.4)",
         glow: T.glowEmerald,
-        icon: "🏆",
+        Icon: Trophy,
       }
     : isDraw
       ? {
@@ -31,7 +34,7 @@ export default function GameStatusBar({ status, playerName, onReset }: GameStatu
           bg: "rgba(255,255,255,0.04)",
           border: T.border,
           glow: "0 0 24px rgba(255,255,255,0.08)",
-          icon: "🤝",
+          Icon: Handshake,
         }
       : {
           label: "Bot wins",
@@ -39,7 +42,7 @@ export default function GameStatusBar({ status, playerName, onReset }: GameStatu
           bg: "rgba(255,107,107,0.10)",
           border: "rgba(255,107,107,0.4)",
           glow: T.glowRuby,
-          icon: "♛",
+          Icon: Bot,
         };
 
   return (
@@ -58,7 +61,7 @@ export default function GameStatusBar({ status, playerName, onReset }: GameStatu
         animation: "statusSlide 0.4s cubic-bezier(0.22,1,0.36,1) both",
       }}
     >
-      <span style={{ fontSize: 22 }}>{config.icon}</span>
+      <config.Icon aria-hidden size={22} color={config.color} strokeWidth={2.2} />
       <span
         style={{
           fontFamily: T.fontDisplay,

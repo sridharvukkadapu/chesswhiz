@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Flame } from "lucide-react";
 import { useGameStore } from "@/stores/gameStore";
 import { KINGDOMS, POWERS, getRankByXP, getNextRank, isKingdomLocked } from "@/lib/progression/data";
 import type { Kingdom, PlayerProgression } from "@/lib/progression/types";
@@ -275,10 +276,11 @@ function KingdomPageInner() {
           <Stat
             label="Streak"
             value={
-              <>
-                <span style={{ color: T.amberGlow }}>🔥 {prog.streak}</span>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: T.amberGlow }}>
+                <Flame aria-hidden size={18} strokeWidth={2.4} fill={T.amberGlow} fillOpacity={0.3} />
+                <span className="tabular-nums">{prog.streak}</span>
                 <span style={{ color: T.textDim, fontSize: 14 }}>d</span>
-              </>
+              </span>
             }
           />
         </div>

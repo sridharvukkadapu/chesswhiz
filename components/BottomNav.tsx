@@ -2,12 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Gamepad2, Map, IdCard, type LucideIcon } from "lucide-react";
 import { T } from "@/lib/design/tokens";
 
-const TABS = [
-  { href: "/play", label: "Play", icon: "♟" },
-  { href: "/kingdom", label: "Kingdom", icon: "🗺" },
-  { href: "/card", label: "Card", icon: "🃏" },
+interface Tab {
+  href: string;
+  label: string;
+  Icon: LucideIcon;
+}
+
+const TABS: Tab[] = [
+  { href: "/play", label: "Play", Icon: Gamepad2 },
+  { href: "/kingdom", label: "Kingdom", Icon: Map },
+  { href: "/card", label: "Card", Icon: IdCard },
 ];
 
 export default function BottomNav() {
@@ -22,7 +29,7 @@ export default function BottomNav() {
         right: 0,
         bottom: 0,
         zIndex: 40,
-        background: "rgba(14,10,31,0.85)",
+        background: "rgba(14,10,31,0.92)",
         backdropFilter: "blur(20px) saturate(1.2)",
         WebkitBackdropFilter: "blur(20px) saturate(1.2)",
         borderTop: `1px solid ${T.borderStrong}`,
@@ -35,7 +42,7 @@ export default function BottomNav() {
           margin: "0 auto",
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
-          height: 60,
+          height: 64,
         }}
       >
         {TABS.map((t) => {
@@ -46,12 +53,13 @@ export default function BottomNav() {
               key={t.href}
               href={t.href}
               aria-current={active ? "page" : undefined}
+              aria-label={t.label}
               style={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 3,
+                gap: 4,
                 textDecoration: "none",
                 color: active ? T.amberGlow : T.textLo,
                 fontFamily: T.fontUI,
@@ -85,17 +93,16 @@ export default function BottomNav() {
                   />
                 </>
               )}
-              <span
+              <t.Icon
+                aria-hidden
+                size={22}
+                strokeWidth={active ? 2.4 : 1.8}
                 style={{
-                  fontSize: 18,
-                  lineHeight: 1,
-                  filter: active ? "none" : "grayscale(0.5)",
+                  filter: active ? "drop-shadow(0 0 6px rgba(252,211,77,0.55))" : "none",
                   transform: active ? "translateY(-1px)" : "none",
                   transition: "transform 200ms cubic-bezier(0.34,1.56,0.64,1)",
                 }}
-              >
-                {t.icon}
-              </span>
+              />
               <span
                 style={{
                   fontSize: 10,

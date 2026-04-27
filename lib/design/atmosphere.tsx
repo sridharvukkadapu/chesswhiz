@@ -272,6 +272,43 @@ export function GoldFoilText({
   );
 }
 
+// ─── useBreakpoint: returns the current named breakpoint ───
+// Mobile-first: returns the largest matching tier. Use sparingly —
+// prefer CSS media queries via flex / grid wherever possible. This
+// hook exists for cases where the layout structure itself needs to
+// branch (e.g. wrap the side panel inside vs. outside the main flow).
+export type Breakpoint = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
+const BP: Array<[Breakpoint, number]> = [
+  ["xs", 0],
+  ["sm", 480],
+  ["md", 768],
+  ["lg", 1024],
+  ["xl", 1280],
+  ["2xl", 1536],
+];
+
+export function useBreakpoint(): Breakpoint {
+  const [bp, setBp] = useState<Breakpoint>("xs");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const compute = () => {
+      const w = window.innerWidth;
+      let cur: Breakpoint = "xs";
+      for (const [name, min] of BP) if (w >= min) cur = name;
+      setBp(cur);
+    };
+    compute();
+    window.addEventListener("resize", compute, { passive: true });
+    return () => window.removeEventListener("resize", compute);
+  }, []);
+  return bp;
+}
+
+export function bpAtLeast(current: Breakpoint, target: Breakpoint): boolean {
+  const order: Breakpoint[] = ["xs", "sm", "md", "lg", "xl", "2xl"];
+  return order.indexOf(current) >= order.indexOf(target);
+}
+
 // ─── usePrefersReducedMotion: respect user OS preference ───
 export function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);

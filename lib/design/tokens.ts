@@ -72,6 +72,15 @@ export const T = {
   text5xl: 56, // hero / brand wordmark in context
   textHero: 84, // page-defining hero only
 
+  // ── Breakpoints ──
+  // Standard mobile-first thresholds (px). Use as media-query targets
+  // or with the useBreakpoint() hook in atmosphere.tsx.
+  bpSm: 480,    // small phone landscape, large phone portrait
+  bpMd: 768,    // tablet portrait
+  bpLg: 1024,   // tablet landscape, small laptop
+  bpXl: 1280,   // desktop
+  bp2xl: 1536,  // large desktop
+
   // ── Spacing scale (4pt grid) ──
   space1: 4,
   space2: 8,

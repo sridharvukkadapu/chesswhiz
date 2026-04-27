@@ -145,7 +145,7 @@ const Hero = React.memo(function Hero() {
             padding: "6px 18px",
           }}
         >
-          Story Mode · 7 Kingdoms
+          Free · Ages 5–12
         </span>
       </Reveal>
 
@@ -355,7 +355,7 @@ const CoachingShowcase = React.memo(function CoachingShowcase() {
             color: T.ink,
           }}
         >
-          Coach Pawn talks back
+          Every move gets a real explanation
         </h2>
       </Reveal>
       <Reveal delay={200}>
@@ -1421,7 +1421,7 @@ const FinalCTA = React.memo(function FinalCTA() {
               fontFamily: T.fontUI,
             }}
           >
-            Watch a lesson
+            See the full journey
           </Link>
         </div>
         <div
@@ -1442,7 +1442,14 @@ const FinalCTA = React.memo(function FinalCTA() {
 });
 
 // ─── Nav ───────────────────────────────────────────────────────────
+const NAV_LINKS = [
+  { href: "/journey", label: "Journey" },
+  { href: "/how-it-works", label: "How it works" },
+  { href: "/privacy", label: "Privacy" },
+];
+
 function Nav({ scrolled }: { scrolled: boolean }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <nav
       style={{
@@ -1469,6 +1476,7 @@ function Nav({ scrolled }: { scrolled: boolean }) {
           transition: "all 500ms cubic-bezier(0.16,1,0.3,1)",
         }}
       >
+        {/* Logo */}
         <Link
           href="/"
           style={{
@@ -1506,25 +1514,127 @@ function Nav({ scrolled }: { scrolled: boolean }) {
             Chess<span style={{ color: T.coral }}>Whiz</span>
           </span>
         </Link>
-        <Link
-          href="/onboard"
+
+        {/* Desktop nav links */}
+        <div className="nav-desktop-links" style={{ display: "flex", alignItems: "center", gap: 28 }}>
+          {NAV_LINKS.map((l) => (
+            <Link key={l.href} href={l.href} style={{
+              fontFamily: T.fontUI, fontSize: 13, fontWeight: 700,
+              color: T.inkLow, textDecoration: "none", letterSpacing: "0.04em",
+              transition: "color 150ms ease",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = T.ink; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = T.inkLow; }}
+            >
+              {l.label}
+            </Link>
+          ))}
+          <Link
+            href="/onboard"
+            style={{
+              background: T.coral,
+              color: "#FFFCF5",
+              border: "none",
+              borderRadius: 100,
+              padding: "10px 22px",
+              fontSize: 13,
+              fontWeight: 800,
+              textDecoration: "none",
+              fontFamily: T.fontUI,
+              boxShadow: "0 4px 14px rgba(255,107,90,0.35)",
+              letterSpacing: "0.04em",
+            }}
+          >
+            Play Free →
+          </Link>
+        </div>
+
+        {/* Mobile hamburger */}
+        <button
+          type="button"
+          className="nav-hamburger"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen(!menuOpen)}
           style={{
-            background: T.coral,
-            color: "#FFFCF5",
+            display: "none",
+            background: "none",
             border: "none",
-            borderRadius: 100,
-            padding: "10px 22px",
-            fontSize: 13,
-            fontWeight: 800,
-            textDecoration: "none",
-            fontFamily: T.fontUI,
-            boxShadow: "0 4px 14px rgba(255,107,90,0.35)",
-            letterSpacing: "0.04em",
+            cursor: "pointer",
+            padding: 8,
+            color: T.ink,
           }}
         >
-          Play Free →
-        </Link>
+          {menuOpen ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <path d="M3 8h18M3 16h18" />
+            </svg>
+          )}
+        </button>
       </div>
+
+      {/* Mobile menu drawer */}
+      {menuOpen && (
+        <div style={{
+          background: "rgba(251,246,236,0.97)",
+          backdropFilter: "blur(20px)",
+          borderTop: `1px solid ${T.border}`,
+          padding: "16px 24px 24px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          animation: "navMenuIn 0.2s ease-out both",
+        }}>
+          {NAV_LINKS.map((l) => (
+            <Link key={l.href} href={l.href}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                fontFamily: T.fontUI, fontSize: 16, fontWeight: 700,
+                color: T.ink, textDecoration: "none",
+                padding: "12px 0",
+                borderBottom: `1px solid ${T.border}`,
+                display: "block",
+              }}
+            >
+              {l.label}
+            </Link>
+          ))}
+          <Link href="/onboard"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: "block",
+              marginTop: 12,
+              background: T.coral,
+              color: "#FFFCF5",
+              borderRadius: 100,
+              padding: "14px 0",
+              textAlign: "center",
+              fontSize: 16,
+              fontWeight: 800,
+              textDecoration: "none",
+              fontFamily: T.fontUI,
+              boxShadow: T.glowCoral,
+            }}
+          >
+            Play Free →
+          </Link>
+        </div>
+      )}
+
+      <style>{`
+        @media (max-width: 680px) {
+          .nav-desktop-links { display: none !important; }
+          .nav-hamburger { display: block !important; }
+        }
+        @keyframes navMenuIn {
+          from { opacity: 0; transform: translateY(-8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </nav>
   );
 }

@@ -182,16 +182,37 @@ export default function JourneyPage() {
                 </p>
 
                 {k.boss && (
-                  <div style={{
-                    background: P.creamDeep, border: `1px solid ${P.inkGhost}`,
-                    borderRadius: 12, padding: "12px 14px", marginBottom: 16,
-                    display: "flex", alignItems: "flex-start", gap: 10,
-                  }}>
-                    <span style={{ fontSize: 24, flexShrink: 0 }}>{k.boss.emoji}</span>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 10, fontWeight: 800, color: "#DC2626", letterSpacing: 1.5, textTransform: "uppercase" }}>Boss</div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-dm-serif), serif" }}>{k.boss.name}</div>
-                      <div style={{ fontSize: 12, color: P.inkLight, fontStyle: "italic", marginTop: 2 }}>{k.boss.signature}</div>
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{
+                      background: P.creamDeep, border: `1px solid ${P.inkGhost}`,
+                      borderRadius: 12, padding: "12px 14px",
+                      display: "flex", alignItems: "flex-start", gap: 10,
+                    }}>
+                      <span style={{ fontSize: 24, flexShrink: 0 }}>{k.boss.emoji}</span>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: "#DC2626", letterSpacing: 1.5, textTransform: "uppercase" }}>Boss</div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-dm-serif), serif" }}>{k.boss.name}</div>
+                        <div style={{ fontSize: 12, color: P.inkLight, fontStyle: "italic", marginTop: 2 }}>{k.boss.signature}</div>
+                        <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+                          {[
+                            { label: "Taunt", line: k.boss.dialogue[0], color: "#DC2626" },
+                            { label: "Mid-fight", line: k.boss.dialogue[1], color: P.gold },
+                            { label: "Defeated", line: k.boss.dialogue[2], color: P.emerald },
+                          ].map((d) => (
+                            <div key={d.label} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                              <span style={{
+                                fontSize: 9, fontWeight: 800, color: d.color,
+                                letterSpacing: 1, textTransform: "uppercase",
+                                flexShrink: 0, marginTop: 2, minWidth: 52,
+                              }}>{d.label}</span>
+                              <span style={{
+                                fontFamily: "var(--font-caveat), cursive",
+                                fontSize: 14, color: P.inkSoft, lineHeight: 1.4,
+                              }}>&ldquo;{d.line}&rdquo;</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -215,36 +236,64 @@ export default function JourneyPage() {
           ))}
         </div>
 
-        {/* Powers grid */}
+        {/* Powers grouped by kingdom */}
         <h2 style={{
           fontSize: 11, color: P.inkLight, letterSpacing: 1.8,
-          textTransform: "uppercase", fontWeight: 800, margin: "44px 0 16px",
+          textTransform: "uppercase", fontWeight: 800, margin: "44px 0 20px",
         }}>{POWERS.length} Powers to collect</h2>
 
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
-          gap: 10,
-        }}>
-          {POWERS.map((p) => {
-            const ringColor = p.rarity === "legendary" ? P.gold
-              : p.rarity === "epic" ? "#F4A6B8"
-              : p.rarity === "rare" ? P.emerald
-              : P.inkGhost;
+        <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+          {KINGDOMS.map((k) => {
+            const kPowers = POWERS.filter((p) => p.kingdom === k.id);
+            if (!kPowers.length) return null;
             return (
-              <div key={p.id} style={{
-                background: "rgba(255,252,245,0.92)",
-                border: `1.5px solid ${ringColor}55`,
-                borderRadius: 12, padding: "12px 10px",
-                textAlign: "center",
-                boxShadow: `0 2px 8px rgba(26,18,16,0.04)`,
-              }}>
-                <div style={{ fontSize: 24, marginBottom: 4 }}>{p.icon}</div>
-                <div style={{ fontSize: 12, fontWeight: 800, color: P.ink, lineHeight: 1.3 }}>{p.name}</div>
+              <div key={k.id}>
                 <div style={{
-                  fontSize: 9, fontWeight: 800, color: ringColor,
-                  letterSpacing: 1, textTransform: "uppercase", marginTop: 4,
-                }}>{p.rarity}</div>
+                  display: "flex", alignItems: "center", gap: 10, marginBottom: 10,
+                }}>
+                  <span style={{ fontSize: 18 }}>{KINGDOM_ICONS[k.id]}</span>
+                  <span style={{
+                    fontSize: 12, fontWeight: 800, color: k.color,
+                    letterSpacing: 1, textTransform: "uppercase",
+                  }}>{k.name}</span>
+                </div>
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                  gap: 8,
+                }}>
+                  {kPowers.map((p) => {
+                    const ringColor = p.rarity === "legendary" ? P.gold
+                      : p.rarity === "epic" ? "#F4A6B8"
+                      : p.rarity === "rare" ? P.emerald
+                      : P.inkGhost;
+                    const isLegendary = p.rarity === "legendary";
+                    return (
+                      <div key={p.id} style={{
+                        background: isLegendary
+                          ? `linear-gradient(135deg, rgba(255,107,90,0.08) 0%, rgba(242,201,76,0.08) 100%)`
+                          : "rgba(255,252,245,0.92)",
+                        border: `${isLegendary ? 2 : 1.5}px solid ${ringColor}${isLegendary ? "99" : "55"}`,
+                        borderRadius: 12, padding: "12px 10px",
+                        textAlign: "center",
+                        boxShadow: isLegendary
+                          ? `0 0 16px ${P.gold}25, 0 2px 8px rgba(26,18,16,0.04)`
+                          : `0 2px 8px rgba(26,18,16,0.04)`,
+                      }}>
+                        <div style={{ fontSize: 24, marginBottom: 4 }}>{p.icon}</div>
+                        <div style={{ fontSize: 12, fontWeight: 800, color: P.ink, lineHeight: 1.3 }}>{p.name}</div>
+                        <div style={{
+                          fontSize: 9, fontWeight: 800, color: ringColor,
+                          letterSpacing: 1, textTransform: "uppercase", marginTop: 4,
+                        }}>{p.rarity}</div>
+                        <div style={{
+                          fontSize: 11, color: P.inkLight, marginTop: 6, lineHeight: 1.4,
+                          fontStyle: "italic",
+                        }}>{p.howToEarn}</div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}

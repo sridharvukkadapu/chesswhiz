@@ -71,7 +71,7 @@ export default function PrivacyPage() {
 
         <Section title="Third parties">
           <ul>
-            <li><strong>Anthropic (Claude API)</strong> — generates the coaching responses. Anthropic&apos;s data policy applies to those API calls; we send the minimum needed (position, age group, first name only).</li>
+            <li><strong>Anthropic (Claude API)</strong> — generates the coaching responses. <a href="https://www.anthropic.com/privacy" style={{ color: P.emerald }}>Anthropic&apos;s privacy policy</a> applies to those API calls; we send the minimum needed (position, age group, first name only).</li>
             <li><strong>Vercel</strong> — hosts the site. Standard server logs (IP, user agent, timestamp) are retained briefly per Vercel&apos;s policy.</li>
           </ul>
         </Section>

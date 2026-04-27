@@ -20,12 +20,15 @@ export function generateAnnotation(
   const fork = tactics.find((t) => t.type === "fork" && t.detected);
   if (fork && fork.attackerSquare && fork.targetSquares?.length) {
     return {
+      heroSquare: fork.attackerSquare,
+      heroColor: "green",
       arrows: fork.targetSquares.map((sq) => ({
         from: fork.attackerSquare!,
         to: sq,
         color: "green" as const,
       })),
       circles: [{ square: fork.attackerSquare, color: "green" as const }],
+      threatSquares: fork.targetSquares,
       duration: 6000,
     };
   }
@@ -44,8 +47,11 @@ export function generateAnnotation(
       });
     }
     return {
+      heroSquare: pin.attackerSquare,
+      heroColor: "red",
       arrows,
       circles: [{ square: pin.pinnedSquare, color: "red" }],
+      threatSquares: [pin.pinnedSquare],
       duration: 6000,
     };
   }
@@ -64,17 +70,19 @@ export function generateAnnotation(
       });
     }
     return {
+      heroSquare: skewer.attackerSquare,
+      heroColor: "red",
       arrows,
+      threatSquares: [skewer.frontSquare],
       duration: 6000,
     };
   }
 
-  // Blunder: red circle on the bad square. (We don't draw a green arrow
-  // for the better move because the system prompt forbids naming
-  // specific moves to the kid — showing the move would contradict that.)
+  // Blunder: red circle + danger zone on the bad square.
   if (analysis.trigger === "BLUNDER") {
     return {
       circles: [{ square: move.to, color: "red" }],
+      dangerSquares: [move.to],
       duration: 5000,
     };
   }
@@ -85,31 +93,33 @@ export function generateAnnotation(
     CENTER_SQUARES.has(move.to)
   ) {
     return {
+      heroSquare: move.to,
+      heroColor: "green",
       highlights: Array.from(CENTER_SQUARES).map((sq) => ({
         square: sq,
         color: "green" as const,
-        opacity: 0.2,
+        opacity: 0.18,
       })),
       circles: [{ square: move.to, color: "green" as const }],
+      influenceSquares: Array.from(CENTER_SQUARES).filter((sq) => sq !== move.to),
+      influenceColor: "green",
       duration: 4000,
     };
   }
 
-  // Hanging piece warning.
+  // Hanging piece warning — danger zone + red circle.
   if (analysis.isHanging) {
     return {
       circles: [{ square: move.to, color: "red" }],
+      dangerSquares: [move.to],
       duration: 4000,
     };
   }
 
-  // Generic praise/critique fallback — when Coach is speaking but the
-  // move doesn't match a specific tactic. Light up the from→to so the
-  // kid's eyes follow what's being narrated. Color matches the trigger:
-  // green for praise, yellow for inaccuracy, red for mistakes.
+  // Generic praise/critique fallback.
   const generic = (() => {
     if (analysis.trigger === "GREAT_MOVE") return "green" as const;
-    if (analysis.trigger === "OK_MOVE") return null; // too routine
+    if (analysis.trigger === "OK_MOVE") return null;
     if (analysis.trigger === "INACCURACY") return "yellow" as const;
     if (analysis.trigger === "MISTAKE") return "yellow" as const;
     return null;

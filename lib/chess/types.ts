@@ -73,6 +73,15 @@ export interface BoardAnnotation {
   arrows?: BoardArrow[];
   circles?: BoardCircle[];
   duration?: number; // ms; default 5000
+  // Richer visual elements from the prototype
+  heroSquare?: string;        // Key piece — gets an expanding halo ring
+  heroColor?: AnnotationColor;
+  threatSquares?: string[];   // Squares that pulse red (threatened pieces)
+  targetSquares?: string[];   // Squares that pulse green (capturable)
+  dangerSquares?: string[];   // Diagonal-stripe danger zone (hanging piece, blocked escape)
+  cageSquares?: string[];     // Trapped-piece indicator with X mark
+  influenceSquares?: string[]; // Small dots showing piece control
+  influenceColor?: AnnotationColor;
 }
 
 export interface CoachPrompt {

@@ -7,11 +7,11 @@ import type { BoardAnnotation, AnnotationColor } from "@/lib/chess/types";
 // "0 0 8 8" and stretches to the parent's size, so the overlay tracks
 // the board's fluid sizing without any pixel math.
 
-const COLORS: Record<AnnotationColor, { rgb: string }> = {
-  green:  { rgb: "34, 197, 94" },
-  red:    { rgb: "239, 68, 68" },
-  yellow: { rgb: "234, 179, 8" },
-  blue:   { rgb: "59, 130, 246" },
+const COLORS: Record<AnnotationColor, { rgb: string; hex: string }> = {
+  green:  { rgb: "34, 197, 94",   hex: "#22C55E" },
+  red:    { rgb: "239, 68, 68",   hex: "#EF4444" },
+  yellow: { rgb: "234, 179, 8",   hex: "#EAB308" },
+  blue:   { rgb: "59, 130, 246",  hex: "#3B82F6" },
 };
 
 function rgba(color: AnnotationColor, alpha: number): string {
@@ -217,6 +217,120 @@ export default function BoardAnnotations({
         );
       })}
 
+      {/* ── Richer prototype visuals ─────────────────────────── */}
+
+      {/* Influence map — small dots showing piece control */}
+      {content.influenceSquares?.map((sq, i) => {
+        const c = squareCenter(sq, flipped);
+        const color = content.influenceColor ?? "green";
+        return (
+          <circle
+            key={`inf-${i}`}
+            cx={c.x}
+            cy={c.y}
+            r={0.15}
+            fill={rgba(color, 0.55)}
+            style={{
+              opacity: staggerStep >= 2 ? 1 : 0,
+              transition: `opacity ${reducedMotion ? 0 : 200 + i * 40}ms ease-out`,
+            }}
+          />
+        );
+      })}
+
+      {/* Danger zones — diagonal stripe + animated dashed border */}
+      {content.dangerSquares?.map((sq, i) => {
+        const c = squareCenter(sq, flipped);
+        const pid = `bca-danger-${i}`;
+        return (
+          <g key={`dz-${i}`} style={{ opacity: staggerStep >= 0 ? 1 : 0, transition: `opacity ${reducedMotion ? 0 : 300}ms ease-out` }}>
+            <defs>
+              <pattern id={pid} patternUnits="userSpaceOnUse" width="0.18" height="0.18" patternTransform="rotate(45)">
+                <line x1="0" y1="0" x2="0" y2="0.18" stroke={COLORS.red.hex} strokeWidth="0.05" opacity="0.18" />
+              </pattern>
+            </defs>
+            <rect x={c.x - 0.5 + 0.04} y={c.y - 0.5 + 0.04} width={0.92} height={0.92} rx={0.06}
+              fill={`url(#${pid})`} />
+            <rect x={c.x - 0.5 + 0.05} y={c.y - 0.5 + 0.05} width={0.9} height={0.9} rx={0.06}
+              fill="none"
+              stroke={rgba("red", 0.35)}
+              strokeWidth={0.06}
+              strokeDasharray="0.18,0.1"
+              className={reducedMotion ? "" : "bca-danger-dash"}
+            />
+          </g>
+        );
+      })}
+
+      {/* Cage bars — trapped piece X marker */}
+      {content.cageSquares?.map((sq, i) => {
+        const c = squareCenter(sq, flipped);
+        return (
+          <g key={`cage-${i}`} style={{ opacity: staggerStep >= 0 ? 1 : 0, transition: `opacity ${reducedMotion ? 0 : 350}ms ease-out` }}>
+            <rect x={c.x - 0.42} y={c.y - 0.42} width={0.84} height={0.84} rx={0.09}
+              fill={rgba("red", 0.1)} stroke={rgba("red", 0.45)} strokeWidth={0.06} />
+            <line x1={c.x - 0.22} y1={c.y - 0.22} x2={c.x + 0.22} y2={c.y + 0.22}
+              stroke={rgba("red", 0.45)} strokeWidth={0.065} strokeLinecap="round" />
+            <line x1={c.x + 0.22} y1={c.y - 0.22} x2={c.x - 0.22} y2={c.y + 0.22}
+              stroke={rgba("red", 0.45)} strokeWidth={0.065} strokeLinecap="round" />
+          </g>
+        );
+      })}
+
+      {/* Threat squares — pulsing red fill (pieces under attack) */}
+      {content.threatSquares?.map((sq, i) => {
+        const c = squareCenter(sq, flipped);
+        return (
+          <rect key={`thr-${i}`}
+            x={c.x - 0.5 + 0.03} y={c.y - 0.5 + 0.03} width={0.94} height={0.94} rx={0.07}
+            fill={rgba("red", 0.14)}
+            stroke={rgba("red", 0.35)}
+            strokeWidth={0.055}
+            className={reducedMotion ? "" : "bca-threat-pulse"}
+            style={{ opacity: staggerStep >= 0 ? 1 : 0, transition: `opacity ${reducedMotion ? 0 : 280}ms ease-out` }}
+          />
+        );
+      })}
+
+      {/* Target squares — pulsing green fill (capturable / good squares) */}
+      {content.targetSquares?.map((sq, i) => {
+        const c = squareCenter(sq, flipped);
+        return (
+          <rect key={`tgt-${i}`}
+            x={c.x - 0.5 + 0.03} y={c.y - 0.5 + 0.03} width={0.94} height={0.94} rx={0.07}
+            fill={rgba("green", 0.14)}
+            stroke={rgba("green", 0.35)}
+            strokeWidth={0.055}
+            className={reducedMotion ? "" : "bca-target-pulse"}
+            style={{ opacity: staggerStep >= 1 ? 1 : 0, transition: `opacity ${reducedMotion ? 0 : 280}ms ease-out` }}
+          />
+        );
+      })}
+
+      {/* Hero piece halo — expanding ring around the key piece */}
+      {content.heroSquare && (() => {
+        const c = squareCenter(content.heroSquare, flipped);
+        const color = content.heroColor ?? "green";
+        return (
+          <g key="hero">
+            <circle cx={c.x} cy={c.y} r={0.35}
+              fill={rgba(color, 0.1)}
+              stroke={rgba(color, 0.7)}
+              strokeWidth={0.055}
+              style={{ opacity: staggerStep >= 0 ? 1 : 0, transition: `opacity ${reducedMotion ? 0 : 220}ms ease-out` }}
+            />
+            {!reducedMotion && (
+              <circle cx={c.x} cy={c.y} r={0.42}
+                fill="none"
+                stroke={rgba(color, 0.5)}
+                strokeWidth={0.04}
+                className="bca-halo-expand"
+              />
+            )}
+          </g>
+        );
+      })()}
+
       <style>{`
         .bca-pulse {
           animation: bcaPulse 1.4s ease-in-out infinite;
@@ -224,6 +338,35 @@ export default function BoardAnnotations({
         @keyframes bcaPulse {
           0%, 100% { stroke-width: 0.085; opacity: 0.85; }
           50%      { stroke-width: 0.12;  opacity: 1; }
+        }
+        .bca-halo-expand {
+          animation: bcaHaloExpand 1.6s ease-out infinite;
+          transform-box: fill-box;
+          transform-origin: center;
+        }
+        @keyframes bcaHaloExpand {
+          0%   { r: 0.38; opacity: 0.55; }
+          100% { r: 0.56; opacity: 0; }
+        }
+        .bca-threat-pulse {
+          animation: bcaThreatPulse 1.8s ease-in-out infinite;
+        }
+        @keyframes bcaThreatPulse {
+          0%, 100% { opacity: 0.7; }
+          50%      { opacity: 1; }
+        }
+        .bca-target-pulse {
+          animation: bcaTargetPulse 1.8s ease-in-out infinite;
+        }
+        @keyframes bcaTargetPulse {
+          0%, 100% { opacity: 0.6; }
+          50%      { opacity: 1; }
+        }
+        .bca-danger-dash {
+          animation: bcaDangerDash 1.2s linear infinite;
+        }
+        @keyframes bcaDangerDash {
+          to { stroke-dashoffset: -0.56; }
         }
       `}</style>
     </svg>

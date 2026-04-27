@@ -1,10 +1,67 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CoachMessage } from "@/lib/chess/types";
 import { T } from "@/lib/design/tokens";
 import CoachPawn from "@/components/CoachPawn";
 import VoiceWave from "@/components/VoiceWave";
+import { usePrefersReducedMotion } from "@/lib/design/atmosphere";
+
+// Typewriter — reveals text char-by-char at ~28 chars/sec when first
+// mounted. Older coach messages re-render fully (no replay). Used only
+// on the most-recent message so back-scroll stays readable.
+function Typewriter({ text, speed = 28 }: { text: string; speed?: number }) {
+  const reduced = usePrefersReducedMotion();
+  const [n, setN] = useState(reduced ? text.length : 0);
+  useEffect(() => {
+    if (reduced) {
+      setN(text.length);
+      return;
+    }
+    setN(0);
+    const total = text.length;
+    let raf: number | null = null;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const elapsed = (now - start) / 1000;
+      const target = Math.min(total, Math.floor(elapsed * speed));
+      setN(target);
+      if (target < total) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      if (raf != null) cancelAnimationFrame(raf);
+    };
+  }, [text, speed, reduced]);
+
+  const visible = text.slice(0, n);
+  const done = n >= text.length;
+  return (
+    <>
+      {visible}
+      {!done && (
+        <span
+          aria-hidden
+          style={{
+            display: "inline-block",
+            width: 2,
+            height: "0.95em",
+            background: T.amberGlow,
+            marginLeft: 3,
+            verticalAlign: "middle",
+            animation: "tpCursor 0.85s ease-in-out infinite",
+          }}
+        />
+      )}
+      <style>{`
+        @keyframes tpCursor {
+          0%, 100% { opacity: 0.2; }
+          50%      { opacity: 1; }
+        }
+      `}</style>
+    </>
+  );
+}
 
 const MSG_STYLES: Record<
   CoachMessage["type"],
@@ -179,8 +236,9 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
           paddingRight: 4,
         }}
       >
-        {messages.map((msg) => {
+        {messages.map((msg, i) => {
           const s = MSG_STYLES[msg.type] ?? MSG_STYLES.tip;
+          const isLatest = i === messages.length - 1;
           return (
             <div
               key={msg.id}
@@ -215,11 +273,12 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
                   lineHeight: 1.55,
                   color: T.textHi,
                   fontFamily: T.fontUI,
+                  // typed-text container is anchored here
                   fontWeight: 500,
                   letterSpacing: "-0.005em",
                 }}
               >
-                {msg.text}
+                {isLatest ? <Typewriter text={msg.text} /> : msg.text}
               </p>
             </div>
           );

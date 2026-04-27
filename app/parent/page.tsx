@@ -100,7 +100,7 @@ export default function ParentPage() {
       {/* Header */}
       <header style={{
         position: "sticky", top: 0, zIndex: 10,
-        padding: "10px 20px",
+        padding: `calc(10px + env(safe-area-inset-top)) 20px 10px 20px`,
         background: "rgba(7,5,15,0.6)",
         backdropFilter: "blur(20px) saturate(1.2)",
         borderBottom: `1px solid ${P.inkGhost}40`,

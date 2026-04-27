@@ -722,7 +722,7 @@ export default function PlayPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "12px 24px",
+          padding: `calc(12px + env(safe-area-inset-top)) 24px 12px 24px`,
           background: "rgba(7,5,15,0.6)",
           backdropFilter: "blur(20px) saturate(1.4)",
           WebkitBackdropFilter: "blur(20px) saturate(1.4)",

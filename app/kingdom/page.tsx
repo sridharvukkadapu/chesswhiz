@@ -123,7 +123,7 @@ function KingdomPageInner() {
           position: "sticky",
           top: 0,
           zIndex: 10,
-          padding: "14px 24px",
+          padding: `calc(14px + env(safe-area-inset-top)) 24px 14px 24px`,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",

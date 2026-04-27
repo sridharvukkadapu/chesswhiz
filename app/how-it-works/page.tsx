@@ -66,7 +66,7 @@ export default function HowItWorksPage() {
       {/* Header */}
       <header style={{
         position: "sticky", top: 0, zIndex: 10,
-        padding: "12px 20px",
+        padding: `calc(12px + env(safe-area-inset-top)) 20px 12px 20px`,
         background: "rgba(7,5,15,0.6)",
         backdropFilter: "blur(20px) saturate(1.2)",
         borderBottom: `1px solid ${P.inkGhost}40`,

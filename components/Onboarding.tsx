@@ -112,20 +112,23 @@ export default function Onboarding({ onStart }: OnboardingProps) {
           zIndex: 1,
         }}
       >
-        {/* Coach + speech bubble */}
+        {/* Coach + speech bubble — inline so they share a flex track and
+            never overflow the page or the form card. The bubble hides on
+            narrow viewports (≤900px) where the coach already stacks above
+            the form card and a side-bubble would point at empty space. */}
         <div
           style={{
-            position: "relative",
             display: "flex",
             alignItems: "center",
-            gap: 24,
-            flexShrink: 0,
+            gap: 16,
+            flexShrink: 1,
+            minWidth: 0,
+            maxWidth: "100%",
           }}
         >
-          <CoachPawn size={220} expression={coachExpression} />
-          <div style={{ display: "none", position: "relative" }} className="onboard-bubble-mobile" />
-          <div className="onboard-bubble-desktop" style={{ position: "absolute", left: 200, top: 30 }}>
-            <SpeechBubble text={coachMessage} width={320} tail="left" />
+          <CoachPawn size={200} expression={coachExpression} />
+          <div className="onboard-bubble-desktop" style={{ minWidth: 0, flexShrink: 1 }}>
+            <SpeechBubble text={coachMessage} width={260} tail="left" />
           </div>
         </div>
 

@@ -17,7 +17,7 @@ import BottomNav from "@/components/BottomNav";
 import { Chess } from "chess.js";
 import { useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
-import { getLegalMoves, applyMove, getGameStatus, moveToSAN } from "@/lib/chess/engine";
+import { getLegalMoves, applyMove, getGameStatus, moveToSAN, classifyMoveSound } from "@/lib/chess/engine";
 import { analyzeMoveQuality } from "@/lib/coaching/analyzer";
 import { shouldCoach } from "@/lib/coaching/triggers";
 import { FALLBACKS } from "@/lib/coaching/prompts";
@@ -504,24 +504,19 @@ export default function PlayPage() {
     // Pick the most "important" sound for what just happened.
     // Order matters: end-of-game and check trump capture trump castle
     // trump promotion trump plain move.
-    if (newStatus === "white_wins" || newStatus === "black_wins") {
-      // The win/lose cue is fired below from grantGameEndXP path.
-    } else if (newChess.isCheck()) {
-      sfx.check();
-      haptics.check();
-    } else if (san.includes("O-O")) {
-      sfx.castle();
-      haptics.capture();
-    } else if (san.includes("=")) {
-      sfx.promotion();
-      haptics.aha();
-    } else if (san.includes("x")) {
-      sfx.capture();
-      haptics.capture();
-    } else {
-      sfx.move();
-      haptics.tap();
-    }
+    // Pick the cue centrally so player + bot paths and tests share
+    // the same priority logic.
+    const playerSound = classifyMoveSound({
+      san,
+      status: newStatus,
+      inCheck: newChess.isCheck(),
+    });
+    if (playerSound === "check") { sfx.check(); haptics.check(); }
+    else if (playerSound === "castle") { sfx.castle(); haptics.capture(); }
+    else if (playerSound === "promotion") { sfx.promotion(); haptics.aha(); }
+    else if (playerSound === "capture") { sfx.capture(); haptics.capture(); }
+    else if (playerSound === "move") { sfx.move(); haptics.tap(); }
+    // win/lose/draw are handled in the game-end branch below
 
     if (newStatus !== "playing") {
       const text =
@@ -594,13 +589,19 @@ export default function PlayPage() {
           const botStatus = getGameStatus(afterBot);
           store.makeMove(botSAN, afterBot, newChess, { from: botMove.from, to: botMove.to }, botStatus);
 
-          // Bot move cue (same priority order as the player's path)
+          // Bot move cue (same priority logic, no haptic — only player
+          // actions deserve haptic feedback)
           if (botStatus === "playing") {
-            if (afterBot.isCheck()) sfx.check();
-            else if (botSAN.includes("O-O")) sfx.castle();
-            else if (botSAN.includes("=")) sfx.promotion();
-            else if (botSAN.includes("x")) sfx.capture();
-            else sfx.move();
+            const botSound = classifyMoveSound({
+              san: botSAN,
+              status: botStatus,
+              inCheck: afterBot.isCheck(),
+            });
+            if (botSound === "check") sfx.check();
+            else if (botSound === "castle") sfx.castle();
+            else if (botSound === "promotion") sfx.promotion();
+            else if (botSound === "capture") sfx.capture();
+            else if (botSound === "move") sfx.move();
           }
 
           const botAnalysis = analyzeMoveQuality(newChess, afterBot, botMove);

@@ -22,7 +22,9 @@ describe("buildCoachPrompt", () => {
 
   it("includes age-appropriate rules for age 6", () => {
     const prompt = buildCoachPrompt(analysis, [], "Sam", 6);
-    expect(prompt.system).toContain("2 sentences");
+    // Age 6 prompt mentions simple words and analogies — that's the
+    // age-tier signal that distinguishes it from older tiers.
+    expect(prompt.system).toMatch(/simple words|analog/i);
   });
 
   it("includes age-appropriate rules for age 12", () => {

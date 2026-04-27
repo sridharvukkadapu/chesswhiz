@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Caveat, Cormorant_Garamond, JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -42,12 +42,49 @@ const jetbrainsMono = JetBrains_Mono({
 // instantly diagnosable: "view source, search chesswhiz-version".
 const COMMIT_SHA = (process.env.VERCEL_GIT_COMMIT_SHA ?? "dev").slice(0, 7);
 
+const TITLE = "ChessWhiz — The chess coach your kid always wanted";
+const DESCRIPTION =
+  "Free AI chess coach that plays alongside your child and explains every move in their language. Ages 5–12. The Chess Kingdom — 7 regions, 7 bosses, 20 powers, and Coach Pawn.";
+
 export const metadata: Metadata = {
-  title: "ChessWhiz — AI Chess Coach for Kids",
-  description: "Learn chess with your personal AI coach. Play, make mistakes, and grow!",
+  metadataBase: new URL("https://chesswhiz.vercel.app"),
+  title: {
+    default: TITLE,
+    template: "%s · ChessWhiz",
+  },
+  description: DESCRIPTION,
+  applicationName: "ChessWhiz",
+  authors: [{ name: "ChessWhiz" }],
+  keywords: [
+    "chess for kids", "AI chess coach", "chess tutor", "chess lessons",
+    "Coach Pawn", "Chess Kingdom", "kids chess app", "chess learning",
+  ],
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    type: "website",
+    url: "https://chesswhiz.vercel.app",
+    siteName: "ChessWhiz",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
   other: {
     "chesswhiz-version": COMMIT_SHA,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#07050F",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

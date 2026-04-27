@@ -392,29 +392,6 @@ export default function PlayPage() {
     };
   }, []);
 
-  // Diagnostic: press `a` while on /play?debug=annotations to fire a
-  // sample fork annotation. Quick pipeline sanity check.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!new URLSearchParams(window.location.search).has("debug")) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "a" || e.metaKey || e.ctrlKey || e.altKey) return;
-      const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-      store.setBoardAnnotation({
-        arrows: [
-          { from: "f3", to: "e5", color: "green" },
-          { from: "f3", to: "g5", color: "green" },
-        ],
-        circles: [{ square: "f3", color: "green" }],
-        duration: 5000,
-      });
-      setTimeout(() => store.setBoardAnnotation(null), 5000);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [store]);
-
   // Post-game screen: show after 2s so the Aha! celebration has a beat
   const [showPostGame, setShowPostGame] = useState(false);
   useEffect(() => {
@@ -908,19 +885,35 @@ export default function PlayPage() {
               />
               <CapturedStrip chess={chess} perspective="b" />
 
-              <Board
-                chess={chess}
-                selected={selected}
-                legalHighlights={legalHighlights}
-                lastMove={lastMove}
-                showPromo={showPromo}
-                status={status}
-                botThinking={botThinking}
-                annotation={boardAnnotation}
-                voicePlaying={voicePlayback === "playing"}
-                onSquareClick={handleSquareClick}
-                onPromo={handlePromo}
-              />
+              {/* Camera zoom on coaching beats — board scales up ~5% when
+                  Coach Pawn is actively speaking AND an annotation is on
+                  the board. Settles back when voice ends or annotation
+                  clears. Long transition on the way out so it doesn't snap. */}
+              <div
+                style={{
+                  transform:
+                    voicePlayback === "playing" && boardAnnotation
+                      ? "scale(1.05)"
+                      : "scale(1)",
+                  transformOrigin: "center",
+                  transition: "transform 600ms cubic-bezier(0.16,1,0.3,1)",
+                  willChange: "transform",
+                }}
+              >
+                <Board
+                  chess={chess}
+                  selected={selected}
+                  legalHighlights={legalHighlights}
+                  lastMove={lastMove}
+                  showPromo={showPromo}
+                  status={status}
+                  botThinking={botThinking}
+                  annotation={boardAnnotation}
+                  voicePlaying={voicePlayback === "playing"}
+                  onSquareClick={handleSquareClick}
+                  onPromo={handlePromo}
+                />
+              </div>
 
               <CapturedStrip chess={chess} perspective="w" />
               <PlayerBar

@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { T, KINGDOM_COLORS } from "@/lib/design/tokens";
-import { GoldFoilText, StarField, MoteField, useTime, animate, Easing } from "@/lib/design/atmosphere";
+import { GoldFoilText, StarField, MoteField, useTime, animate, Easing, usePrefersReducedMotion } from "@/lib/design/atmosphere";
 import { Piece } from "@/components/ChessPieces";
 import CoachPawn, { SpeechBubble } from "@/components/CoachPawn";
 
@@ -33,6 +33,7 @@ function Reveal({
   style?: React.CSSProperties;
 }) {
   const [ref, visible] = useInView();
+  const reducedMotion = usePrefersReducedMotion();
   const transforms: Record<string, string> = {
     up: "translateY(40px)",
     down: "translateY(-30px)",
@@ -40,13 +41,16 @@ function Reveal({
     right: "translateX(-50px)",
     scale: "scale(0.95)",
   };
+  if (reducedMotion) {
+    return <div ref={ref} style={style}>{children}</div>;
+  }
   return (
     <div
       ref={ref}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translate(0) scale(1)" : transforms[direction],
-        transition: `opacity 0.9s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.9s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
+        transition: `opacity 0.6s cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform 0.6s cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
         willChange: "opacity, transform",
         ...style,
       }}

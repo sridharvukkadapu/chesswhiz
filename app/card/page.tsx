@@ -6,7 +6,7 @@ import KnightCard from "@/components/KnightCard";
 import BottomNav from "@/components/BottomNav";
 import { useGameStore } from "@/stores/gameStore";
 import { getRankByXP } from "@/lib/progression/data";
-import { T } from "@/lib/design/tokens";
+import { T, Z } from "@/lib/design/tokens";
 import { StarField, MoteField, GoldFoilText, useTime } from "@/lib/design/atmosphere";
 
 export default function CardPage() {
@@ -277,7 +277,7 @@ export default function CardPage() {
             fontSize: 13,
             fontFamily: T.fontUI,
             boxShadow: T.shadowDeep,
-            zIndex: 100,
+            zIndex: Z.toast,
           }}
         >
           {toast}

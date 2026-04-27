@@ -92,6 +92,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${cormorant.variable} ${jakarta.variable} ${caveat.variable} ${jetbrainsMono.variable}`}>
       <body style={{ margin: 0, background: "#07050F" }}>
         <a href="#main-content" className="skip-link">Skip to content</a>
+        <noscript>
+          <div style={{
+            padding: "24px 28px",
+            margin: "40px auto",
+            maxWidth: 480,
+            borderRadius: 16,
+            background: "#1A1238",
+            border: "1.5px solid rgba(245,230,200,0.22)",
+            color: "#FBF6E8",
+            fontFamily: "Georgia, serif",
+            fontStyle: "italic",
+            textAlign: "center",
+            lineHeight: 1.6,
+          }}>
+            <strong style={{ display: "block", fontSize: 22, marginBottom: 8 }}>
+              ChessWhiz needs JavaScript
+            </strong>
+            <span style={{ fontStyle: "normal", fontSize: 14, color: "#D6C8A8" }}>
+              Please enable JavaScript in your browser to play. Coach Pawn is waiting!
+            </span>
+          </div>
+        </noscript>
         {children}
       </body>
     </html>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
-import { T } from "@/lib/design/tokens";
+import { T, Z } from "@/lib/design/tokens";
 import { GoldFoilText } from "@/lib/design/atmosphere";
 
 interface UpgradeModalProps {
@@ -40,7 +40,7 @@ export default function UpgradeModal({
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 100,
+        zIndex: Z.modal,
         background: "rgba(7,5,15,0.82)",
         backdropFilter: "blur(10px)",
         display: "flex",

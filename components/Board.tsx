@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Move, LastMove, Square, BoardAnnotation } from "@/lib/chess/types";
 import BoardAnnotations from "@/components/BoardAnnotations";
 import { Piece, PieceDefs, PieceFromChess, type PieceType } from "@/components/ChessPieces";
-import { T } from "@/lib/design/tokens";
+import { T, Z } from "@/lib/design/tokens";
 import { usePrefersReducedMotion } from "@/lib/design/atmosphere";
 
 const COLS = "abcdefgh";
@@ -409,7 +409,7 @@ export default function Board({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 30,
+            zIndex: Z.overlay,
             borderRadius: 12,
             background: "rgba(7,5,15,0.78)",
             backdropFilter: "blur(8px)",

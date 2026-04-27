@@ -33,7 +33,7 @@ import { GoldFoilText, StarField, MoteField, useTime } from "@/lib/design/atmosp
 import { sfx } from "@/lib/audio/sfx";
 import { haptics } from "@/lib/audio/haptics";
 import { Target, RefreshCw, Undo2, RotateCcw, Volume2, VolumeX } from "lucide-react";
-import { T } from "@/lib/design/tokens";
+import { T, Z } from "@/lib/design/tokens";
 import type { Move } from "@/lib/chess/types";
 import type { PlayerProgression, RankId } from "@/lib/progression/types";
 
@@ -1119,7 +1119,7 @@ export default function PlayPage() {
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 100,
+            zIndex: Z.modal,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

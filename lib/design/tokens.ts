@@ -138,6 +138,17 @@ export const T = {
   emeraldFoil:  "linear-gradient(135deg, #047857 0%, #34D399 30%, #6EE7B7 50%, #34D399 70%, #047857 100%)",
 } as const;
 
+// Z-index ladder. One source of truth so a popover never accidentally
+// out-stacks the modal. Layers are sparse so we have headroom to insert.
+export const Z = {
+  base: 0,
+  raised: 10,
+  sticky: 20,
+  overlay: 40,
+  modal: 100,
+  toast: 1000,
+} as const;
+
 // Region accent palette — each kingdom gets its own jewel color.
 export const KINGDOM_COLORS: Record<string, string> = {
   village:          T.amber,

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Gamepad2, Map, IdCard, type LucideIcon } from "lucide-react";
-import { T } from "@/lib/design/tokens";
+import { T, Z } from "@/lib/design/tokens";
 import { useGameStore } from "@/stores/gameStore";
 
 interface Tab {
@@ -62,7 +62,7 @@ export default function BottomNav() {
         left: 0,
         right: 0,
         bottom: 0,
-        zIndex: 40,
+        zIndex: Z.overlay,
         background: "rgba(14,10,31,0.92)",
         backdropFilter: "blur(20px) saturate(1.2)",
         WebkitBackdropFilter: "blur(20px) saturate(1.2)",

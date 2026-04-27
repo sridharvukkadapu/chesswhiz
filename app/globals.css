@@ -4,6 +4,12 @@
   box-sizing: border-box;
 }
 
+/* Tabular figures globally — keeps timers, scores, XP, and
+   ranks from jiggling as digits change width. Body inherits. */
+body {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Coach message entrance ──────────────────────── */
 @keyframes coach-fade {
   from { opacity: 0; transform: translateY(6px) translateX(-4px); }

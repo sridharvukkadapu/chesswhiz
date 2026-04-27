@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import type { TacticDetection, Power } from "@/lib/progression/types";
-import { T } from "@/lib/design/tokens";
+import { T, Z } from "@/lib/design/tokens";
 import { useTime, StarField } from "@/lib/design/atmosphere";
 import CoachPawn from "@/components/CoachPawn";
 import { sfx } from "@/lib/audio/sfx";
@@ -76,7 +76,7 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 90,
+        zIndex: Z.modal - 10,
         background: T.bgRadialEmerald,
         cursor: "pointer",
         overflow: "hidden",

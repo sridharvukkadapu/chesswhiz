@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { KINGDOMS, POWERS, RANKS } from "@/lib/progression/data";
 
 import { StarField, MoteField } from "@/lib/design/atmosphere";
@@ -33,6 +34,14 @@ const KINGDOM_ICONS: Record<string, string> = {
 };
 
 export default function JourneyPage() {
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 600);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
     <div style={{
       minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 30%, #2D1B5C 0%, #15102A 45%, #07050F 100%)", color: P.ink,
@@ -256,6 +265,34 @@ export default function JourneyPage() {
           </div>
         </div>
       </section>
+
+      {showBackToTop && (
+        <button
+          type="button"
+          aria-label="Back to top"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          style={{
+            position: "fixed",
+            bottom: "calc(24px + env(safe-area-inset-bottom))",
+            right: 24,
+            zIndex: 40,
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+            border: `1.5px solid ${P.gold}`,
+            background: "rgba(26,18,56,0.85)",
+            color: P.gold,
+            fontSize: 22,
+            fontWeight: 800,
+            cursor: "pointer",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
+            backdropFilter: "blur(12px)",
+            transition: "transform 200ms ease, opacity 200ms ease",
+          }}
+        >
+          ↑
+        </button>
+      )}
     </div>
   );
 }

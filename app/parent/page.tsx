@@ -28,6 +28,10 @@ const P = {
 
 const PIN_KEY = "chesswhiz.parentPIN";
 const UNLOCK_WINDOW_MS = 1000 * 60 * 15; // 15 min session
+const PIN_FAIL_KEY = "chesswhiz.parentPinFails";
+const PIN_LOCK_UNTIL_KEY = "chesswhiz.parentPinLockUntil";
+const PIN_MAX_FAILS = 5;
+const PIN_LOCK_MS = 30_000;
 
 export default function ParentPage() {
   const store = useGameStore();
@@ -37,6 +41,25 @@ export default function ParentPage() {
   const [input, setInput] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [lockUntil, setLockUntil] = useState<number>(0);
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  // Tick once a second while locked so the countdown updates.
+  useEffect(() => {
+    if (lockUntil <= 0) return;
+    const id = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(id);
+  }, [lockUntil]);
+
+  // Hydrate lock state from sessionStorage.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const until = Number(sessionStorage.getItem(PIN_LOCK_UNTIL_KEY) || "0");
+    if (until > Date.now()) setLockUntil(until);
+  }, []);
+
+  const locked = lockUntil > now;
+  const lockSecondsRemaining = locked ? Math.ceil((lockUntil - now) / 1000) : 0;
 
   useEffect(() => {
     store.hydrateProgression();
@@ -57,6 +80,7 @@ export default function ParentPage() {
 
   const handleSubmit = () => {
     setError(null);
+    if (locked) return;
     if (mode === "set") {
       if (input.length !== 4 || !/^\d{4}$/.test(input)) {
         setError("PIN must be exactly 4 digits");
@@ -75,9 +99,21 @@ export default function ParentPage() {
     const stored = localStorage.getItem(PIN_KEY);
     if (input === stored) {
       sessionStorage.setItem("chesswhiz.parentUnlockedAt", String(Date.now()));
+      sessionStorage.removeItem(PIN_FAIL_KEY);
+      sessionStorage.removeItem(PIN_LOCK_UNTIL_KEY);
       setUnlocked(true);
     } else {
-      setError("Incorrect PIN");
+      const fails = Number(sessionStorage.getItem(PIN_FAIL_KEY) || "0") + 1;
+      sessionStorage.setItem(PIN_FAIL_KEY, String(fails));
+      if (fails >= PIN_MAX_FAILS) {
+        const until = Date.now() + PIN_LOCK_MS;
+        sessionStorage.setItem(PIN_LOCK_UNTIL_KEY, String(until));
+        setLockUntil(until);
+        setNow(Date.now());
+        setError(`Too many tries. Locked for ${PIN_LOCK_MS / 1000}s.`);
+      } else {
+        setError(`Incorrect PIN (${PIN_MAX_FAILS - fails} left)`);
+      }
       setInput("");
     }
   };
@@ -148,7 +184,7 @@ export default function ParentPage() {
                 : "Enter your 4-digit PIN to view progress."}
             </p>
 
-            <PinInput value={input} setValue={setInput} label="PIN" />
+            <PinInput value={input} setValue={setInput} label="PIN" disabled={locked} />
 
             {mode === "set" && (
               <div style={{ marginTop: 12 }}>
@@ -165,14 +201,28 @@ export default function ParentPage() {
               }}>{error}</div>
             )}
 
+            {locked && (
+              <div style={{
+                marginTop: 12, padding: "10px 12px", borderRadius: 10,
+                background: "rgba(255,107,107,0.10)",
+                border: "1px solid rgba(255,107,107,0.4)",
+                color: "#FCA5A5", fontSize: 13, fontWeight: 700,
+                textAlign: "center", fontFamily: "var(--font-jakarta), sans-serif",
+              }}>
+                Locked. Try again in {lockSecondsRemaining}s.
+              </div>
+            )}
+
             <button type="button"
               onClick={handleSubmit}
+              disabled={locked}
               style={{
                 marginTop: 18, width: "100%", padding: "14px", borderRadius: 14,
                 background: P.emerald, color: "white", border: "none",
-                fontSize: 15, fontWeight: 800, cursor: "pointer",
+                fontSize: 15, fontWeight: 800, cursor: locked ? "not-allowed" : "pointer",
                 boxShadow: "0 6px 22px rgba(27,115,64,0.28)",
                 transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
+                opacity: locked ? 0.55 : 1,
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
               onFocus={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
@@ -220,8 +270,8 @@ export default function ParentPage() {
 }
 
 function PinInput({
-  value, setValue, label,
-}: { value: string; setValue: (v: string) => void; label: string }) {
+  value, setValue, label, disabled,
+}: { value: string; setValue: (v: string) => void; label: string; disabled?: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <div>
@@ -236,6 +286,7 @@ function PinInput({
         pattern="[0-9]*"
         maxLength={4}
         value={value}
+        disabled={disabled}
         onChange={(e) => setValue(e.target.value.replace(/\D/g, "").slice(0, 4))}
         style={{
           width: "100%", height: 52, padding: "0 18px", borderRadius: 12,
@@ -508,7 +559,21 @@ function SoundAndFeelCard() {
     const next = !sfxOn;
     setSfxEnabled(next);
     setSfxOn(next);
-    if (next) sfx.click();
+    if (next) {
+      sfx.click();
+      // Voice preview cue — let parents hear the kid-facing voice when
+      // they flip audio on, so they know what's coming. Kept short (~1s).
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance("Hi there! I'm Coach Pawn.");
+          u.rate = 1.05;
+          u.pitch = 1.15;
+          u.volume = 0.9;
+          window.speechSynthesis.speak(u);
+        } catch {}
+      }
+    }
   };
   const toggleHaptics = () => {
     const next = !hapticsOn;

@@ -369,6 +369,21 @@ export default function PlayPage() {
     }
   };
 
+  // Cmd/Ctrl+Z undo — global, but ignore typing inside inputs.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.key === "z" || e.key === "Z")) return;
+      if (!(e.metaKey || e.ctrlKey)) return;
+      const tag = (document.activeElement?.tagName || "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || (document.activeElement as HTMLElement | null)?.isContentEditable) return;
+      if (stateHistory.length < 2 || status !== "playing") return;
+      e.preventDefault();
+      store.undo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [stateHistory.length, status, store]);
+
   useEffect(() => {
     if (screen === "onboarding") router.push("/");
   }, [screen, router]);

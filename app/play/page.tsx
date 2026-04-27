@@ -31,6 +31,7 @@ import GameStatusBar from "@/components/GameStatus";
 import { Piece } from "@/components/ChessPieces";
 import { GoldFoilText, StarField, MoteField, useTime } from "@/lib/design/atmosphere";
 import { sfx } from "@/lib/audio/sfx";
+import { haptics } from "@/lib/audio/haptics";
 import { T } from "@/lib/design/tokens";
 import type { Move } from "@/lib/chess/types";
 import type { PlayerProgression, RankId } from "@/lib/progression/types";
@@ -507,14 +508,19 @@ export default function PlayPage() {
       // The win/lose cue is fired below from grantGameEndXP path.
     } else if (newChess.isCheck()) {
       sfx.check();
+      haptics.check();
     } else if (san.includes("O-O")) {
       sfx.castle();
+      haptics.capture();
     } else if (san.includes("=")) {
       sfx.promotion();
+      haptics.aha();
     } else if (san.includes("x")) {
       sfx.capture();
+      haptics.capture();
     } else {
       sfx.move();
+      haptics.tap();
     }
 
     if (newStatus !== "playing") {

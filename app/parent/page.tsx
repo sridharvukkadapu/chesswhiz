@@ -179,6 +179,35 @@ export default function ParentPage() {
             >
               {mode === "set" ? "Set PIN & Continue" : "Unlock"}
             </button>
+
+            {mode === "enter" && (
+              <button
+                onClick={() => {
+                  const ok = typeof window !== "undefined" && window.confirm(
+                    "Reset PIN?\n\nThis will clear the parent PIN. " +
+                    "You'll be asked to set a new one. Your child's progress " +
+                    "(rank, XP, kingdoms, powers, knight card) is NOT affected."
+                  );
+                  if (!ok) return;
+                  localStorage.removeItem(PIN_KEY);
+                  sessionStorage.removeItem("chesswhiz.parentUnlockedAt");
+                  setMode("set");
+                  setInput("");
+                  setConfirm("");
+                  setError(null);
+                }}
+                style={{
+                  marginTop: 14, width: "100%", padding: "8px",
+                  background: "transparent", border: "none",
+                  fontSize: 12, color: P.inkLight, cursor: "pointer",
+                  fontFamily: "var(--font-jakarta), sans-serif",
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Forgot PIN? Reset it
+              </button>
+            )}
           </div>
         </section>
       ) : (

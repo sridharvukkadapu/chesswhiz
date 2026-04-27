@@ -411,12 +411,33 @@ function KingdomPageInner() {
               }
             };
 
+            const interactive = isTierLocked || isCurrent || isCompleted;
             return (
               <g
                 key={k.id}
                 transform={`translate(${layout.x} ${layout.y})`}
                 onClick={handleClick}
-                style={{ cursor: isTierLocked ? "pointer" : isCurrent || isCompleted ? "pointer" : "default" }}
+                onKeyDown={(e) => {
+                  if (interactive && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    handleClick();
+                  }
+                }}
+                role={interactive ? "button" : undefined}
+                tabIndex={interactive ? 0 : undefined}
+                aria-label={
+                  isTierLocked
+                    ? `${k.name} — locked, requires Champion`
+                    : isCurrent
+                      ? `${k.name} — current quest`
+                      : isCompleted
+                        ? `${k.name} — conquered`
+                        : `${k.name} — locked`
+                }
+                style={{
+                  cursor: interactive ? "pointer" : "default",
+                  outline: "none",
+                }}
               >
                 {/* Halo */}
                 {!isLocked && (

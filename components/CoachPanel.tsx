@@ -284,6 +284,50 @@ export default function CoachPanel({ messages, loading, voicePlaying = false }: 
           );
         })}
 
+        {loading && (
+          <div
+            aria-hidden
+            className="cp-msg"
+            style={{
+              position: "relative",
+              background: MSG_STYLES.tip.bg,
+              border: `1.5px solid ${MSG_STYLES.tip.border}`,
+              borderRadius: 18,
+              padding: "14px 18px",
+              width: 80,
+              boxShadow: `inset 0 1px 0 rgba(252,211,77,0.05), ${T.e2}`,
+            }}
+          >
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: -10,
+                top: 18,
+                width: 0,
+                height: 0,
+                borderTop: "10px solid transparent",
+                borderBottom: "10px solid transparent",
+                borderRight: `12px solid ${MSG_STYLES.tip.tail}`,
+              }}
+            />
+            <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "center" }}>
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    background: T.amberGlow,
+                    animation: `cpDotPulse 1.2s ${i * 0.15}s infinite ease-in-out`,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {messages.length === 0 && !loading && (
           <p
             style={{

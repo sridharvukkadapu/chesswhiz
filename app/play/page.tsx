@@ -360,6 +360,15 @@ export default function PlayPage() {
     progression, lastXPGain, justRankedUp, ahaCelebration, boardAnnotation, voicePlayback,
   } = store;
 
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const requestReset = () => {
+    if (moveHistory.length > 0 && status === "playing") {
+      setResetConfirmOpen(true);
+    } else {
+      store.resetGame();
+    }
+  };
+
   useEffect(() => {
     if (screen === "onboarding") router.push("/");
   }, [screen, router]);
@@ -771,7 +780,7 @@ export default function PlayPage() {
 
           {/* New Game */}
           <button type="button"
-            onClick={() => store.resetGame()}
+            onClick={requestReset}
             style={{
               display: "flex",
               alignItems: "center",
@@ -911,6 +920,7 @@ export default function PlayPage() {
                   clears. Long transition on the way out so it doesn't snap. */}
               <div
                 style={{
+                  position: "relative",
                   transform:
                     voicePlayback === "playing" && boardAnnotation
                       ? "scale(1.05)"
@@ -920,6 +930,28 @@ export default function PlayPage() {
                   willChange: "transform",
                 }}
               >
+                {botThinking && status === "playing" && (
+                  <>
+                    <div
+                      aria-hidden
+                      style={{
+                        position: "absolute",
+                        inset: -4,
+                        borderRadius: 14,
+                        pointerEvents: "none",
+                        zIndex: 5,
+                        boxShadow: `0 0 0 2px ${T.amber}66, 0 0 28px 4px ${T.amber}44`,
+                        animation: "botThinkPulse 1.4s ease-in-out infinite",
+                      }}
+                    />
+                    <style>{`
+                      @keyframes botThinkPulse {
+                        0%, 100% { opacity: 0.45; }
+                        50% { opacity: 1; }
+                      }
+                    `}</style>
+                  </>
+                )}
                 <Board
                   chess={chess}
                   selected={selected}
@@ -990,7 +1022,7 @@ export default function PlayPage() {
             }}
           >
             <button type="button"
-              onClick={() => store.resetGame()}
+              onClick={requestReset}
               style={{
                 flex: 1,
                 display: "flex",
@@ -1078,6 +1110,88 @@ export default function PlayPage() {
       </main>
 
       <BottomNav />
+
+      {resetConfirmOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Restart game?"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 100,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(7,5,15,0.78)",
+            backdropFilter: "blur(8px)",
+          }}
+          onClick={() => setResetConfirmOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: 360,
+              width: "calc(100% - 40px)",
+              padding: "24px 26px",
+              borderRadius: 22,
+              background: T.velvet,
+              border: `1.5px solid ${T.borderStrong}`,
+              boxShadow: T.shadowDeep,
+              fontFamily: T.fontUI,
+              color: T.textHi,
+            }}
+          >
+            <div style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
+              Restart this game?
+            </div>
+            <div style={{ fontSize: 14, color: T.textMed, lineHeight: 1.5, marginBottom: 18 }}>
+              You'll lose your current position and start a fresh board. Your XP and progress are safe.
+            </div>
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                onClick={() => setResetConfirmOpen(false)}
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  color: T.textMed,
+                  border: `1.5px solid ${T.border}`,
+                  borderRadius: 12,
+                  padding: "10px 16px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontFamily: T.fontUI,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setResetConfirmOpen(false);
+                  store.resetGame();
+                }}
+                style={{
+                  background: T.goldFoil,
+                  color: T.inkDeep,
+                  border: "none",
+                  borderRadius: 12,
+                  padding: "10px 18px",
+                  fontSize: 13,
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  boxShadow: T.glowAmber,
+                  fontFamily: T.fontUI,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                Yes, restart
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

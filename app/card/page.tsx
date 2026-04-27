@@ -85,14 +85,14 @@ export default function CardPage() {
       style={{
         minHeight: "100dvh",
         background: T.bgRadial,
-        color: T.textHi,
+        color: T.ink,
         fontFamily: T.fontUI,
         position: "relative",
         overflow: "hidden",
       }}
     >
       <StarField count={140} seed={13} opacity={0.7} />
-      <MoteField count={20} seed={14} color={T.amberGlow} />
+      <MoteField count={20} seed={14} color={T.coral} />
 
       {/* Light burst behind card */}
       <div
@@ -106,7 +106,7 @@ export default function CardPage() {
           height: "min(90vw, 800px)",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(245,182,56,0.30) 0%, rgba(192,132,252,0.18) 35%, transparent 65%)",
+            "radial-gradient(circle, rgba(255,107,90,0.18) 0%, rgba(242,201,76,0.12) 35%, transparent 65%)",
           filter: "blur(20px)",
           pointerEvents: "none",
         }}
@@ -146,7 +146,7 @@ export default function CardPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background: "rgba(7,5,15,0.6)",
+          background: "rgba(251,246,236,0.92)",
           backdropFilter: "blur(20px) saturate(1.4)",
           borderBottom: `1px solid ${T.border}`,
         }}
@@ -157,7 +157,7 @@ export default function CardPage() {
             display: "flex",
             alignItems: "center",
             gap: 8,
-            color: T.textLo,
+            color: T.inkLow,
             textDecoration: "none",
             fontSize: 13,
             fontWeight: 700,
@@ -178,7 +178,7 @@ export default function CardPage() {
               fontStyle: "italic",
               fontWeight: 600,
               fontSize: 18,
-              color: T.textHi,
+              color: T.ink,
               letterSpacing: "-0.01em",
             }}
           >
@@ -188,7 +188,7 @@ export default function CardPage() {
         <button type="button"
           onClick={handleShare}
           style={{
-            background: T.goldFoil,
+            background: T.coral,
             color: T.inkDeep,
             border: "none",
             borderRadius: 10,
@@ -198,7 +198,7 @@ export default function CardPage() {
             cursor: "pointer",
             fontFamily: T.fontUI,
             letterSpacing: "0.05em",
-            boxShadow: T.glowAmber,
+            boxShadow: T.glowCoral,
           }}
         >
           ✦ Share
@@ -226,7 +226,7 @@ export default function CardPage() {
               fontFamily: T.fontUI,
               fontSize: 12,
               fontWeight: 700,
-              color: T.amberGlow,
+              color: T.coral,
               letterSpacing: "0.4em",
               textTransform: "uppercase",
               marginBottom: 6,
@@ -248,7 +248,7 @@ export default function CardPage() {
             fontFamily: T.fontDisplay,
             fontStyle: "italic",
             fontSize: 22,
-            color: T.textHi,
+            color: T.ink,
             letterSpacing: "-0.01em",
             maxWidth: 520,
             padding: "0 16px",
@@ -270,9 +270,9 @@ export default function CardPage() {
             transform: "translateX(-50%)",
             padding: "10px 20px",
             borderRadius: 14,
-            background: T.amethystBg,
-            color: T.textHi,
-            border: `1px solid ${T.borderStrong}`,
+            background: "#FFFCF5",
+            color: T.ink,
+            border: `1px solid ${T.border}`,
             fontWeight: 700,
             fontSize: 13,
             fontFamily: T.fontUI,

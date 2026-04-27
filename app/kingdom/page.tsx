@@ -93,14 +93,14 @@ function KingdomPageInner() {
       style={{
         minHeight: "100dvh",
         background: T.bgRadial,
-        color: T.textHi,
+        color: T.ink,
         fontFamily: T.fontUI,
         position: "relative",
         overflow: "hidden",
       }}
     >
       <StarField count={130} seed={11} opacity={0.7} />
-      <MoteField count={22} seed={12} color={T.amberGlow} />
+      <MoteField count={22} seed={12} color={T.coral} />
 
       {/* Atmospheric fog at the bottom of the map */}
       <div
@@ -127,7 +127,7 @@ function KingdomPageInner() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          background: "rgba(7,5,15,0.6)",
+          background: "rgba(251,246,236,0.92)",
           backdropFilter: "blur(20px) saturate(1.4)",
           borderBottom: `1px solid ${T.border}`,
         }}
@@ -138,7 +138,7 @@ function KingdomPageInner() {
             display: "flex",
             alignItems: "center",
             gap: 8,
-            color: T.textLo,
+            color: T.inkLow,
             textDecoration: "none",
             fontSize: 13,
             fontWeight: 700,
@@ -154,7 +154,7 @@ function KingdomPageInner() {
         <Link
           href="/card"
           style={{
-            color: T.amberGlow,
+            color: T.coral,
             textDecoration: "none",
             fontSize: 13,
             fontWeight: 700,
@@ -180,7 +180,7 @@ function KingdomPageInner() {
             fontFamily: T.fontUI,
             fontSize: 13,
             fontWeight: 700,
-            color: T.amberGlow,
+            color: T.coral,
             letterSpacing: "0.5em",
             textTransform: "uppercase",
             marginBottom: 8,
@@ -210,8 +210,8 @@ function KingdomPageInner() {
             alignItems: "center",
             gap: 22,
             padding: "14px 28px",
-            background: "rgba(26,18,56,0.7)",
-            border: `1px solid ${T.borderStrong}`,
+            background: "rgba(255,252,245,0.85)",
+            border: `1px solid ${T.border}`,
             backdropFilter: "blur(12px)",
             borderRadius: 100,
             boxShadow: T.shadowCard,
@@ -225,11 +225,11 @@ function KingdomPageInner() {
                 width: 36,
                 height: 36,
                 borderRadius: 10,
-                background: T.goldFoil,
+                background: T.coral,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: T.glowAmber,
+                boxShadow: T.glowCoral,
               }}
             >
               <Piece type={RANK_PIECE[rank.id] ?? "pawn"} color="white" size={28} />
@@ -239,7 +239,7 @@ function KingdomPageInner() {
                 style={{
                   fontFamily: T.fontUI,
                   fontSize: 11,
-                  color: T.textLo,
+                  color: T.inkLow,
                   letterSpacing: "0.14em",
                   textTransform: "uppercase",
                 }}
@@ -251,7 +251,7 @@ function KingdomPageInner() {
                   fontFamily: T.fontDisplay,
                   fontStyle: "italic",
                   fontSize: 20,
-                  color: T.textHi,
+                  color: T.ink,
                   fontWeight: 600,
                 }}
               >
@@ -267,7 +267,7 @@ function KingdomPageInner() {
             value={
               <>
                 {prog.earnedPowers.length}
-                <span style={{ color: T.textDim, fontSize: 16 }}> / {POWERS.length}</span>
+                <span style={{ color: T.inkDim, fontSize: 16 }}> / {POWERS.length}</span>
               </>
             }
           />
@@ -277,7 +277,7 @@ function KingdomPageInner() {
             value={
               <>
                 {prog.completedKingdoms.length}
-                <span style={{ color: T.textDim, fontSize: 16 }}> / {KINGDOMS.length}</span>
+                <span style={{ color: T.inkDim, fontSize: 16 }}> / {KINGDOMS.length}</span>
               </>
             }
           />
@@ -285,10 +285,10 @@ function KingdomPageInner() {
           <Stat
             label="Streak"
             value={
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: T.amberGlow }}>
-                <Flame aria-hidden size={18} strokeWidth={2.4} fill={T.amberGlow} fillOpacity={0.3} />
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 6, color: T.coral }}>
+                <Flame aria-hidden size={18} strokeWidth={2.4} fill={T.coral} fillOpacity={0.3} />
                 <span className="tabular-nums">{prog.streak}</span>
-                <span style={{ color: T.textDim, fontSize: 14 }}>d</span>
+                <span style={{ color: T.inkDim, fontSize: 14 }}>d</span>
               </span>
             }
           />
@@ -322,18 +322,18 @@ function KingdomPageInner() {
           >
           <defs>
             <linearGradient id="kmMtnGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#5B4488" />
-              <stop offset="60%" stopColor="#2A1B4A" />
-              <stop offset="100%" stopColor="#15102A" />
+              <stop offset="0%" stopColor="#7A5C3A" />
+              <stop offset="60%" stopColor="#4A3220" />
+              <stop offset="100%" stopColor="#2A1A0E" />
             </linearGradient>
             <linearGradient id="kmSnow" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#E0BBFF" />
-              <stop offset="100%" stopColor="#7DA8FF" />
+              <stop offset="0%" stopColor="#F5E8C8" />
+              <stop offset="100%" stopColor="#C8A87A" />
             </linearGradient>
             {KINGDOMS.map((k) => (
               <radialGradient key={k.id} id={`kmRegion-${k.id}`} cx="0.4" cy="0.35" r="0.7">
-                <stop offset="0%" stopColor={KINGDOM_COLORS[k.id] ?? T.amber} stopOpacity="0.7" />
-                <stop offset="100%" stopColor="#15102A" stopOpacity="1" />
+                <stop offset="0%" stopColor={KINGDOM_COLORS[k.id] ?? T.coral} stopOpacity="0.7" />
+                <stop offset="100%" stopColor="#2A1A0E" stopOpacity="1" />
               </radialGradient>
             ))}
           </defs>
@@ -348,7 +348,7 @@ function KingdomPageInner() {
           <g opacity="0.85">
             <polygon
               points="0,750 180,540 340,680 500,540 680,660 880,600 1080,700 1280,560 1500,660 1680,540 1900,680 2200,600 2200,900 0,900"
-              fill="#1A1238"
+              fill="#3D2A1B"
             />
             <polygon points="500,540 525,560 545,568 565,552" fill="url(#kmSnow)" opacity="0.7" />
             <polygon points="1280,560 1305,580 1325,588 1345,572" fill="url(#kmSnow)" opacity="0.7" />
@@ -404,7 +404,7 @@ function KingdomPageInner() {
             const isTierLocked = status === "tier_locked";
             const baseRadius = 60;
             const haloPulse = isCurrent ? 1.1 + 0.1 * Math.sin(time * 2.5) : 1;
-            const accent = KINGDOM_COLORS[k.id] ?? T.amber;
+            const accent = KINGDOM_COLORS[k.id] ?? T.coral;
             const handleClick = () => {
               if (isTierLocked) {
                 setUpgradeFor(k);
@@ -461,7 +461,7 @@ function KingdomPageInner() {
                 {/* Plinth shadow */}
                 <ellipse cx="0" cy={baseRadius + 14} rx={baseRadius * 0.85} ry="6" fill="rgba(0,0,0,0.45)" filter="blur(2px)" />
                 {/* Plinth */}
-                <circle r={baseRadius} fill={isLocked ? "rgba(40,30,70,0.85)" : `url(#kmRegion-${k.id})`} />
+                <circle r={baseRadius} fill={isLocked ? "rgba(80,55,35,0.85)" : `url(#kmRegion-${k.id})`} />
                 {/* Boss icon (chess piece) */}
                 <g
                   transform={`translate(-30 -32)`}
@@ -499,7 +499,7 @@ function KingdomPageInner() {
                 {/* Conquered checkmark */}
                 {isCompleted && (
                   <g transform="translate(48 -48)">
-                    <circle r="14" fill={T.emerald} stroke="#FFF" strokeWidth="2" />
+                    <circle r="14" fill={T.sage} stroke="#FFF" strokeWidth="2" />
                     <path d="M -6 0 L -2 4 L 6 -4" stroke="#FFF" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                   </g>
                 )}
@@ -530,7 +530,7 @@ function KingdomPageInner() {
                   fontStyle="italic"
                   fontWeight="600"
                   textAnchor="middle"
-                  fill={isLocked ? "#9A8FB5" : T.textHi}
+                  fill={isLocked ? "#9A8FB5" : T.ink}
                   style={isLocked ? undefined : { filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.7))" }}
                 >
                   {k.name}
@@ -577,7 +577,7 @@ function KingdomPageInner() {
                 <line x1="0" y1="0" x2="0" y2="-50" stroke="#7A5418" strokeWidth="2" />
                 <path
                   d="M 0 -50 L 24 -42 L 18 -32 L 24 -22 L 0 -28 Z"
-                  fill={T.amber}
+                  fill={T.butter}
                   stroke="#7A5418"
                   strokeWidth="1"
                 />
@@ -611,17 +611,17 @@ function KingdomPageInner() {
             margin: "0 auto 100px",
             padding: "24px",
             textAlign: "center",
-            background: "rgba(26,18,56,0.85)",
-            border: `1.5px solid ${T.amber}`,
+            background: "rgba(255,252,245,0.92)",
+            border: `1.5px solid ${T.coral}`,
             borderRadius: 22,
-            boxShadow: T.glowAmber,
+            boxShadow: T.glowCoral,
           }}
         >
           <span
             style={{
               fontFamily: T.fontHand,
               fontSize: 19,
-              color: T.amberGlow,
+              color: T.coral,
               transform: "rotate(-2deg)",
               display: "inline-block",
               marginBottom: 4,
@@ -635,7 +635,7 @@ function KingdomPageInner() {
               fontStyle: "italic",
               fontSize: 26,
               fontWeight: 600,
-              color: T.textHi,
+              color: T.ink,
               margin: "4px 0 10px",
             }}
           >
@@ -646,7 +646,7 @@ function KingdomPageInner() {
               fontFamily: T.fontUI,
               fontSize: 14,
               lineHeight: 1.7,
-              color: T.textMed,
+              color: T.inkLow,
               maxWidth: 380,
               margin: "0 auto 18px",
             }}
@@ -657,14 +657,14 @@ function KingdomPageInner() {
             href="/onboard"
             style={{
               display: "inline-block",
-              background: T.goldFoil,
+              background: T.coral,
               color: T.inkDeep,
               borderRadius: 14,
               padding: "14px 30px",
               fontSize: 15,
               fontWeight: 800,
               textDecoration: "none",
-              boxShadow: T.glowAmber,
+              boxShadow: T.glowCoral,
               letterSpacing: "0.05em",
               fontFamily: T.fontUI,
             }}
@@ -749,7 +749,7 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
         style={{
           fontFamily: T.fontUI,
           fontSize: 11,
-          color: T.textLo,
+          color: T.inkLow,
           letterSpacing: "0.14em",
           textTransform: "uppercase",
         }}
@@ -760,7 +760,7 @@ function Stat({ label, value }: { label: string; value: React.ReactNode }) {
         style={{
           fontFamily: T.fontDisplay,
           fontSize: 22,
-          color: T.textHi,
+          color: T.ink,
           fontWeight: 600,
         }}
       >

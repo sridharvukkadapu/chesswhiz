@@ -6,21 +6,21 @@ import { KINGDOMS, POWERS, RANKS } from "@/lib/progression/data";
 
 import { StarField, MoteField } from "@/lib/design/atmosphere";
 const P = {
-  cream: "#1A1238",
-  creamDeep: "rgba(36,24,69,0.85)",
-  parchment: "rgba(245,230,200,0.12)",
-  ink: "#FBF6E8",
-  inkSoft: "#FBF6E8",
-  inkMed: "#D6C8A8",
-  inkLight: "#9A8FB5",
-  inkFaint: "#6B6285",
-  inkGhost: "rgba(245,230,200,0.22)",
-  emerald: "#34D399",
-  emeraldBright: "#6EE7B7",
-  emeraldPale: "rgba(52,211,153,0.10)",
-  gold: "#F5B638",
-  goldLight: "#FCD34D",
-  goldPale: "rgba(245,182,56,0.10)",
+  cream: "#FBF6EC",
+  creamDeep: "#FFFCF5",
+  parchment: "rgba(31,42,68,0.06)",
+  ink: "#1F2A44",
+  inkSoft: "#1F2A44",
+  inkMed: "#5C6580",
+  inkLight: "#9BA1B5",
+  inkFaint: "#B8BDD0",
+  inkGhost: "rgba(31,42,68,0.12)",
+  emerald: "#7CB69E",
+  emeraldBright: "#A8D4C2",
+  emeraldPale: "rgba(124,182,158,0.12)",
+  gold: "#FF6B5A",
+  goldLight: "#FF8E70",
+  goldPale: "rgba(255,107,90,0.10)",
 };
 
 const KINGDOM_ICONS: Record<string, string> = {
@@ -44,12 +44,12 @@ export default function JourneyPage() {
 
   return (
     <div style={{
-      minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 30%, #2D1B5C 0%, #15102A 45%, #07050F 100%)", color: P.ink,
+      minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 20%, #FFF8E8 0%, #F5ECDC 45%, #FBF6EC 100%)", color: P.ink,
       fontFamily: "var(--font-jakarta), sans-serif",
       position: "relative", overflowX: "hidden",
     }}>
       <StarField count={70} seed={11} opacity={0.45} />
-      <MoteField count={14} seed={12} color="#FCD34D" />
+      <MoteField count={14} seed={12} color={P.gold} />
       <div aria-hidden style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
         backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.022'/%3E%3C/svg%3E")`,
@@ -59,7 +59,7 @@ export default function JourneyPage() {
       <header style={{
         position: "sticky", top: 0, zIndex: 10,
         padding: `calc(12px + env(safe-area-inset-top)) 20px 12px 20px`,
-        background: "rgba(7,5,15,0.6)",
+        background: "rgba(251,246,236,0.92)",
         backdropFilter: "blur(20px) saturate(1.2)",
         borderBottom: `1px solid ${P.inkGhost}40`,
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -75,10 +75,10 @@ export default function JourneyPage() {
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 20 }}>♟</span>
-          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-cormorant), serif", letterSpacing: -0.4 }}>The Chess Kingdom</span>
+          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-dm-serif), serif", letterSpacing: -0.4 }}>The Chess Kingdom</span>
         </div>
         <Link href="/onboard" style={{
-          background: P.emerald, color: "white", borderRadius: 10,
+          background: P.emerald, color: "#FFFCF5", borderRadius: 10,
           padding: "8px 18px", fontSize: 13, fontWeight: 700,
           textDecoration: "none",
         }}>Play free</Link>
@@ -92,7 +92,7 @@ export default function JourneyPage() {
         }}>the full journey →</span>
         <h1 style={{
           fontSize: "clamp(36px, 5vw, 56px)", fontWeight: 900,
-          fontFamily: "var(--font-cormorant), serif",
+          fontFamily: "var(--font-dm-serif), serif",
           letterSpacing: -1.2, margin: "0 0 16px", color: P.ink,
         }}>From Pawn to King</h1>
         <p style={{
@@ -106,7 +106,7 @@ export default function JourneyPage() {
       {/* Rank ladder */}
       <section style={{ maxWidth: 720, margin: "0 auto", padding: "16px 20px 8px", position: "relative", zIndex: 1 }}>
         <div style={{
-          background: "rgba(26,18,56,0.85)", borderRadius: 18,
+          background: "rgba(255,252,245,0.92)", borderRadius: 18,
           border: `1px solid ${P.inkGhost}`,
           boxShadow: `0 0 0 4px ${P.parchment}, 0 8px 24px rgba(26,18,16,0.06)`,
           padding: "20px 22px",
@@ -125,7 +125,7 @@ export default function JourneyPage() {
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 22, color: P.ink,
                 }}>{r.icon}</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: r.color, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>{r.name}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: r.color, fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic" }}>{r.name}</div>
                 <div style={{ fontSize: 11, color: P.inkLight, fontVariantNumeric: "tabular-nums" }}>{r.xpRequired} XP</div>
               </div>
             ))}
@@ -143,7 +143,7 @@ export default function JourneyPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {KINGDOMS.map((k, idx) => (
             <article key={k.id} style={{
-              background: "rgba(26,18,56,0.85)",
+              background: "rgba(255,252,245,0.92)",
               border: `1px solid ${P.inkGhost}`,
               borderRadius: 18,
               boxShadow: `0 4px 16px rgba(26,18,16,0.05)`,
@@ -169,7 +169,7 @@ export default function JourneyPage() {
                   }}>Region {idx + 1} of {KINGDOMS.length}</div>
                   <div style={{
                     fontSize: 22, fontWeight: 900, color: P.ink,
-                    fontFamily: "var(--font-cormorant), serif", letterSpacing: -0.4,
+                    fontFamily: "var(--font-dm-serif), serif", letterSpacing: -0.4,
                     marginTop: 2,
                   }}>{k.name}</div>
                   <div style={{ fontSize: 13, color: P.inkLight, marginTop: 2 }}>{k.subtitle}</div>
@@ -190,7 +190,7 @@ export default function JourneyPage() {
                     <span style={{ fontSize: 24, flexShrink: 0 }}>{k.boss.emoji}</span>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 10, fontWeight: 800, color: "#DC2626", letterSpacing: 1.5, textTransform: "uppercase" }}>Boss</div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-cormorant), serif" }}>{k.boss.name}</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-dm-serif), serif" }}>{k.boss.name}</div>
                       <div style={{ fontSize: 12, color: P.inkLight, fontStyle: "italic", marginTop: 2 }}>{k.boss.signature}</div>
                     </div>
                   </div>
@@ -228,12 +228,12 @@ export default function JourneyPage() {
         }}>
           {POWERS.map((p) => {
             const ringColor = p.rarity === "legendary" ? P.gold
-              : p.rarity === "epic" ? "#A855F7"
+              : p.rarity === "epic" ? "#F4A6B8"
               : p.rarity === "rare" ? P.emerald
               : P.inkGhost;
             return (
               <div key={p.id} style={{
-                background: "rgba(26,18,56,0.85)",
+                background: "rgba(255,252,245,0.92)",
                 border: `1.5px solid ${ringColor}55`,
                 borderRadius: 12, padding: "12px 10px",
                 textAlign: "center",
@@ -253,7 +253,7 @@ export default function JourneyPage() {
         {/* CTA */}
         <div style={{ textAlign: "center", marginTop: 56 }}>
           <Link href="/onboard" style={{
-            background: P.emerald, color: "white",
+            background: P.emerald, color: "#FFFCF5",
             borderRadius: 16, padding: "16px 36px",
             fontSize: 16, fontWeight: 800,
             textDecoration: "none", display: "inline-block",
@@ -280,12 +280,12 @@ export default function JourneyPage() {
             height: 48,
             borderRadius: "50%",
             border: `1.5px solid ${P.gold}`,
-            background: "rgba(26,18,56,0.85)",
+            background: "rgba(255,252,245,0.92)",
             color: P.gold,
             fontSize: 22,
             fontWeight: 800,
             cursor: "pointer",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
+            boxShadow: "0 4px 16px rgba(31,42,68,0.18)",
             backdropFilter: "blur(12px)",
             transition: "transform 200ms ease, opacity 200ms ease",
           }}

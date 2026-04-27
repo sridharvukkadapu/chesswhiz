@@ -8,22 +8,20 @@ import { KINGDOMS, POWERS, getRankByXP, getNextRank } from "@/lib/progression/da
 import { StarField, MoteField } from "@/lib/design/atmosphere";
 import { sfx, getSfxEnabled, setSfxEnabled } from "@/lib/audio/sfx";
 import { haptics, getHapticsEnabled, setHapticsEnabled } from "@/lib/audio/haptics";
-// Map the legacy P palette to the new Reimagined jewel-tone tokens so
-// the parent dashboard inherits the dark theme without a structural rewrite.
 const P = {
-  cream: "#1A1238",                  // velvet card bg (was warm cream)
-  creamDeep: "rgba(36,24,69,0.85)",  // raised surface
-  parchment: "rgba(245,230,200,0.12)", // border tone
-  ink: "#FBF6E8",                    // ivory text (was deep walnut)
-  inkSoft: "#FBF6E8",
-  inkMed: "#D6C8A8",
-  inkLight: "#9A8FB5",
-  inkFaint: "#6B6285",
-  inkGhost: "rgba(245,230,200,0.22)",
-  emerald: "#34D399",
-  emeraldPale: "rgba(52,211,153,0.10)",
-  gold: "#F5B638",
-  goldPale: "rgba(245,182,56,0.10)",
+  cream: "#FBF6EC",
+  creamDeep: "#FFFCF5",
+  parchment: "rgba(31,42,68,0.06)",
+  ink: "#1F2A44",
+  inkSoft: "#1F2A44",
+  inkMed: "#5C6580",
+  inkLight: "#9BA1B5",
+  inkFaint: "#B8BDD0",
+  inkGhost: "rgba(31,42,68,0.12)",
+  emerald: "#7CB69E",
+  emeraldPale: "rgba(124,182,158,0.12)",
+  gold: "#FF6B5A",
+  goldPale: "rgba(255,107,90,0.10)",
 };
 
 const PIN_KEY = "chesswhiz.parentPIN";
@@ -122,11 +120,11 @@ export default function ParentPage() {
 
   return (
     <div style={{
-      minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 30%, #2D1B5C 0%, #15102A 45%, #07050F 100%)", color: P.ink,
+      minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 20%, #FFF8E8 0%, #F5ECDC 45%, #FBF6EC 100%)", color: P.ink,
       fontFamily: "var(--font-jakarta), sans-serif", position: "relative",
     }}>
       <StarField count={70} seed={11} opacity={0.45} />
-      <MoteField count={14} seed={12} color="#FCD34D" />
+      <MoteField count={14} seed={12} color={P.gold} />
       {/* Paper grain */}
       <div aria-hidden style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
@@ -137,7 +135,7 @@ export default function ParentPage() {
       <header style={{
         position: "sticky", top: 0, zIndex: 10,
         padding: `calc(10px + env(safe-area-inset-top)) 20px 10px 20px`,
-        background: "rgba(7,5,15,0.6)",
+        background: "rgba(251,246,236,0.92)",
         backdropFilter: "blur(20px) saturate(1.2)",
         borderBottom: `1px solid ${P.inkGhost}40`,
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -153,7 +151,7 @@ export default function ParentPage() {
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 20 }}>♟</span>
-          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic", color: P.ink }}>
+          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic", color: P.ink }}>
             Parent Dashboard
           </span>
         </div>
@@ -164,7 +162,7 @@ export default function ParentPage() {
         <section style={{ maxWidth: 420, margin: "60px auto 0", padding: "0 20px", position: "relative", zIndex: 1 }}>
           <div style={{
             padding: "32px 28px",
-            background: "rgba(26,18,56,0.85)",
+            background: "rgba(255,252,245,0.92)",
             border: `1px solid ${P.inkGhost}`,
             borderRadius: 24,
             boxShadow: `0 0 0 4px ${P.parchment}, 0 24px 60px rgba(26,18,16,0.12)`,
@@ -175,7 +173,7 @@ export default function ParentPage() {
             }}>grown-ups only</span>
             <h2 style={{
               fontSize: 26, fontWeight: 900, textAlign: "center",
-              fontFamily: "var(--font-cormorant), serif", fontStyle: "italic",
+              fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic",
               margin: "0 0 8px", letterSpacing: -0.5,
             }}>{mode === "set" ? "Set a PIN" : "Enter PIN"}</h2>
             <p style={{ fontSize: 14, color: P.inkLight, textAlign: "center", margin: "0 0 22px", lineHeight: 1.6 }}>
@@ -218,9 +216,9 @@ export default function ParentPage() {
               disabled={locked}
               style={{
                 marginTop: 18, width: "100%", padding: "14px", borderRadius: 14,
-                background: P.emerald, color: "white", border: "none",
+                background: P.emerald, color: "#FFFCF5", border: "none",
                 fontSize: 15, fontWeight: 800, cursor: locked ? "not-allowed" : "pointer",
-                boxShadow: "0 6px 22px rgba(27,115,64,0.28)",
+                boxShadow: "0 6px 22px rgba(124,182,158,0.28)",
                 transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
                 opacity: locked ? 0.55 : 1,
               }}
@@ -335,13 +333,13 @@ function Dashboard() {
       }}>at a glance</span>
       <h1 style={{
         margin: "0 0 24px", fontSize: "clamp(28px, 4vw, 38px)", fontWeight: 900,
-        fontFamily: "var(--font-cormorant), serif", fontStyle: "italic", color: P.ink, letterSpacing: -0.8,
+        fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic", color: P.ink, letterSpacing: -0.8,
         textAlign: "center",
       }}>{store.playerName ? `${store.playerName}'s Progress` : "Chess Progress"}</h1>
 
       {/* Rank + XP */}
       <div style={{
-        padding: "20px 22px", background: "rgba(26,18,56,0.85)",
+        padding: "20px 22px", background: "rgba(255,252,245,0.92)",
         border: `1px solid ${P.inkGhost}`, borderRadius: 18,
         boxShadow: `0 0 0 4px ${P.parchment}, 0 10px 30px rgba(26,18,16,0.06)`,
         display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap",
@@ -356,7 +354,7 @@ function Dashboard() {
           <div style={{ fontSize: 11, fontWeight: 800, color: P.inkLight, letterSpacing: 1.5, textTransform: "uppercase" }}>
             Current Rank
           </div>
-          <div style={{ fontSize: 22, fontWeight: 900, color: P.ink, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
+          <div style={{ fontSize: 22, fontWeight: 900, color: P.ink, fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic" }}>
             {rank.name}
           </div>
           <div style={{ fontSize: 13, color: P.inkLight, marginTop: 2 }}>
@@ -375,8 +373,8 @@ function Dashboard() {
       <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
         <Metric label="Strategies Mastered" value={`${masteredCount}/${totalStrategies}`} color={P.emerald} />
         <Metric label="Bosses Defeated" value={String(prog.defeatedBosses.length)} color={P.gold} />
-        <Metric label="Powers Earned" value={`${prog.earnedPowers.length}/${POWERS.length}`} color="#3B82F6" />
-        <Metric label="Current Streak" value={`${prog.streak} ${prog.streak === 1 ? "day" : "days"}`} color="#9333EA" />
+        <Metric label="Powers Earned" value={`${prog.earnedPowers.length}/${POWERS.length}`} color={P.emerald} />
+        <Metric label="Current Streak" value={`${prog.streak} ${prog.streak === 1 ? "day" : "days"}`} color={P.gold} />
       </div>
 
       {/* Skill tree */}
@@ -391,10 +389,10 @@ function Dashboard() {
             return (
               <div key={k.id} style={{
                 padding: "14px 16px", borderRadius: 14,
-                background: "rgba(26,18,56,0.85)", border: `1px solid ${P.inkGhost}`,
+                background: "rgba(255,252,245,0.92)", border: `1px solid ${P.inkGhost}`,
               }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: P.ink, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: P.ink, fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic" }}>
                     {k.name}
                   </div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: P.inkLight }}>
@@ -433,7 +431,7 @@ function Dashboard() {
               }}>
                 <span style={{ fontSize: 22 }}>{power.icon}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic" }}>
                     {power.name}
                   </div>
                   <div style={{ fontSize: 12, color: P.inkLight }}>{power.howToEarn}</div>
@@ -462,7 +460,7 @@ function Dashboard() {
           }}>
             <div style={{
               width: 40, height: 40, borderRadius: "50%",
-              background: "rgba(26,18,56,0.85)", border: `2px solid ${P.emerald}66`,
+              background: "rgba(255,252,245,0.92)", border: `2px solid ${P.emerald}66`,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 20, flexShrink: 0,
             }}>♟</div>
@@ -470,7 +468,7 @@ function Dashboard() {
               <div style={{ fontSize: 12, fontWeight: 800, color: P.emerald, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
                 Focus Area
               </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: P.ink, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: P.ink, fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic" }}>
                 {focusStrategy.name}
               </div>
               <p style={{ fontSize: 13, color: P.inkSoft, margin: "4px 0 0", lineHeight: 1.6, fontStyle: "italic" }}>
@@ -495,7 +493,7 @@ function Dashboard() {
           dev-only manual toggle for testing. */}
       <div style={{
         marginTop: 24, padding: "20px 22px",
-        background: "rgba(26,18,56,0.85)", border: `1px solid ${P.inkGhost}`,
+        background: "rgba(255,252,245,0.92)", border: `1px solid ${P.inkGhost}`,
         borderRadius: 18,
         boxShadow: `0 4px 14px rgba(26,18,16,0.05)`,
       }}>
@@ -507,7 +505,7 @@ function Dashboard() {
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{
               fontSize: 17, fontWeight: 900, color: P.ink,
-              fontFamily: "var(--font-cormorant), serif", fontStyle: "italic", letterSpacing: -0.3,
+              fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic", letterSpacing: -0.3,
             }}>{prog.tier === "champion" ? "Champion" : "Free"}</div>
             <div style={{ fontSize: 12, color: P.inkLight, marginTop: 2 }}>
               {prog.tier === "champion"
@@ -518,15 +516,15 @@ function Dashboard() {
           <button type="button"
             onClick={() => store.setTier(prog.tier === "champion" ? "free" : "champion")}
             style={{
-              background: prog.tier === "champion" ? "white" : P.emerald,
-              color: prog.tier === "champion" ? P.inkSoft : "white",
+              background: prog.tier === "champion" ? P.creamDeep : P.emerald,
+              color: prog.tier === "champion" ? P.inkSoft : "#FFFCF5",
               border: `1.5px solid ${prog.tier === "champion" ? P.inkGhost : P.emerald}`,
               borderRadius: 12, padding: "10px 18px",
               fontSize: 13, fontWeight: 800, cursor: "pointer",
               fontFamily: "var(--font-jakarta), sans-serif",
               boxShadow: prog.tier === "champion"
                 ? `0 2px 8px rgba(26,18,16,0.06)`
-                : `0 6px 20px rgba(27,115,64,0.22)`,
+                : `0 6px 20px rgba(124,182,158,0.22)`,
               letterSpacing: 0.3,
             }}
           >
@@ -585,7 +583,7 @@ function SoundAndFeelCard() {
   return (
     <div style={{
       marginTop: 24, padding: "20px 22px",
-      background: "rgba(26,18,56,0.85)", border: `1px solid ${P.inkGhost}`,
+      background: "rgba(255,252,245,0.92)", border: `1px solid ${P.inkGhost}`,
       borderRadius: 18,
       boxShadow: `0 4px 14px rgba(0,0,0,0.32)`,
     }}>
@@ -634,8 +632,8 @@ function ToggleRow({
         style={{
           width: 52, height: 30,
           borderRadius: 15,
-          background: on ? P.emerald : "rgba(255,255,255,0.08)",
-          border: `1px solid ${on ? P.emerald : "rgba(245,230,200,0.22)"}`,
+          background: on ? P.emerald : P.parchment,
+          border: `1px solid ${on ? P.emerald : P.inkGhost}`,
           position: "relative",
           cursor: "pointer",
           transition: "background 200ms ease, border-color 200ms ease",
@@ -650,8 +648,8 @@ function ToggleRow({
           width: 22,
           height: 22,
           borderRadius: "50%",
-          background: "#FBF6E8",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+          background: P.creamDeep,
+          boxShadow: "0 2px 6px rgba(31,42,68,0.18)",
           transition: "left 200ms cubic-bezier(0.34,1.56,0.64,1)",
         }} />
       </button>
@@ -663,12 +661,12 @@ function Metric({ label, value, color }: { label: string; value: string; color: 
   return (
     <div style={{
       padding: "14px 16px", borderRadius: 14,
-      background: "rgba(26,18,56,0.85)", border: `1px solid ${P.inkGhost}`,
+      background: "rgba(255,252,245,0.92)", border: `1px solid ${P.inkGhost}`,
       textAlign: "center",
     }}>
       <div style={{
         fontSize: 24, fontWeight: 900, color,
-        fontFamily: "var(--font-cormorant), serif", fontStyle: "italic",
+        fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic",
       }}>{value}</div>
       <div style={{
         fontSize: 10, fontWeight: 800, color: P.inkLight,
@@ -705,7 +703,7 @@ function VoiceUsageCard() {
   return (
     <div style={{
       marginTop: 24, padding: "20px 22px",
-      background: "rgba(26,18,56,0.85)", border: `1px solid ${P.inkGhost}`,
+      background: "rgba(255,252,245,0.92)", border: `1px solid ${P.inkGhost}`,
       borderRadius: 18,
       boxShadow: `0 4px 14px rgba(26,18,16,0.05)`,
     }}>

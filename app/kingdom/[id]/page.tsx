@@ -8,19 +8,19 @@ import { KINGDOMS, isKingdomLocked } from "@/lib/progression/data";
 
 import { StarField, MoteField } from "@/lib/design/atmosphere";
 const P = {
-  cream: "#1A1238",
-  creamDeep: "rgba(36,24,69,0.85)",
-  parchment: "rgba(245,230,200,0.12)",
-  ink: "#FBF6E8",
-  inkSoft: "#FBF6E8",
-  inkMed: "#D6C8A8",
-  inkLight: "#9A8FB5",
-  inkFaint: "#6B6285",
-  inkGhost: "rgba(245,230,200,0.22)",
-  emerald: "#34D399",
-  emeraldPale: "rgba(52,211,153,0.10)",
-  gold: "#F5B638",
-  goldPale: "rgba(245,182,56,0.10)",
+  cream: "#FBF6EC",
+  creamDeep: "#FFFCF5",
+  parchment: "rgba(31,42,68,0.06)",
+  ink: "#1F2A44",
+  inkSoft: "#1F2A44",
+  inkMed: "#5C6580",
+  inkLight: "#9BA1B5",
+  inkFaint: "#B8BDD0",
+  inkGhost: "rgba(31,42,68,0.12)",
+  emerald: "#7CB69E",
+  emeraldPale: "rgba(124,182,158,0.12)",
+  gold: "#FF6B5A",
+  goldPale: "rgba(255,107,90,0.10)",
 };
 
 export default function KingdomDetailPage() {
@@ -65,11 +65,11 @@ export default function KingdomDetailPage() {
 
   return (
     <div style={{
-      minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 30%, #2D1B5C 0%, #15102A 45%, #07050F 100%)", color: P.ink,
+      minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 20%, #FFF8E8 0%, #F5ECDC 45%, #FBF6EC 100%)", color: P.ink,
       fontFamily: "var(--font-jakarta), sans-serif", position: "relative",
     }}>
       <StarField count={70} seed={11} opacity={0.45} />
-      <MoteField count={14} seed={12} color="#FCD34D" />
+      <MoteField count={14} seed={12} color={P.gold} />
       {/* Paper grain */}
       <div aria-hidden style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
@@ -80,7 +80,7 @@ export default function KingdomDetailPage() {
       <header style={{
         position: "sticky", top: 0, zIndex: 10,
         padding: `calc(10px + env(safe-area-inset-top)) 20px 10px 20px`,
-        background: "rgba(7,5,15,0.6)",
+        background: "rgba(251,246,236,0.92)",
         backdropFilter: "blur(20px) saturate(1.2)",
         borderBottom: `1px solid ${P.inkGhost}40`,
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -96,7 +96,7 @@ export default function KingdomDetailPage() {
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 20 }}>♟</span>
-          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-cormorant), serif", color: P.ink }}>
+          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-dm-serif), serif", color: P.ink }}>
             ChessWhiz
           </span>
         </div>
@@ -111,7 +111,7 @@ export default function KingdomDetailPage() {
         }}>kingdom of</span>
         <h1 style={{
           margin: "0 0 10px", fontSize: "clamp(34px, 5.5vw, 50px)", fontWeight: 900,
-          fontFamily: "var(--font-cormorant), serif", color: P.ink, letterSpacing: -1,
+          fontFamily: "var(--font-dm-serif), serif", color: P.ink, letterSpacing: -1,
         }}>{kingdom.name}</h1>
         <p style={{ fontSize: 16, color: P.inkLight, margin: "0 auto 22px", maxWidth: 500, lineHeight: 1.7 }}>
           {kingdom.subtitle}
@@ -119,7 +119,7 @@ export default function KingdomDetailPage() {
 
         <div style={{
           padding: "18px 22px",
-          background: "rgba(26,18,56,0.85)",
+          background: "rgba(255,252,245,0.92)",
           border: `1px solid ${P.inkGhost}`,
           borderRadius: 18,
           boxShadow: `0 0 0 4px ${P.parchment}, 0 12px 36px rgba(26,18,16,0.08)`,
@@ -140,7 +140,7 @@ export default function KingdomDetailPage() {
           }}>The Boss {defeated && <span style={{ color: P.emerald }}>· DEFEATED</span>}</h2>
 
           <div style={{
-            background: "rgba(26,18,56,0.85)",
+            background: "rgba(255,252,245,0.92)",
             border: `1px solid ${P.inkGhost}`,
             borderRadius: 20,
             boxShadow: `0 8px 30px rgba(26,18,16,0.06)`,
@@ -157,7 +157,7 @@ export default function KingdomDetailPage() {
             <div style={{ flex: 1, minWidth: 260 }}>
               <div style={{
                 fontSize: 22, fontWeight: 900, color: P.ink,
-                fontFamily: "var(--font-cormorant), serif", letterSpacing: -0.4,
+                fontFamily: "var(--font-dm-serif), serif", letterSpacing: -0.4,
               }}>{kingdom.boss.name}</div>
               <div style={{
                 display: "inline-block", marginTop: 6, padding: "3px 10px", borderRadius: 6,
@@ -200,7 +200,7 @@ export default function KingdomDetailPage() {
             return (
               <div key={s.id} style={{
                 padding: "14px 18px", borderRadius: 14,
-                background: mastered ? P.emeraldPale : "white",
+                background: mastered ? P.emeraldPale : P.creamDeep,
                 border: `1px solid ${mastered ? P.emerald : P.inkGhost}`,
               }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -238,11 +238,11 @@ export default function KingdomDetailPage() {
         <button type="button"
           onClick={enterKingdom}
           style={{
-            background: P.emerald, color: "white", border: "none",
+            background: P.emerald, color: "#FFFCF5", border: "none",
             borderRadius: 16, padding: "18px 40px", fontSize: 17,
             fontWeight: 800, cursor: "pointer",
             fontFamily: "var(--font-jakarta), sans-serif",
-            boxShadow: "0 8px 32px rgba(27,115,64,0.3), 0 2px 8px rgba(27,115,64,0.2)",
+            boxShadow: "0 8px 32px rgba(124,182,158,0.30), 0 2px 8px rgba(124,182,158,0.20)",
             transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
             letterSpacing: 0.2,
           }}

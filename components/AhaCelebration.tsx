@@ -77,7 +77,7 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
         position: "fixed",
         inset: 0,
         zIndex: Z.modal - 10,
-        background: T.bgRadialEmerald,
+        background: "radial-gradient(ellipse at 50% 30%, #FFF8E3 0%, #F5ECDC 50%, #FBF6EC 100%)",
         cursor: "pointer",
         overflow: "hidden",
         animation: "ahaIn 0.4s ease-out, ahaFlash 0.6s ease-out",
@@ -97,7 +97,7 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
           height: "min(140vw, 1500px)",
           borderRadius: "50%",
           background:
-            "radial-gradient(circle, rgba(192,132,252,0.40) 0%, rgba(52,211,153,0.20) 30%, transparent 60%)",
+            "radial-gradient(circle, rgba(255,107,90,0.22) 0%, rgba(242,201,76,0.14) 30%, transparent 60%)",
           animation: "ahaPulse 2s infinite",
           pointerEvents: "none",
         }}
@@ -122,7 +122,7 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
             <polygon
               key={i}
               points="0,-650 8,-200 -8,-200"
-              fill="rgba(252,211,77,0.12)"
+              fill="rgba(255,107,90,0.10)"
               transform={`rotate(${ang})`}
             />
           );
@@ -136,16 +136,16 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
           left: "50%",
           top: "32%",
           transform: `translate(-50%, -50%) translateY(${crystalBob}px) rotateZ(${crystalRot}deg)`,
-          filter: "drop-shadow(0 0 40px rgba(192,132,252,0.9)) drop-shadow(0 0 80px rgba(52,211,153,0.5))",
+          filter: "drop-shadow(0 0 40px rgba(255,107,90,0.60)) drop-shadow(0 0 80px rgba(242,201,76,0.40))",
           animation: "ahaCrystalIn 1.2s cubic-bezier(0.34,1.56,0.64,1) both",
         }}
       >
         <svg width="240" height="280" viewBox="0 0 280 320" aria-hidden>
           <defs>
             <linearGradient id="crystalGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#E0BBFF" />
-              <stop offset="50%" stopColor="#9333EA" />
-              <stop offset="100%" stopColor="#3B0764" />
+              <stop offset="0%" stopColor="#FFDFA8" />
+              <stop offset="50%" stopColor="#FF6B5A" />
+              <stop offset="100%" stopColor="#C8965A" />
             </linearGradient>
             <linearGradient id="crystalShine" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.9" />
@@ -156,17 +156,17 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
           <path
             d="M 140 20 L 220 130 L 180 280 L 100 280 L 60 130 Z"
             fill="url(#crystalGrad)"
-            stroke="#FCD34D"
+            stroke="#F2C94C"
             strokeWidth="3"
           />
           <path
             d="M 140 20 L 140 280 M 60 130 L 220 130 M 60 130 L 140 20 L 220 130"
-            stroke="rgba(252,211,77,0.6)"
+            stroke="rgba(242,201,76,0.6)"
             strokeWidth="2"
             fill="none"
           />
           <path d="M 140 20 L 95 130 L 100 270 L 70 130 Z" fill="url(#crystalShine)" />
-          <ellipse cx="140" cy="160" rx="35" ry="50" fill="rgba(252,211,77,0.8)" filter="blur(20px)" />
+          <ellipse cx="140" cy="160" rx="35" ry="50" fill="rgba(242,201,76,0.7)" filter="blur(20px)" />
         </svg>
         <div
           style={{
@@ -175,7 +175,7 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
             top: "55%",
             transform: "translate(-50%, -50%)",
             fontSize: 52,
-            filter: "drop-shadow(0 0 12px rgba(252,211,77,0.9))",
+            filter: "drop-shadow(0 0 12px rgba(242,201,76,0.9))",
             pointerEvents: "none",
           }}
         >
@@ -201,7 +201,7 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
             fontFamily: T.fontUI,
             fontSize: "clamp(13px, 1.6vw, 18px)",
             fontWeight: 700,
-            color: T.amethystGlow,
+            color: T.coral,
             letterSpacing: "0.5em",
             textTransform: "uppercase",
             marginBottom: 14,
@@ -217,7 +217,7 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
             fontWeight: 700,
             fontSize: "clamp(54px, 9vw, 110px)",
             letterSpacing: "-0.02em",
-            background: "linear-gradient(135deg, #E0BBFF 0%, #FCD34D 50%, #6EE7B7 100%)",
+            background: "linear-gradient(135deg, #FF8E70 0%, #F2C94C 50%, #7CB69E 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text",
@@ -232,7 +232,7 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
             marginTop: 16,
             fontFamily: T.fontHand,
             fontSize: "clamp(20px, 2.6vw, 30px)",
-            color: T.amberGlow,
+            color: T.coral,
             transform: "rotate(-1deg)",
             animation: "ahaBlurbIn 0.5s ease-out 2.2s both",
           }}
@@ -244,11 +244,11 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
             marginTop: 18,
             fontFamily: T.fontUI,
             fontSize: 14,
-            color: T.textLo,
+            color: T.inkLow,
             animation: "ahaBlurbIn 0.5s ease-out 2.6s both",
           }}
         >
-          {playerName}, you earned <strong style={{ color: T.amberGlow }}>{celebration.power.name}</strong> · Tap to dismiss
+          {playerName}, you earned <strong style={{ color: T.coral }}>{celebration.power.name}</strong> · Tap to dismiss
         </div>
       </div>
 
@@ -303,7 +303,7 @@ export default function AhaCelebration({ celebration, onDismiss, playerName }: A
 }
 
 function ConfettiBurst({ time }: { time: number }) {
-  const colors = ["#FCD34D", "#34D399", "#C084FC", "#FF6B6B", "#7DA8FF"];
+  const colors = ["#F2C94C", "#7CB69E", "#FF6B5A", "#F4A6B8", "#7FBFE8"];
   const t = time;
   return (
     <svg

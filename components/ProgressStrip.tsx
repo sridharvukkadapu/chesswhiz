@@ -57,7 +57,7 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
           display: "flex",
           alignItems: "center",
           gap: 18,
-          background: "rgba(26,18,56,0.72)",
+          background: "rgba(251,246,236,0.88)",
           border: `1px solid ${T.border}`,
           borderRadius: 100,
           backdropFilter: "blur(14px) saturate(1.2)",
@@ -72,11 +72,11 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
               width: 32,
               height: 32,
               borderRadius: 10,
-              background: "linear-gradient(135deg, #F5E2B8, #B07A0E)",
+              background: "linear-gradient(135deg, #FFDFA8, #C8965A)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: T.glowAmber,
+              boxShadow: "none",
             }}
           >
             <Piece type={RANK_PIECE[rank.id] ?? "pawn"} color="white" size={26} />
@@ -86,7 +86,7 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
               fontFamily: T.fontUI,
               fontSize: 13,
               fontWeight: 700,
-              color: T.textHi,
+              color: T.ink,
               letterSpacing: "0.08em",
               textTransform: "uppercase",
             }}
@@ -110,7 +110,7 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
               maxWidth: 220,
               height: 8,
               borderRadius: 4,
-              background: "rgba(255,255,255,0.08)",
+              background: "rgba(31,42,68,0.10)",
               overflow: "hidden",
             }}
           >
@@ -118,8 +118,8 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
               style={{
                 width: `${pct}%`,
                 height: "100%",
-                background: T.goldFoil,
-                boxShadow: "0 0 8px rgba(245,182,56,0.6)",
+                background: T.coral,
+                boxShadow: "0 0 8px rgba(255,107,90,0.40)",
                 transition: "width 600ms ease",
               }}
             />
@@ -128,7 +128,7 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
             style={{
               fontFamily: T.fontMono,
               fontSize: 12,
-              color: T.amberGlow,
+              color: T.coral,
               fontWeight: 600,
               flexShrink: 0,
               fontVariantNumeric: "tabular-nums",
@@ -148,7 +148,7 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
               style={{
                 fontFamily: T.fontUI,
                 fontSize: 10,
-                color: T.textLo,
+                color: T.inkDim,
                 letterSpacing: "0.16em",
                 textTransform: "uppercase",
                 lineHeight: 1.1,
@@ -161,7 +161,7 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
                 fontFamily: T.fontDisplay,
                 fontStyle: "italic",
                 fontSize: 16,
-                color: T.textHi,
+                color: T.ink,
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -183,18 +183,18 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
                 alignItems: "center",
                 gap: 8,
                 padding: "6px 14px",
-                background: "rgba(245,182,56,0.10)",
+                background: "rgba(255,107,90,0.10)",
                 borderRadius: 100,
-                border: "1px solid rgba(245,182,56,0.3)",
+                border: "1px solid rgba(255,107,90,0.30)",
                 flexShrink: 0,
               }}
             >
-              <Flame aria-hidden size={14} color={T.amberGlow} strokeWidth={2.4} fill={T.amberGlow} fillOpacity={0.3} />
+              <Flame aria-hidden size={14} color={T.coral} strokeWidth={2.4} fill={T.coral} fillOpacity={0.3} />
               <span
                 style={{
                   fontFamily: T.fontUI,
                   fontWeight: 700,
-                  color: T.amberGlow,
+                  color: T.coral,
                   fontSize: 12,
                 }}
               >

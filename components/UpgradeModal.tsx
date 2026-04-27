@@ -41,7 +41,7 @@ export default function UpgradeModal({
         position: "fixed",
         inset: 0,
         zIndex: Z.modal,
-        background: "rgba(7,5,15,0.82)",
+        background: "rgba(31,42,68,0.55)",
         backdropFilter: "blur(10px)",
         display: "flex",
         alignItems: "center",
@@ -55,10 +55,10 @@ export default function UpgradeModal({
         style={{
           width: "100%",
           maxWidth: 460,
-          background: "linear-gradient(180deg, rgba(36,24,69,0.96) 0%, rgba(14,10,31,0.99) 100%)",
+          background: "#FFFCF5",
           borderRadius: 26,
-          border: `1.5px solid ${T.amber}55`,
-          boxShadow: `0 0 0 4px rgba(245,182,56,0.12), ${T.shadowDeep}`,
+          border: `1.5px solid ${T.border}`,
+          boxShadow: `0 0 0 4px rgba(242,201,76,0.12), ${T.shadowDeep}`,
           padding: "32px 30px 28px",
           position: "relative",
           animation: "umPop 0.45s cubic-bezier(0.16,1,0.3,1)",
@@ -76,7 +76,7 @@ export default function UpgradeModal({
             borderRadius: "50%",
             background: "transparent",
             border: "none",
-            color: T.textLo,
+            color: T.inkLow,
             cursor: "pointer",
             fontSize: 20,
             display: "flex",
@@ -97,11 +97,11 @@ export default function UpgradeModal({
               width: 76,
               height: 76,
               borderRadius: 22,
-              background: "linear-gradient(135deg, rgba(245,182,56,0.25) 0%, rgba(192,132,252,0.18) 100%)",
-              border: `1.5px solid ${T.amber}`,
+              background: "linear-gradient(135deg, rgba(242,201,76,0.20) 0%, rgba(124,182,158,0.14) 100%)",
+              border: `1.5px solid ${T.butter}`,
               fontSize: 38,
               position: "relative",
-              boxShadow: T.glowAmber,
+              boxShadow: "none",
             }}
           >
             {blockedKingdomIcon ?? "👑"}
@@ -113,9 +113,9 @@ export default function UpgradeModal({
                 width: 30,
                 height: 30,
                 borderRadius: "50%",
-                background: T.obsidian,
-                color: T.amberGlow,
-                border: `3px solid ${T.amber}`,
+                background: "#FFFCF5",
+                color: T.butterDeep,
+                border: `3px solid ${T.butter}`,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -132,7 +132,7 @@ export default function UpgradeModal({
             style={{
               fontFamily: T.fontHand,
               fontSize: 18,
-              color: T.amberGlow,
+              color: T.coral,
               transform: "rotate(-2deg)",
               display: "inline-block",
             }}
@@ -147,7 +147,7 @@ export default function UpgradeModal({
             fontStyle: "italic",
             fontSize: 28,
             fontWeight: 600,
-            color: T.textHi,
+            color: T.ink,
             margin: "0 0 8px",
             letterSpacing: "-0.01em",
           }}
@@ -160,12 +160,12 @@ export default function UpgradeModal({
             fontFamily: T.fontUI,
             fontSize: 14,
             lineHeight: 1.65,
-            color: T.textMed,
+            color: T.inkLow,
             margin: "0 0 22px",
           }}
         >
           {blockedKingdomName ? (
-            <>You&apos;ve grown beyond Pawn Village. To enter <strong style={{ color: T.amberGlow }}>{blockedKingdomName}</strong> — and the 5 kingdoms after it — unlock Champion.</>
+            <>You&apos;ve grown beyond Pawn Village. To enter <strong style={{ color: T.coral }}>{blockedKingdomName}</strong> — and the 5 kingdoms after it — unlock Champion.</>
           ) : (
             <>Pawn Village is just the beginning. Unlock all 7 kingdoms, 7 bosses, 20 Powers, and your shareable Knight Card.</>
           )}
@@ -173,19 +173,19 @@ export default function UpgradeModal({
 
         <div
           style={{
-            background: "rgba(255,255,255,0.04)",
-            border: `1.5px solid ${T.amber}55`,
+            background: "rgba(31,42,68,0.03)",
+            border: `1.5px solid ${T.border}`,
             borderRadius: 18,
             padding: "18px 18px",
             marginBottom: 18,
-            boxShadow: "inset 0 0 0 3px rgba(245,182,56,0.06)",
+            boxShadow: "none",
           }}
         >
           <div
             style={{
               display: "inline-block",
-              background: T.goldFoil,
-              color: T.inkDeep,
+              background: T.coral,
+              color: "#FFFCF5",
               borderRadius: 6,
               padding: "3px 10px",
               fontSize: 10,
@@ -213,7 +213,7 @@ export default function UpgradeModal({
                   gap: 10,
                   fontFamily: T.fontUI,
                   fontSize: 13,
-                  color: T.textHi,
+                  color: T.ink,
                 }}
               >
                 <span
@@ -222,14 +222,14 @@ export default function UpgradeModal({
                     height: 18,
                     borderRadius: "50%",
                     flexShrink: 0,
-                    background: T.emerald,
-                    color: T.obsidian,
+                    background: T.sage,
+                    color: "#FFFCF5",
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: 10,
                     fontWeight: 800,
-                    boxShadow: `0 0 8px ${T.emeraldGlow}`,
+                    boxShadow: "none",
                   }}
                 >
                   ✓
@@ -246,8 +246,8 @@ export default function UpgradeModal({
           style={{
             display: "block",
             width: "100%",
-            background: T.goldFoil,
-            color: T.inkDeep,
+            background: T.coral,
+            color: "#FFFCF5",
             borderRadius: 14,
             padding: "16px 0",
             textAlign: "center",
@@ -255,7 +255,7 @@ export default function UpgradeModal({
             fontWeight: 800,
             textDecoration: "none",
             fontFamily: T.fontUI,
-            boxShadow: T.glowAmber,
+            boxShadow: T.glowCoral,
             letterSpacing: "0.05em",
           }}
         >
@@ -271,7 +271,7 @@ export default function UpgradeModal({
             marginTop: 10,
             padding: "8px 0",
             fontSize: 13,
-            color: T.textLo,
+            color: T.inkDim,
             cursor: "pointer",
             fontFamily: T.fontUI,
             fontWeight: 600,

@@ -78,11 +78,11 @@ function MissionProgress({ mission }: { mission: Mission | null }) {
   return (
     <div
       style={{
-        background: "rgba(245,182,56,0.08)",
-        border: `1.5px solid rgba(245,182,56,0.32)`,
+        background: "rgba(242,201,76,0.08)",
+        border: `1.5px solid rgba(242,201,76,0.35)`,
         borderRadius: 16,
         padding: "16px 18px",
-        boxShadow: "0 0 24px rgba(245,182,56,0.12)",
+        boxShadow: "0 0 24px rgba(242,201,76,0.12)",
       }}
     >
       <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
@@ -92,7 +92,7 @@ function MissionProgress({ mission }: { mission: Mission | null }) {
             fontStyle: "italic",
             fontSize: 14,
             fontWeight: 600,
-            color: T.amberGlow,
+            color: T.butterDeep,
             letterSpacing: 0.3,
           }}
         >
@@ -102,7 +102,7 @@ function MissionProgress({ mission }: { mission: Mission | null }) {
           style={{
             fontSize: 10,
             fontWeight: 700,
-            color: T.amberGlow,
+            color: T.butterDeep,
             letterSpacing: "0.2em",
             textTransform: "uppercase",
             fontFamily: T.fontUI,
@@ -116,7 +116,7 @@ function MissionProgress({ mission }: { mission: Mission | null }) {
           margin: 0,
           fontSize: 14,
           fontWeight: 600,
-          color: T.textHi,
+          color: T.ink,
           fontFamily: T.fontUI,
           lineHeight: 1.5,
         }}
@@ -127,7 +127,7 @@ function MissionProgress({ mission }: { mission: Mission | null }) {
         style={{
           marginTop: 6,
           fontSize: 11,
-          color: T.textLo,
+          color: T.inkDim,
           fontFamily: T.fontMono,
         }}
       >
@@ -157,7 +157,7 @@ export default function PostGameScreen({
   const kingdomColor = KINGDOM_COLORS[kingdom.id] ?? T.amber;
 
   const isWin = status === "white_wins";
-  const accent = isWin ? T.emeraldGlow : status === "black_wins" ? T.rubyGlow : T.amberGlow;
+  const accent = isWin ? T.sageDeep : status === "black_wins" ? T.coralDeep : T.butterDeep;
 
   const showUpgradePitch = progression.tier === "free" && isReadyForNextKingdom(progression.masteredStrategies);
   const forkForest = KINGDOMS.find((k) => k.id === "fork_forest");
@@ -169,9 +169,9 @@ export default function PostGameScreen({
       aria-modal="false"
       aria-label="Game complete"
       style={{
-        background: "linear-gradient(180deg, rgba(36,24,69,0.85) 0%, rgba(14,10,31,0.95) 100%)",
+        background: "#FFFCF5",
         borderRadius: 24,
-        border: `1.5px solid ${T.borderStrong}`,
+        border: `1.5px solid ${T.border}`,
         boxShadow: T.shadowDeep,
         padding: "28px 24px",
         animation: "postGameIn 0.55s cubic-bezier(0.16,1,0.3,1) both",
@@ -186,7 +186,7 @@ export default function PostGameScreen({
             style={{
               fontFamily: T.fontHand,
               fontSize: 16,
-              color: T.amberGlow,
+              color: T.butterDeep,
               display: "block",
               transform: "rotate(-2deg)",
               marginBottom: 4,
@@ -213,11 +213,11 @@ export default function PostGameScreen({
 
       {/* 01 Coach review */}
       <div style={{ marginBottom: 14 }}>
-        <SectionLabel num="01" text="Coach Pawn's Review" tone={T.amberGlow} />
+        <SectionLabel num="01" text="Coach Pawn's Review" tone={T.butterDeep} />
         <div
           style={{
-            background: "linear-gradient(180deg, rgba(245,182,56,0.08) 0%, rgba(245,182,56,0.02) 100%)",
-            border: "1.5px solid rgba(245,182,56,0.28)",
+            background: "linear-gradient(180deg, rgba(242,201,76,0.08) 0%, rgba(242,201,76,0.02) 100%)",
+            border: "1.5px solid rgba(242,201,76,0.30)",
             borderRadius: 18,
             padding: "16px 18px",
             position: "relative",
@@ -233,10 +233,10 @@ export default function PostGameScreen({
               height: 0,
               borderTop: "10px solid transparent",
               borderBottom: "10px solid transparent",
-              borderRight: "12px solid rgba(245,182,56,0.28)",
+              borderRight: "12px solid rgba(242,201,76,0.30)",
             }}
           />
-          <p style={{ margin: 0, fontFamily: T.fontUI, fontSize: 15, lineHeight: 1.55, color: T.textHi }}>
+          <p style={{ margin: 0, fontFamily: T.fontUI, fontSize: 15, lineHeight: 1.55, color: T.ink }}>
             {review.body}
           </p>
         </div>
@@ -244,10 +244,10 @@ export default function PostGameScreen({
 
       {/* 02 XP + rank progress */}
       <div style={{ marginBottom: 14 }}>
-        <SectionLabel num="02" text="Your Progress" tone={T.textMed} />
+        <SectionLabel num="02" text="Your Progress" tone={T.inkLow} />
         <div
           style={{
-            background: "rgba(255,255,255,0.04)",
+            background: "rgba(31,42,68,0.03)",
             border: `1px solid ${T.border}`,
             borderRadius: 16,
             padding: "14px 16px",
@@ -259,9 +259,9 @@ export default function PostGameScreen({
                 width: 44,
                 height: 44,
                 borderRadius: 12,
-                background: "linear-gradient(135deg, #F5E2B8, #B07A0E)",
+                background: "linear-gradient(135deg, #FFDFA8, #C8965A)",
                 border: `1.5px solid ${rank.color}`,
-                boxShadow: T.glowAmber,
+                boxShadow: "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -277,7 +277,7 @@ export default function PostGameScreen({
                   fontStyle: "italic",
                   fontSize: 18,
                   fontWeight: 600,
-                  color: T.textHi,
+                  color: T.ink,
                 }}
               >
                 {rank.name}
@@ -286,7 +286,7 @@ export default function PostGameScreen({
                 style={{
                   fontFamily: T.fontMono,
                   fontSize: 12,
-                  color: T.textLo,
+                  color: T.inkDim,
                 }}
               >
                 {progression.xp.toLocaleString()} XP
@@ -300,14 +300,14 @@ export default function PostGameScreen({
             aria-valuemin={floor}
             aria-valuemax={ceil}
             aria-label={`XP progress: ${progression.xp} of ${ceil}`}
-            style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}
+            style={{ height: 6, borderRadius: 3, background: "rgba(31,42,68,0.10)", overflow: "hidden" }}
           >
             <div
               style={{
                 width: `${pct}%`,
                 height: "100%",
-                background: T.goldFoil,
-                boxShadow: "0 0 8px rgba(245,182,56,0.6)",
+                background: T.coral,
+                boxShadow: "0 0 8px rgba(255,107,90,0.40)",
                 transition: "width 800ms cubic-bezier(0.16,1,0.3,1)",
               }}
             />
@@ -327,9 +327,9 @@ export default function PostGameScreen({
             marginBottom: 20,
             padding: "16px 18px",
             borderRadius: 16,
-            background: "linear-gradient(135deg, rgba(245,182,56,0.18) 0%, rgba(192,132,252,0.12) 100%)",
-            border: `1.5px solid ${T.amber}`,
-            boxShadow: T.glowAmber,
+            background: "linear-gradient(135deg, rgba(242,201,76,0.12) 0%, rgba(124,182,158,0.08) 100%)",
+            border: `1.5px solid ${T.butter}`,
+            boxShadow: "none",
             fontFamily: "inherit",
             color: "inherit",
             transition: "transform 200ms cubic-bezier(0.34,1.56,0.64,1)",
@@ -348,10 +348,10 @@ export default function PostGameScreen({
           }}
         >
           <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
-            <span style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: 14, fontWeight: 600, color: T.amberGlow }}>
+            <span style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: 14, fontWeight: 600, color: T.butterDeep }}>
               03
             </span>
-            <span style={{ fontFamily: T.fontUI, fontSize: 10, fontWeight: 800, color: T.amberGlow, letterSpacing: "0.2em", textTransform: "uppercase" }}>
+            <span style={{ fontFamily: T.fontUI, fontSize: 10, fontWeight: 800, color: T.butterDeep, letterSpacing: "0.2em", textTransform: "uppercase" }}>
               Next Adventure
             </span>
             <span
@@ -360,9 +360,9 @@ export default function PostGameScreen({
                 fontFamily: T.fontUI,
                 fontSize: 9,
                 fontWeight: 800,
-                color: T.amberGlow,
-                background: "rgba(7,5,15,0.7)",
-                border: `1px solid ${T.amber}80`,
+                color: T.butterDeep,
+                background: "rgba(242,201,76,0.15)",
+                border: `1px solid ${T.butter}`,
                 padding: "2px 8px",
                 borderRadius: 6,
                 letterSpacing: "0.18em",
@@ -380,13 +380,13 @@ export default function PostGameScreen({
                   fontStyle: "italic",
                   fontSize: 18,
                   fontWeight: 600,
-                  color: T.textHi,
+                  color: T.ink,
                 }}
               >
                 The Fork Forest awaits!
               </div>
-              <div style={{ fontFamily: T.fontUI, fontSize: 13, color: T.textMed, marginTop: 2 }}>
-                Face the <strong style={{ color: T.amberGlow }}>Knight Twins</strong> and earn the Fork Master power →
+              <div style={{ fontFamily: T.fontUI, fontSize: 13, color: T.inkLow, marginTop: 2 }}>
+                Face the <strong style={{ color: T.butterDeep }}>Knight Twins</strong> and earn the Fork Master power →
               </div>
             </div>
           </div>
@@ -401,7 +401,7 @@ export default function PostGameScreen({
             marginBottom: 20,
             padding: "14px 16px",
             borderRadius: 16,
-            background: "rgba(255,255,255,0.04)",
+            background: "rgba(31,42,68,0.03)",
             border: `1px solid ${T.border}`,
             display: "flex",
             alignItems: "center",
@@ -410,10 +410,10 @@ export default function PostGameScreen({
         >
           <span style={{ fontSize: 24 }}>{KINGDOM_ICONS[kingdom.id] ?? "♟"}</span>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: 16, color: T.textHi }}>
+            <div style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: 16, color: T.ink }}>
               {kingdom.name}
             </div>
-            <div style={{ fontFamily: T.fontUI, fontSize: 12, color: T.textLo }}>{kingdom.subtitle}</div>
+            <div style={{ fontFamily: T.fontUI, fontSize: 12, color: T.inkDim }}>{kingdom.subtitle}</div>
           </div>
         </div>
       )}
@@ -428,14 +428,14 @@ export default function PostGameScreen({
             alignItems: "center",
             justifyContent: "center",
             gap: 4,
-            background: T.goldFoil,
-            color: T.inkDeep,
+            background: T.coral,
+            color: "#FFFCF5",
             border: "none",
             borderRadius: 14,
             minHeight: 56,
             cursor: "pointer",
             fontFamily: T.fontUI,
-            boxShadow: T.glowAmber,
+            boxShadow: T.glowCoral,
             transition: "transform 200ms cubic-bezier(0.34,1.56,0.64,1)",
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
@@ -454,8 +454,8 @@ export default function PostGameScreen({
             alignItems: "center",
             justifyContent: "center",
             gap: 4,
-            background: "rgba(255,255,255,0.04)",
-            color: T.textMed,
+            background: "#FFFCF5",
+            color: T.inkLow,
             border: `1.5px solid ${T.border}`,
             borderRadius: 14,
             minHeight: 56,
@@ -464,20 +464,20 @@ export default function PostGameScreen({
             transition: "all 200ms cubic-bezier(0.34,1.56,0.64,1)",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = T.amber;
-            (e.currentTarget as HTMLElement).style.color = T.amberGlow;
+            (e.currentTarget as HTMLElement).style.borderColor = T.butter;
+            (e.currentTarget as HTMLElement).style.color = T.butterDeep;
           }}
           onFocus={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = T.amber;
-            (e.currentTarget as HTMLElement).style.color = T.amberGlow;
+            (e.currentTarget as HTMLElement).style.borderColor = T.butter;
+            (e.currentTarget as HTMLElement).style.color = T.butterDeep;
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.borderColor = T.border;
-            (e.currentTarget as HTMLElement).style.color = T.textMed;
+            (e.currentTarget as HTMLElement).style.color = T.inkLow;
           }}
           onBlur={(e) => {
             (e.currentTarget as HTMLElement).style.borderColor = T.border;
-            (e.currentTarget as HTMLElement).style.color = T.textMed;
+            (e.currentTarget as HTMLElement).style.color = T.inkLow;
           }}
         >
           <span style={{ fontSize: 18 }}>🗺</span>
@@ -491,8 +491,8 @@ export default function PostGameScreen({
             alignItems: "center",
             justifyContent: "center",
             gap: 4,
-            background: "rgba(255,255,255,0.04)",
-            color: T.textMed,
+            background: "#FFFCF5",
+            color: T.inkLow,
             border: `1.5px solid ${T.border}`,
             borderRadius: 14,
             minHeight: 56,
@@ -501,20 +501,20 @@ export default function PostGameScreen({
             transition: "all 200ms cubic-bezier(0.34,1.56,0.64,1)",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = T.amethyst;
-            (e.currentTarget as HTMLElement).style.color = T.amethystGlow;
+            (e.currentTarget as HTMLElement).style.borderColor = T.sage;
+            (e.currentTarget as HTMLElement).style.color = T.sageDeep;
           }}
           onFocus={(e) => {
-            (e.currentTarget as HTMLElement).style.borderColor = T.amethyst;
-            (e.currentTarget as HTMLElement).style.color = T.amethystGlow;
+            (e.currentTarget as HTMLElement).style.borderColor = T.sage;
+            (e.currentTarget as HTMLElement).style.color = T.sageDeep;
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLElement).style.borderColor = T.border;
-            (e.currentTarget as HTMLElement).style.color = T.textMed;
+            (e.currentTarget as HTMLElement).style.color = T.inkLow;
           }}
           onBlur={(e) => {
             (e.currentTarget as HTMLElement).style.borderColor = T.border;
-            (e.currentTarget as HTMLElement).style.color = T.textMed;
+            (e.currentTarget as HTMLElement).style.color = T.inkLow;
           }}
         >
           <span style={{ fontSize: 18 }}>🃏</span>

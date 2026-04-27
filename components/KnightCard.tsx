@@ -46,11 +46,11 @@ function rarity(prog: PlayerProgression): "common" | "uncommon" | "rare" | "epic
 }
 
 const RARITY_TINT: Record<string, { color: string; bg: string; border: string }> = {
-  common: { color: T.textMed, bg: "rgba(255,255,255,0.08)", border: "rgba(255,255,255,0.20)" },
-  uncommon: { color: T.emeraldGlow, bg: "rgba(52,211,153,0.15)", border: "rgba(52,211,153,0.4)" },
-  rare: { color: T.sapphireGlow, bg: "rgba(125,168,255,0.15)", border: "rgba(125,168,255,0.5)" },
-  epic: { color: T.amethystGlow, bg: "rgba(192,132,252,0.18)", border: "rgba(192,132,252,0.5)" },
-  legendary: { color: T.amberGlow, bg: "rgba(245,182,56,0.18)", border: "rgba(252,211,77,0.6)" },
+  common: { color: "#C8A87A", bg: "rgba(200,168,122,0.15)", border: "rgba(200,168,122,0.30)" },
+  uncommon: { color: T.sage, bg: "rgba(124,182,158,0.20)", border: "rgba(124,182,158,0.45)" },
+  rare: { color: "#7FBFE8", bg: "rgba(127,191,232,0.18)", border: "rgba(127,191,232,0.45)" },
+  epic: { color: "#F4A6B8", bg: "rgba(244,166,184,0.18)", border: "rgba(244,166,184,0.45)" },
+  legendary: { color: T.butter, bg: "rgba(242,201,76,0.20)", border: "rgba(242,201,76,0.55)" },
 };
 
 function dateCode(): string {
@@ -97,9 +97,9 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
           width: "100%",
           height: "100%",
           borderRadius: 32,
-          background: "linear-gradient(155deg, #2A1B5C 0%, #1A1238 30%, #0E0A1F 70%, #1A1238 100%)",
+          background: "linear-gradient(155deg, #3D2A1B 0%, #2A1A0E 30%, #1A0F08 70%, #2A1A0E 100%)",
           padding: 4,
-          boxShadow: `${T.shadowDeep}, 0 0 60px rgba(192,132,252,0.4), inset 0 0 0 2px rgba(252,211,77,0.5)`,
+          boxShadow: `${T.shadowDeep}, 0 0 60px rgba(242,201,76,0.35), inset 0 0 0 2px rgba(242,201,76,0.55)`,
           position: "relative",
           overflow: "hidden",
         }}
@@ -115,7 +115,7 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
               transparent 0%,
               transparent ${(shimmerX * 100) | 0}%,
               rgba(255,255,255,0.30) ${((shimmerX + 0.08) * 100) | 0}%,
-              rgba(252,211,77,0.20) ${((shimmerX + 0.16) * 100) | 0}%,
+              rgba(242,201,76,0.20) ${((shimmerX + 0.16) * 100) | 0}%,
               transparent ${((shimmerX + 0.24) * 100) | 0}%,
               transparent 100%)`,
             mixBlendMode: "screen",
@@ -130,8 +130,8 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
             width: "100%",
             height: "100%",
             borderRadius: 28,
-            background: "linear-gradient(170deg, #1A1238 0%, #0A0814 100%)",
-            border: "1px solid rgba(252,211,77,0.35)",
+            background: "linear-gradient(170deg, #2A1A0E 0%, #150C05 100%)",
+            border: "1px solid rgba(242,201,76,0.35)",
             padding: "28px 24px",
             display: "flex",
             flexDirection: "column",
@@ -159,8 +159,8 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
               >
                 <defs>
                   <linearGradient id={`kcCorner-${corner}`} x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#FCD34D" />
-                    <stop offset="100%" stopColor="#B07A0E" />
+                    <stop offset="0%" stopColor="#F2C94C" />
+                    <stop offset="100%" stopColor="#C8965A" />
                   </linearGradient>
                 </defs>
                 <path
@@ -181,7 +181,7 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
                 fontFamily: T.fontUI,
                 fontSize: 11,
                 fontWeight: 700,
-                color: T.amberGlow,
+                color: T.butter,
                 letterSpacing: "0.3em",
                 textTransform: "uppercase",
               }}
@@ -216,7 +216,7 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
             style={{
               fontFamily: T.fontHand,
               fontSize: 22,
-              color: T.amberSoft,
+              color: "#C8A87A",
               transform: "rotate(-1.5deg)",
               marginBottom: 18,
             }}
@@ -230,13 +230,13 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
               flex: 1,
               position: "relative",
               borderRadius: 18,
-              background: "radial-gradient(ellipse at 50% 30%, rgba(192,132,252,0.30) 0%, rgba(26,18,56,0.6) 60%, rgba(10,8,20,1) 100%)",
-              border: "1px solid rgba(252,211,77,0.25)",
+              background: "radial-gradient(ellipse at 50% 30%, rgba(242,201,76,0.22) 0%, rgba(42,26,14,0.7) 60%, rgba(21,12,5,1) 100%)",
+              border: "1px solid rgba(242,201,76,0.25)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               overflow: "hidden",
-              boxShadow: "inset 0 0 30px rgba(0,0,0,0.5)",
+              boxShadow: "inset 0 0 30px rgba(0,0,0,0.4)",
               minHeight: 220,
             }}
           >
@@ -249,14 +249,14 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
                   y1="180"
                   x2={230 + Math.cos((i / 20) * Math.PI * 2 + time * 0.3) * 300}
                   y2={180 + Math.sin((i / 20) * Math.PI * 2 + time * 0.3) * 300}
-                  stroke="rgba(252,211,77,0.15)"
+                  stroke="rgba(242,201,76,0.15)"
                   strokeWidth="1"
                 />
               ))}
             </svg>
             <div
               style={{
-                filter: "drop-shadow(0 0 24px rgba(252,211,77,0.7))",
+                filter: "drop-shadow(0 0 24px rgba(242,201,76,0.7))",
                 transform: `translateY(${Math.sin(time * 1.5) * 4}px)`,
               }}
             >
@@ -272,7 +272,7 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
                 width: 200,
                 height: 22,
                 borderRadius: "50%",
-                background: "radial-gradient(ellipse, rgba(252,211,77,0.6) 0%, transparent 70%)",
+                background: "radial-gradient(ellipse, rgba(242,201,76,0.6) 0%, transparent 70%)",
                 filter: "blur(8px)",
               }}
             />
@@ -281,16 +281,16 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
           {/* Stats row */}
           <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
             {[
-              { label: "GAMES WON", value: String(stats.gamesWon), color: T.emerald },
-              { label: "POWERS", value: `${progression.earnedPowers.length}`, color: T.amethyst },
-              { label: "STREAK", value: `${stats.longestStreak}d`, color: T.amber },
+              { label: "GAMES WON", value: String(stats.gamesWon), color: T.sage },
+              { label: "POWERS", value: `${progression.earnedPowers.length}`, color: "#F4A6B8" },
+              { label: "STREAK", value: `${stats.longestStreak}d`, color: T.butter },
             ].map((s) => (
               <div
                 key={s.label}
                 style={{
                   flex: 1,
                   padding: "10px 8px",
-                  background: "rgba(255,255,255,0.04)",
+                  background: "rgba(255,255,255,0.06)",
                   border: `1px solid ${s.color}55`,
                   borderRadius: 10,
                   textAlign: "center",
@@ -313,7 +313,7 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
                   style={{
                     fontFamily: T.fontUI,
                     fontSize: 10,
-                    color: T.textLo,
+                    color: "#C8A87A",
                     letterSpacing: "0.15em",
                     marginTop: 4,
                   }}
@@ -363,7 +363,7 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
               style={{
                 fontFamily: T.fontMono,
                 fontSize: 10,
-                color: T.textDim,
+                color: "#7A5C3A",
                 letterSpacing: "0.15em",
                 fontVariantNumeric: "tabular-nums",
               }}
@@ -376,7 +376,7 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
                 fontStyle: "italic",
                 fontSize: 14,
                 fontWeight: 600,
-                background: T.goldFoil,
+                background: "linear-gradient(135deg, #F2C94C, #FF8E70, #F2C94C)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
                 backgroundClip: "text",

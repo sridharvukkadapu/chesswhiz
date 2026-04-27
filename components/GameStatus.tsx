@@ -21,27 +21,27 @@ export default function GameStatusBar({ status, playerName, onReset }: GameStatu
   } = isWin
     ? {
         label: `${playerName} wins!`,
-        color: T.emeraldGlow,
-        bg: "rgba(52,211,153,0.10)",
-        border: "rgba(52,211,153,0.4)",
-        glow: T.glowEmerald,
+        color: T.sageDeep,
+        bg: "rgba(124,182,158,0.12)",
+        border: "rgba(124,182,158,0.45)",
+        glow: "0 0 24px rgba(124,182,158,0.22)",
         Icon: Trophy,
       }
     : isDraw
       ? {
           label: "Draw",
-          color: T.textHi,
-          bg: "rgba(255,255,255,0.04)",
+          color: T.ink,
+          bg: "#FFFCF5",
           border: T.border,
-          glow: "0 0 24px rgba(255,255,255,0.08)",
+          glow: T.shadowSoft,
           Icon: Handshake,
         }
       : {
           label: "Bot wins",
-          color: T.rubyGlow,
-          bg: "rgba(255,107,107,0.10)",
-          border: "rgba(255,107,107,0.4)",
-          glow: T.glowRuby,
+          color: T.coralDeep,
+          bg: "rgba(255,107,90,0.10)",
+          border: "rgba(255,107,90,0.35)",
+          glow: "0 0 24px rgba(255,107,90,0.18)",
           Icon: Bot,
         };
 
@@ -80,14 +80,14 @@ export default function GameStatusBar({ status, playerName, onReset }: GameStatu
         style={{
           padding: "10px 20px",
           borderRadius: 12,
-          background: T.goldFoil,
-          color: T.inkDeep,
+          background: T.coral,
+          color: "#FFFCF5",
           border: "none",
           fontSize: 13,
           fontWeight: 700,
           cursor: "pointer",
           fontFamily: T.fontUI,
-          boxShadow: T.glowAmber,
+          boxShadow: T.glowCoral,
           letterSpacing: "0.05em",
         }}
       >

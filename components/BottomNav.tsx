@@ -63,10 +63,10 @@ export default function BottomNav() {
         right: 0,
         bottom: 0,
         zIndex: Z.overlay,
-        background: "rgba(14,10,31,0.92)",
+        background: "rgba(251,246,236,0.94)",
         backdropFilter: "blur(20px) saturate(1.2)",
         WebkitBackdropFilter: "blur(20px) saturate(1.2)",
-        borderTop: `1px solid ${T.borderStrong}`,
+        borderTop: `1px solid ${T.border}`,
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
@@ -97,7 +97,7 @@ export default function BottomNav() {
                 justifyContent: "center",
                 gap: 4,
                 textDecoration: "none",
-                color: active ? T.amberGlow : T.textLo,
+                color: active ? T.coral : T.inkLow,
                 fontFamily: T.fontUI,
                 position: "relative",
               }}
@@ -112,8 +112,8 @@ export default function BottomNav() {
                       left: "30%",
                       right: "30%",
                       height: 2,
-                      background: T.goldFoil,
-                      boxShadow: T.glowAmber,
+                      background: T.coral,
+                      boxShadow: T.glowCoral,
                     }}
                   />
                   <span
@@ -122,7 +122,7 @@ export default function BottomNav() {
                       position: "absolute",
                       inset: 0,
                       background:
-                        "radial-gradient(ellipse at 50% 100%, rgba(252,211,77,0.18) 0%, transparent 70%)",
+                        "radial-gradient(ellipse at 50% 100%, rgba(255,107,90,0.14) 0%, transparent 70%)",
                       pointerEvents: "none",
                     }}
                   />
@@ -134,7 +134,7 @@ export default function BottomNav() {
                   size={22}
                   strokeWidth={active ? 2.4 : 1.8}
                   style={{
-                    filter: active ? "drop-shadow(0 0 6px rgba(252,211,77,0.55))" : "none",
+                    filter: active ? "drop-shadow(0 0 6px rgba(255,107,90,0.55))" : "none",
                     transform: active ? "translateY(-1px)" : "none",
                     transition: "transform 200ms cubic-bezier(0.34,1.56,0.64,1)",
                   }}
@@ -149,8 +149,8 @@ export default function BottomNav() {
                       minWidth: 16,
                       height: 16,
                       padding: "0 4px",
-                      background: T.amber,
-                      color: T.inkDeep,
+                      background: T.coral,
+                      color: "#FFFCF5",
                       borderRadius: 8,
                       fontFamily: T.fontUI,
                       fontSize: 10,
@@ -158,7 +158,7 @@ export default function BottomNav() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      boxShadow: "0 0 0 2px rgba(14,10,31,0.95), 0 0 8px rgba(245,182,56,0.6)",
+                      boxShadow: "0 0 0 2px rgba(251,246,236,0.95), 0 0 8px rgba(255,107,90,0.50)",
                       lineHeight: 1,
                       fontVariantNumeric: "tabular-nums",
                     }}

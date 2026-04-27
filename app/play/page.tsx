@@ -73,7 +73,7 @@ function XPToast({
         fontWeight: 800,
         fontSize: 15,
         letterSpacing: "0.06em",
-        boxShadow: T.glowAmber,
+        boxShadow: "0 0 20px rgba(242,201,76,0.40)",
         animation: "xpToast 2.2s cubic-bezier(0.34,1.56,0.64,1) forwards",
         fontVariantNumeric: "tabular-nums",
       }}

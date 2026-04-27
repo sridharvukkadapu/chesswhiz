@@ -57,7 +57,7 @@ function Reveal({
 }
 
 // ─── Hero — port of scene 1 ──────────────────────────────────────
-function Hero() {
+const Hero = React.memo(function Hero() {
   const time = useTime();
   const bgPulse = 1 + Math.sin(time * 0.6) * 0.02;
   const kingY = Math.sin(time * 1.2) * 6;
@@ -229,10 +229,10 @@ function Hero() {
       </Reveal>
     </section>
   );
-}
+});
 
 // ─── Coaching showcase — Coach Pawn + a sample message ───────────
-function CoachingShowcase() {
+const CoachingShowcase = React.memo(function CoachingShowcase() {
   return (
     <section
       style={{
@@ -343,10 +343,10 @@ function CoachingShowcase() {
       </div>
     </section>
   );
-}
+});
 
 // ─── Journey section — direct port of scene 5's energy ───────────
-function JourneySection() {
+const JourneySection = React.memo(function JourneySection() {
   const time = useTime();
   const KINGDOMS_PREVIEW = [
     { id: "village", emoji: "🏘️", label: "Village" },
@@ -669,10 +669,10 @@ function JourneySection() {
       `}</style>
     </section>
   );
-}
+});
 
 // ─── Comparison ──────────────────────────────────────────────────
-function ComparisonSection() {
+const ComparisonSection = React.memo(function ComparisonSection() {
   return (
     <section style={{ padding: "100px 24px", maxWidth: 980, margin: "0 auto", position: "relative", zIndex: 1 }}>
       <Reveal>
@@ -803,10 +803,10 @@ function ComparisonSection() {
       </Reveal>
     </section>
   );
-}
+});
 
 // ─── Note from the maker ────────────────────────────────────────
-function MakerNote() {
+const MakerNote = React.memo(function MakerNote() {
   return (
     <section style={{ padding: "80px 24px", maxWidth: 720, margin: "0 auto", position: "relative", zIndex: 1 }}>
       <Reveal>
@@ -878,10 +878,10 @@ function MakerNote() {
       </Reveal>
     </section>
   );
-}
+});
 
 // ─── Pricing ────────────────────────────────────────────────────
-function Pricing() {
+const Pricing = React.memo(function Pricing() {
   return (
     <section style={{ padding: "80px 24px", maxWidth: 580, margin: "0 auto", position: "relative", zIndex: 1 }}>
       <Reveal>
@@ -1143,7 +1143,7 @@ function Pricing() {
       </Reveal>
     </section>
   );
-}
+});
 
 // ─── FAQ ────────────────────────────────────────────────────────
 function FAQItem({ q, a }: { q: string; a: string }) {
@@ -1204,7 +1204,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   );
 }
 
-function FAQ() {
+const FAQ = React.memo(function FAQ() {
   return (
     <section style={{ padding: "60px 24px 80px", maxWidth: 680, margin: "0 auto", position: "relative", zIndex: 1 }}>
       <Reveal>
@@ -1234,10 +1234,10 @@ function FAQ() {
       ))}
     </section>
   );
-}
+});
 
 // ─── Final CTA — port of scene 7 ────────────────────────────────
-function FinalCTA() {
+const FinalCTA = React.memo(function FinalCTA() {
   const time = useTime();
   const kingY = Math.sin(time * 1.2) * 4;
   return (
@@ -1309,7 +1309,7 @@ function FinalCTA() {
       </Reveal>
     </section>
   );
-}
+});
 
 // ─── Top nav ─────────────────────────────────────────────────────
 function Nav({ scrolled }: { scrolled: boolean }) {

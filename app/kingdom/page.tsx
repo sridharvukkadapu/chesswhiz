@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
@@ -284,7 +284,10 @@ function KingdomPageInner() {
         </div>
       </section>
 
-      {/* World map — horizontally scrollable on narrow viewports */}
+      {/* World map — horizontally scrollable on narrow viewports.
+          Camera entrance: slow pan from left to center + slight zoom
+          on first mount. Tracks elapsed time since mount, settles
+          after ~3.5s. */}
       <section
         aria-label="Kingdom map"
         style={{
@@ -295,16 +298,17 @@ function KingdomPageInner() {
           overflowY: "hidden",
         }}
       >
-        <svg
-          width="2200"
-          height="900"
-          viewBox="0 0 2200 900"
-          style={{
-            display: "block",
-            margin: "0 auto",
-            minWidth: 1100,
-          }}
-        >
+        <CameraView>
+          <svg
+            width="2200"
+            height="900"
+            viewBox="0 0 2200 900"
+            style={{
+              display: "block",
+              margin: "0 auto",
+              minWidth: 1100,
+            }}
+          >
           <defs>
             <linearGradient id="kmMtnGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#5B4488" />
@@ -561,7 +565,8 @@ function KingdomPageInner() {
               </g>
             );
           })()}
-        </svg>
+          </svg>
+        </CameraView>
       </section>
 
       {/* Visitor CTA — only shown for unauthenticated players */}
@@ -647,6 +652,62 @@ function KingdomPageInner() {
       />
     </div>
   );
+}
+
+// Camera entrance: slow pan from x=+60 → -120 with a slight 1.0 → 1.06 zoom
+// over the first ~3.5s after mount, then settles. Honors reduced motion.
+function CameraView({ children }: { children: React.ReactNode }) {
+  const [t, setT] = useState(0);
+  const startRef = useRef<number | null>(null);
+  const reduced = useReducedMotionPref();
+
+  useEffect(() => {
+    if (reduced) return;
+    let raf: number | null = null;
+    const tick = (now: number) => {
+      if (startRef.current == null) startRef.current = now;
+      const elapsed = (now - startRef.current) / 1000;
+      setT(elapsed);
+      if (elapsed < 3.6) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      if (raf != null) cancelAnimationFrame(raf);
+    };
+  }, [reduced]);
+
+  // Camera curve: pan + zoom over 3.5s, then hold
+  const p = Math.min(1, t / 3.5);
+  const eased = 1 - Math.pow(1 - p, 3); // easeOutCubic
+  const camX = reduced ? 0 : 60 + (-180) * eased; // 60 → -120 px
+  const camScale = reduced ? 1 : 1.0 + 0.06 * eased; // 1.0 → 1.06
+
+  return (
+    <div
+      style={{
+        transform: `translateX(${camX}px) scale(${camScale})`,
+        transformOrigin: "center",
+        transition: "none",
+        willChange: "transform",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Local hook to avoid an extra import roundtrip
+function useReducedMotionPref(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const update = () => setReduced(mq.matches);
+    mq.addEventListener?.("change", update);
+    return () => mq.removeEventListener?.("change", update);
+  }, []);
+  return reduced;
 }
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {

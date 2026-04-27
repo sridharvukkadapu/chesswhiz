@@ -6,6 +6,8 @@ import { useGameStore } from "@/stores/gameStore";
 import { KINGDOMS, POWERS, getRankByXP, getNextRank } from "@/lib/progression/data";
 
 import { StarField, MoteField } from "@/lib/design/atmosphere";
+import { sfx, getSfxEnabled, setSfxEnabled } from "@/lib/audio/sfx";
+import { haptics, getHapticsEnabled, setHapticsEnabled } from "@/lib/audio/haptics";
 // Map the legacy P palette to the new Reimagined jewel-tone tokens so
 // the parent dashboard inherits the dark theme without a structural rewrite.
 const P = {
@@ -456,7 +458,108 @@ function Dashboard() {
           Local toggle for testing. Stripe Checkout will replace this in v2.
         </div>
       </div>
+
+      <SoundAndFeelCard />
     </section>
+  );
+}
+
+function SoundAndFeelCard() {
+  const [sfxOn, setSfxOn] = useState(true);
+  const [hapticsOn, setHapticsOn] = useState(true);
+  // Hydrate from localStorage on mount
+  useEffect(() => {
+    setSfxOn(getSfxEnabled());
+    setHapticsOn(getHapticsEnabled());
+  }, []);
+
+  const toggleSfx = () => {
+    const next = !sfxOn;
+    setSfxEnabled(next);
+    setSfxOn(next);
+    if (next) sfx.click();
+  };
+  const toggleHaptics = () => {
+    const next = !hapticsOn;
+    setHapticsEnabled(next);
+    setHapticsOn(next);
+    if (next) haptics.tap();
+  };
+
+  return (
+    <div style={{
+      marginTop: 24, padding: "20px 22px",
+      background: "rgba(26,18,56,0.85)", border: `1px solid ${P.inkGhost}`,
+      borderRadius: 18,
+      boxShadow: `0 4px 14px rgba(0,0,0,0.32)`,
+    }}>
+      <div style={{
+        fontSize: 11, fontWeight: 800, color: P.inkLight,
+        letterSpacing: 1.6, textTransform: "uppercase", marginBottom: 14,
+      }}>Sound &amp; feel</div>
+
+      <ToggleRow
+        label="Sound effects"
+        hint="Move clicks, captures, coach chimes, win/lose cues."
+        on={sfxOn}
+        onChange={toggleSfx}
+      />
+      <div style={{ height: 12 }} />
+      <ToggleRow
+        label="Haptic feedback"
+        hint="Vibration on moves, captures, and Aha! moments. (Android Chrome only.)"
+        on={hapticsOn}
+        onChange={toggleHaptics}
+      />
+    </div>
+  );
+}
+
+function ToggleRow({
+  label, hint, on, onChange,
+}: { label: string; hint: string; on: boolean; onChange: () => void }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{
+          fontFamily: "var(--font-jakarta), sans-serif",
+          fontSize: 14, fontWeight: 700, color: P.ink,
+        }}>{label}</div>
+        <div style={{
+          fontFamily: "var(--font-jakarta), sans-serif",
+          fontSize: 12, color: P.inkLight, marginTop: 2,
+        }}>{hint}</div>
+      </div>
+      <button
+        role="switch"
+        aria-checked={on}
+        aria-label={`${label}: ${on ? "on" : "off"}`}
+        onClick={onChange}
+        style={{
+          width: 52, height: 30,
+          borderRadius: 15,
+          background: on ? P.emerald : "rgba(255,255,255,0.08)",
+          border: `1px solid ${on ? P.emerald : "rgba(245,230,200,0.22)"}`,
+          position: "relative",
+          cursor: "pointer",
+          transition: "background 200ms ease, border-color 200ms ease",
+          flexShrink: 0,
+          padding: 0,
+        }}
+      >
+        <span aria-hidden style={{
+          position: "absolute",
+          top: 3,
+          left: on ? 24 : 3,
+          width: 22,
+          height: 22,
+          borderRadius: "50%",
+          background: "#FBF6E8",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.4)",
+          transition: "left 200ms cubic-bezier(0.34,1.56,0.64,1)",
+        }} />
+      </button>
+    </div>
   );
 }
 

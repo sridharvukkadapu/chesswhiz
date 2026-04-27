@@ -1,9 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useSpeech } from "@/lib/speech";
 import { getRankByXP, getNextRank, RANKS } from "@/lib/progression/data";
-import AhaCelebration from "@/components/AhaCelebration";
+// AhaCelebration is heavy (80-particle confetti + crystal + spinning
+// rays) and only fires when the kid earns a Power. Lazy-load it so the
+// initial /play bundle is lighter.
+const AhaCelebration = dynamic(() => import("@/components/AhaCelebration"), {
+  ssr: false,
+  loading: () => null,
+});
 import PostGameScreen from "@/components/PostGameScreen";
 import ProgressStrip from "@/components/ProgressStrip";
 import BottomNav from "@/components/BottomNav";

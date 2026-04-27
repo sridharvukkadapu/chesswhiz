@@ -59,6 +59,31 @@ export const T = {
   boardDarkHi:  "#B88652",
   boardEdge:    "#3D2615",
 
+  // ── Type scale ──
+  // 8 sizes — every visual size in the app should map to one of these.
+  // Discourages the "26 different sizes" bloat the audit caught.
+  textXs:  12, // chip labels, mono codes (still ≥12 to satisfy a11y floor)
+  textSm:  14, // body small, captions
+  textMd:  16, // body default
+  textLg:  18, // emphasis body
+  text2xl: 22, // section subheads
+  text3xl: 28, // card titles
+  text4xl: 36, // page titles
+  text5xl: 56, // hero / brand wordmark in context
+  textHero: 84, // page-defining hero only
+
+  // ── Spacing scale (4pt grid) ──
+  space1: 4,
+  space2: 8,
+  space3: 12,
+  space4: 16,
+  space5: 20,
+  space6: 24,
+  space8: 32,
+  space10: 40,
+  space12: 48,
+  space16: 64,
+
   // ── Fonts (CSS variables wired in app/layout.tsx) ──
   fontDisplay: 'var(--font-cormorant), Georgia, serif',
   fontBrand:   'var(--font-cormorant), Georgia, serif',

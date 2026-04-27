@@ -304,6 +304,7 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
                     fontSize: 24,
                     color: s.color,
                     lineHeight: 1,
+                    fontVariantNumeric: "tabular-nums",
                   }}
                 >
                   {s.value}
@@ -311,7 +312,7 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
                 <div
                   style={{
                     fontFamily: T.fontUI,
-                    fontSize: 9,
+                    fontSize: 10,
                     color: T.textLo,
                     letterSpacing: "0.15em",
                     marginTop: 4,
@@ -361,9 +362,10 @@ function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
             <div
               style={{
                 fontFamily: T.fontMono,
-                fontSize: 9,
+                fontSize: 10,
                 color: T.textDim,
                 letterSpacing: "0.15em",
+                fontVariantNumeric: "tabular-nums",
               }}
             >
               {cardId}

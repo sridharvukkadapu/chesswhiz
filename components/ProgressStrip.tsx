@@ -131,6 +131,7 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
               color: T.amberGlow,
               fontWeight: 600,
               flexShrink: 0,
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {progression.xp.toLocaleString()} XP

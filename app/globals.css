@@ -20,7 +20,7 @@
   display: inline-block;
   width: 5px; height: 5px;
   border-radius: 50%;
-  background: #D97706;
+  background: #FCD34D;
   animation: dot-pulse 1.4s infinite ease-in-out;
   will-change: transform, opacity;
 }
@@ -35,17 +35,10 @@
 }
 .card-enter { animation: card-enter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-/* ── Piece move flash ────────────────────────────── */
-@keyframes square-land {
-  0%   { filter: brightness(1.5); }
-  100% { filter: brightness(1); }
-}
-.square-land { animation: square-land 0.35s ease-out; }
-
 /* ── Active player pulse ─────────────────────────── */
 @keyframes player-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(217, 119, 6, 0.4); }
-  50%       { box-shadow: 0 0 0 6px rgba(217, 119, 6, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(252, 211, 77, 0); }
 }
 .player-active { animation: player-pulse 2s infinite ease-in-out; }
 
@@ -64,22 +57,27 @@
 .btn-press:active:not(:disabled) { transform: scale(0.95); }
 .btn-press:hover:not(:disabled) { filter: brightness(1.08); }
 
-/* ── Focus rings (gold, WCAG AA) ─────────────────── */
+/* ── Focus rings (gold, WCAG AA) ─────────────────────
+   Universal — every focusable element gets a clearly visible
+   amber ring on keyboard focus. The 3px ring + offset keeps it
+   readable on both light and dark surfaces. */
 :focus-visible {
-  outline: 2px solid #D97706;
+  outline: 3px solid #FCD34D;
   outline-offset: 3px;
   border-radius: 6px;
 }
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid #FCD34D;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(252, 211, 77, 0.18);
+}
 
-/* ── Board texture overlay ───────────────────────── */
-.board-square-light {
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-}
-.board-square-dark {
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.06'/%3E%3C/svg%3E");
-}
+/* ── Tabular figures for stat slots ──────────────────
+   Apply to anything with .nums or to containers explicitly.
+   Stops layout shift when XP / counts tick. */
+.tabular-nums { font-variant-numeric: tabular-nums; }
 
 /* ── Reduced motion ──────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
@@ -90,23 +88,35 @@
   }
 }
 
-/* ── Scrollbar ───────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #D0C8BC; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #B0A898; }
-
-/* ── Skip link (a11y) ────────────────────────────── */
-.skip-link {
-  position: absolute;
-  top: -100%;
-  left: 8px;
-  padding: 8px 16px;
-  background: #D97706;
-  color: #000;
-  font-weight: 700;
-  border-radius: 0 0 8px 8px;
-  z-index: 9999;
-  transition: top 0.1s;
+/* ── Scrollbar (dark theme) ──────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(245, 230, 200, 0.04); }
+::-webkit-scrollbar-thumb {
+  background: rgba(245, 230, 200, 0.18);
+  border-radius: 4px;
 }
-.skip-link:focus { top: 0; }
+::-webkit-scrollbar-thumb:hover { background: rgba(245, 230, 200, 0.32); }
+
+/* ── Skip link (a11y) ──────────────────────────────
+   Hidden by default, visible + amber ring on keyboard focus. */
+.skip-link {
+  position: fixed;
+  top: -100px;
+  left: 12px;
+  padding: 12px 20px;
+  background: #FCD34D;
+  color: #1A1210;
+  font-weight: 800;
+  border-radius: 0 0 12px 12px;
+  z-index: 9999;
+  text-decoration: none;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  transition: top 0.18s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 12px;
+  outline: 3px solid #FFFFFF;
+  outline-offset: 2px;
+}

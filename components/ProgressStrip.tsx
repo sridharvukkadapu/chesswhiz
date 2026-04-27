@@ -99,6 +99,11 @@ export default function ProgressStrip({ progression }: { progression: PlayerProg
         {/* XP bar + value */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flex: "1 1 200px", minWidth: 180 }}>
           <div
+            role="progressbar"
+            aria-valuenow={progression.xp}
+            aria-valuemin={floor}
+            aria-valuemax={ceil}
+            aria-label={`XP progress to next rank: ${progression.xp} of ${ceil}`}
             style={{
               flex: 1,
               maxWidth: 220,

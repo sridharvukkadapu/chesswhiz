@@ -43,6 +43,9 @@ function XPToast({
   }, [gain.timestamp, onDone]);
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-label={`Earned ${gain.amount} XP from ${gain.source}`}
       style={{
         position: "fixed",
         top: 84,
@@ -63,9 +66,10 @@ function XPToast({
         letterSpacing: "0.06em",
         boxShadow: T.glowAmber,
         animation: "xpToast 2.2s cubic-bezier(0.34,1.56,0.64,1) forwards",
+        fontVariantNumeric: "tabular-nums",
       }}
     >
-      <span style={{ fontSize: 18 }}>✦</span>
+      <span aria-hidden style={{ fontSize: 18 }}>✦</span>
       <span>+{gain.amount} XP</span>
       <span style={{ opacity: 0.75, fontWeight: 600, fontSize: 13 }}>· {gain.source}</span>
       <style>{`
@@ -158,9 +162,9 @@ function VoiceToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => 
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        width: 38,
-        height: 38,
-        borderRadius: 10,
+        width: 44,
+        height: 44,
+        borderRadius: 12,
         background: enabled ? "rgba(245,182,56,0.15)" : "rgba(255,255,255,0.04)",
         border: `1.5px solid ${enabled ? T.amber : T.border}`,
         color: enabled ? T.amberGlow : T.textLo,

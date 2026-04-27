@@ -161,12 +161,25 @@ export default function Onboarding({ onStart }: OnboardingProps) {
 
           {/* Name */}
           <div style={{ marginBottom: 22 }}>
-            <Label>Your name</Label>
+            <label htmlFor="onboard-name" style={{
+              display: "block",
+              fontFamily: T.fontUI,
+              fontSize: 12,
+              fontWeight: 700,
+              color: T.textLo,
+              textTransform: "uppercase",
+              letterSpacing: "0.16em",
+              marginBottom: 8,
+            }}>Your name</label>
             <input
+              id="onboard-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value.slice(0, 24))}
               placeholder="Type your name…"
               autoComplete="given-name"
+              maxLength={24}
+              required
+              aria-required="true"
               style={{
                 width: "100%",
                 boxSizing: "border-box",

@@ -4,21 +4,21 @@ import Link from "next/link";
 import { KINGDOMS, POWERS, RANKS } from "@/lib/progression/data";
 
 const P = {
-  cream: "#FBF7F0",
-  creamDeep: "#F5EFE4",
-  parchment: "#F0E8D8",
-  ink: "#1A1210",
-  inkSoft: "#2E2620",
-  inkMed: "#5C544A",
-  inkLight: "#8A8278",
-  inkFaint: "#B0A898",
-  inkGhost: "#D0C8BC",
-  emerald: "#1B7340",
-  emeraldBright: "#22C55E",
-  emeraldPale: "#E6F4EC",
-  gold: "#C7940A",
-  goldLight: "#F0D060",
-  goldPale: "#FDF6E3",
+  cream: "#1A1238",
+  creamDeep: "rgba(36,24,69,0.85)",
+  parchment: "rgba(245,230,200,0.12)",
+  ink: "#FBF6E8",
+  inkSoft: "#FBF6E8",
+  inkMed: "#D6C8A8",
+  inkLight: "#9A8FB5",
+  inkFaint: "#6B6285",
+  inkGhost: "rgba(245,230,200,0.22)",
+  emerald: "#34D399",
+  emeraldBright: "#6EE7B7",
+  emeraldPale: "rgba(52,211,153,0.10)",
+  gold: "#F5B638",
+  goldLight: "#FCD34D",
+  goldPale: "rgba(245,182,56,0.10)",
 };
 
 const KINGDOM_ICONS: Record<string, string> = {
@@ -34,8 +34,8 @@ const KINGDOM_ICONS: Record<string, string> = {
 export default function JourneyPage() {
   return (
     <div style={{
-      minHeight: "100dvh", background: P.cream, color: P.ink,
-      fontFamily: "var(--font-nunito), sans-serif",
+      minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 30%, #2D1B5C 0%, #15102A 45%, #07050F 100%)", color: P.ink,
+      fontFamily: "var(--font-jakarta), sans-serif",
       position: "relative", overflowX: "hidden",
     }}>
       <div aria-hidden style={{
@@ -47,7 +47,7 @@ export default function JourneyPage() {
       <header style={{
         position: "sticky", top: 0, zIndex: 10,
         padding: "12px 20px",
-        background: "rgba(251,247,240,0.88)",
+        background: "rgba(7,5,15,0.6)",
         backdropFilter: "blur(20px) saturate(1.2)",
         borderBottom: `1px solid ${P.inkGhost}40`,
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -63,7 +63,7 @@ export default function JourneyPage() {
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 20 }}>♟</span>
-          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-playfair), serif", letterSpacing: -0.4 }}>The Chess Kingdom</span>
+          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-cormorant), serif", letterSpacing: -0.4 }}>The Chess Kingdom</span>
         </div>
         <Link href="/onboard" style={{
           background: P.emerald, color: "white", borderRadius: 10,
@@ -80,7 +80,7 @@ export default function JourneyPage() {
         }}>the full journey →</span>
         <h1 style={{
           fontSize: "clamp(36px, 5vw, 56px)", fontWeight: 900,
-          fontFamily: "var(--font-playfair), serif",
+          fontFamily: "var(--font-cormorant), serif",
           letterSpacing: -1.2, margin: "0 0 16px", color: P.ink,
         }}>From Pawn to King</h1>
         <p style={{
@@ -94,7 +94,7 @@ export default function JourneyPage() {
       {/* Rank ladder */}
       <section style={{ maxWidth: 720, margin: "0 auto", padding: "16px 20px 8px", position: "relative", zIndex: 1 }}>
         <div style={{
-          background: "white", borderRadius: 18,
+          background: "rgba(26,18,56,0.85)", borderRadius: 18,
           border: `1px solid ${P.inkGhost}`,
           boxShadow: `0 0 0 4px ${P.parchment}, 0 8px 24px rgba(26,18,16,0.06)`,
           padding: "20px 22px",
@@ -113,7 +113,7 @@ export default function JourneyPage() {
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 22, color: P.ink,
                 }}>{r.icon}</div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: r.color, fontFamily: "var(--font-playfair), serif" }}>{r.name}</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: r.color, fontFamily: "var(--font-cormorant), serif" }}>{r.name}</div>
                 <div style={{ fontSize: 10, color: P.inkLight }}>{r.xpRequired} XP</div>
               </div>
             ))}
@@ -131,7 +131,7 @@ export default function JourneyPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {KINGDOMS.map((k, idx) => (
             <article key={k.id} style={{
-              background: "white",
+              background: "rgba(26,18,56,0.85)",
               border: `1px solid ${P.inkGhost}`,
               borderRadius: 18,
               boxShadow: `0 4px 16px rgba(26,18,16,0.05)`,
@@ -157,7 +157,7 @@ export default function JourneyPage() {
                   }}>Region {idx + 1} of {KINGDOMS.length}</div>
                   <div style={{
                     fontSize: 22, fontWeight: 900, color: P.ink,
-                    fontFamily: "var(--font-playfair), serif", letterSpacing: -0.4,
+                    fontFamily: "var(--font-cormorant), serif", letterSpacing: -0.4,
                     marginTop: 2,
                   }}>{k.name}</div>
                   <div style={{ fontSize: 13, color: P.inkLight, marginTop: 2 }}>{k.subtitle}</div>
@@ -178,7 +178,7 @@ export default function JourneyPage() {
                     <span style={{ fontSize: 24, flexShrink: 0 }}>{k.boss.emoji}</span>
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 10, fontWeight: 800, color: "#DC2626", letterSpacing: 1.5, textTransform: "uppercase" }}>Boss</div>
-                      <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-playfair), serif" }}>{k.boss.name}</div>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-cormorant), serif" }}>{k.boss.name}</div>
                       <div style={{ fontSize: 12, color: P.inkLight, fontStyle: "italic", marginTop: 2 }}>{k.boss.signature}</div>
                     </div>
                   </div>
@@ -221,7 +221,7 @@ export default function JourneyPage() {
               : P.inkGhost;
             return (
               <div key={p.id} style={{
-                background: "white",
+                background: "rgba(26,18,56,0.85)",
                 border: `1.5px solid ${ringColor}55`,
                 borderRadius: 12, padding: "12px 10px",
                 textAlign: "center",

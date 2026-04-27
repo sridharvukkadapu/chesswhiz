@@ -5,20 +5,22 @@ import Link from "next/link";
 import { useGameStore } from "@/stores/gameStore";
 import { KINGDOMS, POWERS, getRankByXP, getNextRank } from "@/lib/progression/data";
 
+// Map the legacy P palette to the new Reimagined jewel-tone tokens so
+// the parent dashboard inherits the dark theme without a structural rewrite.
 const P = {
-  cream: "#FBF7F0",
-  creamDeep: "#F5EFE4",
-  parchment: "#F0E8D8",
-  ink: "#1A1210",
-  inkSoft: "#2E2620",
-  inkMed: "#5C544A",
-  inkLight: "#8A8278",
-  inkFaint: "#B0A898",
-  inkGhost: "#D0C8BC",
-  emerald: "#1B7340",
-  emeraldPale: "#E6F4EC",
-  gold: "#C7940A",
-  goldPale: "#FDF6E3",
+  cream: "#1A1238",                  // velvet card bg (was warm cream)
+  creamDeep: "rgba(36,24,69,0.85)",  // raised surface
+  parchment: "rgba(245,230,200,0.12)", // border tone
+  ink: "#FBF6E8",                    // ivory text (was deep walnut)
+  inkSoft: "#FBF6E8",
+  inkMed: "#D6C8A8",
+  inkLight: "#9A8FB5",
+  inkFaint: "#6B6285",
+  inkGhost: "rgba(245,230,200,0.22)",
+  emerald: "#34D399",
+  emeraldPale: "rgba(52,211,153,0.10)",
+  gold: "#F5B638",
+  goldPale: "rgba(245,182,56,0.10)",
 };
 
 const PIN_KEY = "chesswhiz.parentPIN";
@@ -81,8 +83,8 @@ export default function ParentPage() {
 
   return (
     <div style={{
-      minHeight: "100dvh", background: P.cream, color: P.ink,
-      fontFamily: "var(--font-nunito), sans-serif", position: "relative",
+      minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 30%, #2D1B5C 0%, #15102A 45%, #07050F 100%)", color: P.ink,
+      fontFamily: "var(--font-jakarta), sans-serif", position: "relative",
     }}>
       {/* Paper grain */}
       <div aria-hidden style={{
@@ -94,7 +96,7 @@ export default function ParentPage() {
       <header style={{
         position: "sticky", top: 0, zIndex: 10,
         padding: "10px 20px",
-        background: "rgba(251,247,240,0.88)",
+        background: "rgba(7,5,15,0.6)",
         backdropFilter: "blur(20px) saturate(1.2)",
         borderBottom: `1px solid ${P.inkGhost}40`,
         display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -110,7 +112,7 @@ export default function ParentPage() {
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 20 }}>♟</span>
-          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-playfair), serif", color: P.ink }}>
+          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic", color: P.ink }}>
             Parent Dashboard
           </span>
         </div>
@@ -121,7 +123,7 @@ export default function ParentPage() {
         <section style={{ maxWidth: 420, margin: "60px auto 0", padding: "0 20px", position: "relative", zIndex: 1 }}>
           <div style={{
             padding: "32px 28px",
-            background: "white",
+            background: "rgba(26,18,56,0.85)",
             border: `1px solid ${P.inkGhost}`,
             borderRadius: 24,
             boxShadow: `0 0 0 4px ${P.parchment}, 0 24px 60px rgba(26,18,16,0.12)`,
@@ -132,7 +134,7 @@ export default function ParentPage() {
             }}>grown-ups only</span>
             <h2 style={{
               fontSize: 26, fontWeight: 900, textAlign: "center",
-              fontFamily: "var(--font-playfair), serif",
+              fontFamily: "var(--font-cormorant), serif", fontStyle: "italic",
               margin: "0 0 8px", letterSpacing: -0.5,
             }}>{mode === "set" ? "Set a PIN" : "Enter PIN"}</h2>
             <p style={{ fontSize: 14, color: P.inkLight, textAlign: "center", margin: "0 0 22px", lineHeight: 1.6 }}>
@@ -206,7 +208,7 @@ function PinInput({
           fontSize: 20, fontWeight: 800, letterSpacing: 8,
           color: P.ink, textAlign: "center",
           outline: "none", boxSizing: "border-box",
-          fontFamily: "var(--font-nunito), sans-serif",
+          fontFamily: "var(--font-jakarta), sans-serif",
         }}
         onFocus={(e) => (e.target.style.borderColor = P.emerald)}
         onBlur={(e) => (e.target.style.borderColor = P.inkGhost)}
@@ -246,13 +248,13 @@ function Dashboard() {
       }}>at a glance</span>
       <h1 style={{
         margin: "0 0 24px", fontSize: "clamp(28px, 4vw, 38px)", fontWeight: 900,
-        fontFamily: "var(--font-playfair), serif", color: P.ink, letterSpacing: -0.8,
+        fontFamily: "var(--font-cormorant), serif", fontStyle: "italic", color: P.ink, letterSpacing: -0.8,
         textAlign: "center",
       }}>{store.playerName ? `${store.playerName}'s Progress` : "Chess Progress"}</h1>
 
       {/* Rank + XP */}
       <div style={{
-        padding: "20px 22px", background: "white",
+        padding: "20px 22px", background: "rgba(26,18,56,0.85)",
         border: `1px solid ${P.inkGhost}`, borderRadius: 18,
         boxShadow: `0 0 0 4px ${P.parchment}, 0 10px 30px rgba(26,18,16,0.06)`,
         display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap",
@@ -267,7 +269,7 @@ function Dashboard() {
           <div style={{ fontSize: 11, fontWeight: 800, color: P.inkLight, letterSpacing: 1.5, textTransform: "uppercase" }}>
             Current Rank
           </div>
-          <div style={{ fontSize: 22, fontWeight: 900, color: P.ink, fontFamily: "var(--font-playfair), serif" }}>
+          <div style={{ fontSize: 22, fontWeight: 900, color: P.ink, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
             {rank.name}
           </div>
           <div style={{ fontSize: 13, color: P.inkLight, marginTop: 2 }}>
@@ -302,10 +304,10 @@ function Dashboard() {
             return (
               <div key={k.id} style={{
                 padding: "14px 16px", borderRadius: 14,
-                background: "white", border: `1px solid ${P.inkGhost}`,
+                background: "rgba(26,18,56,0.85)", border: `1px solid ${P.inkGhost}`,
               }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: P.ink, fontFamily: "var(--font-playfair), serif" }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: P.ink, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
                     {k.name}
                   </div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: P.inkLight }}>
@@ -344,7 +346,7 @@ function Dashboard() {
               }}>
                 <span style={{ fontSize: 22 }}>{power.icon}</span>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-playfair), serif" }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
                     {power.name}
                   </div>
                   <div style={{ fontSize: 12, color: P.inkLight }}>{power.howToEarn}</div>
@@ -373,7 +375,7 @@ function Dashboard() {
           }}>
             <div style={{
               width: 40, height: 40, borderRadius: "50%",
-              background: "white", border: `2px solid ${P.emerald}66`,
+              background: "rgba(26,18,56,0.85)", border: `2px solid ${P.emerald}66`,
               display: "flex", alignItems: "center", justifyContent: "center",
               fontSize: 20, flexShrink: 0,
             }}>♟</div>
@@ -381,7 +383,7 @@ function Dashboard() {
               <div style={{ fontSize: 12, fontWeight: 800, color: P.emerald, letterSpacing: 1, textTransform: "uppercase", marginBottom: 4 }}>
                 Focus Area
               </div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: P.ink, fontFamily: "var(--font-playfair), serif" }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: P.ink, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>
                 {focusStrategy.name}
               </div>
               <p style={{ fontSize: 13, color: P.inkSoft, margin: "4px 0 0", lineHeight: 1.6, fontStyle: "italic" }}>
@@ -406,7 +408,7 @@ function Dashboard() {
           dev-only manual toggle for testing. */}
       <div style={{
         marginTop: 24, padding: "20px 22px",
-        background: "white", border: `1px solid ${P.inkGhost}`,
+        background: "rgba(26,18,56,0.85)", border: `1px solid ${P.inkGhost}`,
         borderRadius: 18,
         boxShadow: `0 4px 14px rgba(26,18,16,0.05)`,
       }}>
@@ -418,7 +420,7 @@ function Dashboard() {
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{
               fontSize: 17, fontWeight: 900, color: P.ink,
-              fontFamily: "var(--font-playfair), serif", letterSpacing: -0.3,
+              fontFamily: "var(--font-cormorant), serif", fontStyle: "italic", letterSpacing: -0.3,
             }}>{prog.tier === "champion" ? "Champion" : "Free"}</div>
             <div style={{ fontSize: 12, color: P.inkLight, marginTop: 2 }}>
               {prog.tier === "champion"
@@ -434,7 +436,7 @@ function Dashboard() {
               border: `1.5px solid ${prog.tier === "champion" ? P.inkGhost : P.emerald}`,
               borderRadius: 12, padding: "10px 18px",
               fontSize: 13, fontWeight: 800, cursor: "pointer",
-              fontFamily: "var(--font-nunito), sans-serif",
+              fontFamily: "var(--font-jakarta), sans-serif",
               boxShadow: prog.tier === "champion"
                 ? `0 2px 8px rgba(26,18,16,0.06)`
                 : `0 6px 20px rgba(27,115,64,0.22)`,
@@ -446,7 +448,7 @@ function Dashboard() {
         </div>
         <div style={{
           marginTop: 10, fontSize: 11, color: P.inkFaint,
-          fontFamily: "var(--font-nunito), sans-serif",
+          fontFamily: "var(--font-jakarta), sans-serif",
         }}>
           Local toggle for testing. Stripe Checkout will replace this in v2.
         </div>
@@ -459,12 +461,12 @@ function Metric({ label, value, color }: { label: string; value: string; color: 
   return (
     <div style={{
       padding: "14px 16px", borderRadius: 14,
-      background: "white", border: `1px solid ${P.inkGhost}`,
+      background: "rgba(26,18,56,0.85)", border: `1px solid ${P.inkGhost}`,
       textAlign: "center",
     }}>
       <div style={{
         fontSize: 24, fontWeight: 900, color,
-        fontFamily: "var(--font-playfair), serif",
+        fontFamily: "var(--font-cormorant), serif", fontStyle: "italic",
       }}>{value}</div>
       <div style={{
         fontSize: 10, fontWeight: 800, color: P.inkLight,
@@ -501,7 +503,7 @@ function VoiceUsageCard() {
   return (
     <div style={{
       marginTop: 24, padding: "20px 22px",
-      background: "white", border: `1px solid ${P.inkGhost}`,
+      background: "rgba(26,18,56,0.85)", border: `1px solid ${P.inkGhost}`,
       borderRadius: 18,
       boxShadow: `0 4px 14px rgba(26,18,16,0.05)`,
     }}>

@@ -1,9 +1,21 @@
 import Link from "next/link";
 
 const P = {
-  cream: "#FBF7F0", parchment: "#F0E8D8",
-  ink: "#1A1210", inkSoft: "#2E2620", inkMed: "#5C544A", inkLight: "#8A8278", inkGhost: "#D0C8BC",
-  emerald: "#1B7340", gold: "#C7940A",
+  cream: "#1A1238",
+  creamDeep: "rgba(36,24,69,0.85)",
+  parchment: "rgba(245,230,200,0.12)",
+  ink: "#FBF6E8",
+  inkSoft: "#FBF6E8",
+  inkMed: "#D6C8A8",
+  inkLight: "#9A8FB5",
+  inkFaint: "#6B6285",
+  inkGhost: "rgba(245,230,200,0.22)",
+  emerald: "#34D399",
+  emeraldBright: "#6EE7B7",
+  emeraldPale: "rgba(52,211,153,0.10)",
+  gold: "#F5B638",
+  goldLight: "#FCD34D",
+  goldPale: "rgba(245,182,56,0.10)",
 };
 
 export const metadata = {
@@ -14,8 +26,8 @@ export const metadata = {
 export default function PrivacyPage() {
   return (
     <div style={{
-      minHeight: "100dvh", background: P.cream, color: P.ink,
-      fontFamily: "var(--font-nunito), sans-serif",
+      minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 30%, #2D1B5C 0%, #15102A 45%, #07050F 100%)", color: P.ink,
+      fontFamily: "var(--font-jakarta), sans-serif",
     }}>
       <header style={{
         padding: "12px 20px",
@@ -26,13 +38,13 @@ export default function PrivacyPage() {
           display: "flex", alignItems: "center", gap: 8,
           color: P.inkMed, textDecoration: "none", fontSize: 13, fontWeight: 700,
         }}>← Home</Link>
-        <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-playfair), serif" }}>♟ ChessWhiz</span>
+        <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-cormorant), serif" }}>♟ ChessWhiz</span>
         <span style={{ width: 60 }} />
       </header>
 
       <article style={{ maxWidth: 680, margin: "0 auto", padding: "48px 24px 80px", lineHeight: 1.8 }}>
         <span style={{ fontFamily: "'Caveat', cursive", fontSize: 20, color: P.gold }}>the short version →</span>
-        <h1 style={{ fontSize: 40, fontWeight: 900, fontFamily: "var(--font-playfair), serif", letterSpacing: -1, margin: "8px 0 24px" }}>Privacy</h1>
+        <h1 style={{ fontSize: 40, fontWeight: 900, fontFamily: "var(--font-cormorant), serif", letterSpacing: -1, margin: "8px 0 24px" }}>Privacy</h1>
 
         <p style={{ fontSize: 17, color: P.inkSoft, marginBottom: 24 }}>
           ChessWhiz is built for kids. We collect as little as possible, and we never sell, share, or advertise to anyone. Here&apos;s exactly what happens with your data.
@@ -84,7 +96,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <section style={{ marginBottom: 28 }}>
       <h2 style={{
-        fontSize: 18, fontWeight: 900, fontFamily: "var(--font-playfair), serif",
+        fontSize: 18, fontWeight: 900, fontFamily: "var(--font-cormorant), serif",
         margin: "0 0 8px", color: P.ink, letterSpacing: -0.3,
       }}>{title}</h2>
       <div style={{ fontSize: 15, color: P.inkSoft }}>{children}</div>

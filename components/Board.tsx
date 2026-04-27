@@ -1,16 +1,28 @@
 "use client";
 
 import { Chess } from "chess.js";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Move, LastMove, Square, BoardAnnotation } from "@/lib/chess/types";
 import BoardAnnotations from "@/components/BoardAnnotations";
-import { Piece, PieceDefs, PieceFromChess } from "@/components/ChessPieces";
+import { Piece, PieceDefs, PieceFromChess, type PieceType } from "@/components/ChessPieces";
 import { T } from "@/lib/design/tokens";
+import { usePrefersReducedMotion } from "@/lib/design/atmosphere";
 
 const COLS = "abcdefgh";
 
 function squareFromRC(r: number, c: number): string {
   return COLS[c] + (8 - r);
 }
+
+function rcFromSquare(sq: string): { r: number; c: number } {
+  const file = sq.charCodeAt(0) - 97;
+  const rank = parseInt(sq[1], 10);
+  return { r: 8 - rank, c: file };
+}
+
+const PIECE_TYPE_FROM_LETTER: Record<string, PieceType> = {
+  p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king",
+};
 
 interface BoardProps {
   chess: Chess;
@@ -26,6 +38,22 @@ interface BoardProps {
   onPromo: (piece: string) => void;
 }
 
+// ── Slide animation: when lastMove changes, render an overlay piece
+// that physically moves from `from` square center to `to` square center
+// with a parabolic arc lift. The destination square is hidden during
+// the slide so we don't see two copies of the piece.
+const SLIDE_MS = 320;
+
+interface SlideState {
+  fromR: number;
+  fromC: number;
+  toR: number;
+  toC: number;
+  pieceType: PieceType;
+  pieceColor: "white" | "black";
+  startedAt: number;
+}
+
 export default function Board({
   chess, selected, legalHighlights, lastMove,
   showPromo, status, botThinking, annotation, voicePlaying,
@@ -34,13 +62,112 @@ export default function Board({
   const board = chess.board();
   const inCheck = chess.isCheck();
   const turn = chess.turn();
+  const reducedMotion = usePrefersReducedMotion();
+
+  // ── Slide state ─────────────────────────────────────────────────
+  const lastSeenMoveRef = useRef<LastMove | null>(null);
+  const [slide, setSlide] = useState<SlideState | null>(null);
+  const [slideTick, setSlideTick] = useState(0); // forces re-render during animation
+
+  useEffect(() => {
+    if (!lastMove) {
+      lastSeenMoveRef.current = null;
+      return;
+    }
+    const prev = lastSeenMoveRef.current;
+    if (prev && prev.from === lastMove.from && prev.to === lastMove.to) return;
+    lastSeenMoveRef.current = lastMove;
+    if (reducedMotion) return; // no slide for reduced motion users
+
+    const { r: toR, c: toC } = rcFromSquare(lastMove.to);
+    const { r: fromR, c: fromC } = rcFromSquare(lastMove.from);
+    const dest = board[toR][toC];
+    if (!dest) return;
+    const pieceType = PIECE_TYPE_FROM_LETTER[dest.type];
+    if (!pieceType) return;
+
+    setSlide({
+      fromR,
+      fromC,
+      toR,
+      toC,
+      pieceType,
+      pieceColor: dest.color === "w" ? "white" : "black",
+      startedAt: performance.now(),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastMove?.from, lastMove?.to, reducedMotion]);
+
+  // Animate via rAF while a slide is active
+  useEffect(() => {
+    if (!slide) return;
+    let raf: number | null = null;
+    const tick = () => {
+      const elapsed = performance.now() - slide.startedAt;
+      if (elapsed >= SLIDE_MS) {
+        setSlide(null);
+        return;
+      }
+      setSlideTick((n) => n + 1);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      if (raf != null) cancelAnimationFrame(raf);
+    };
+  }, [slide]);
+
+  // ── Particle burst ─────────────────────────────────────────────
+  // Fires when the player makes a tactic-detected or great move.
+  // The parent calls into the imperatively-exposed handle by setting
+  // the `lastMove` to a special marker — but to keep the API simple,
+  // we just fire a soft burst on every successful move (the kid sees
+  // a tiny spark on every move, a bigger one on captures). This also
+  // lets the bot's good moves flash too, which is fine.
+  const [bursts, setBursts] = useState<{ id: number; r: number; c: number; big: boolean; startedAt: number }[]>([]);
+  const burstIdRef = useRef(0);
+
+  useEffect(() => {
+    if (!lastMove || reducedMotion) return;
+    const { r, c } = rcFromSquare(lastMove.to);
+    const dest = board[r][c];
+    // Bigger burst on captures (we infer from board: if material count
+    // dropped we'd need history; cheap proxy is just always "small"
+    // for now — the slide + drop shadow is the main visual lift).
+    const big = !!dest && dest.color === "w"; // bigger burst on player moves
+    const id = ++burstIdRef.current;
+    setBursts((b) => [...b, { id, r, c, big, startedAt: performance.now() }]);
+    const timeout = setTimeout(() => {
+      setBursts((b) => b.filter((x) => x.id !== id));
+    }, 900);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastMove?.from, lastMove?.to]);
+
+  // Drive a re-render while bursts are active so their progress advances
+  useEffect(() => {
+    if (bursts.length === 0) return;
+    let raf: number | null = null;
+    const tick = () => {
+      setSlideTick((n) => n + 1);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      if (raf != null) cancelAnimationFrame(raf);
+    };
+  }, [bursts.length]);
+
+  // Slide progress (0..1, eased)
+  const slideProgress = slide
+    ? Math.min(1, (performance.now() - slide.startedAt) / SLIDE_MS)
+    : 0;
+  const easedSlideProgress = 1 - Math.pow(1 - slideProgress, 3); // easeOutCubic
 
   return (
     <div style={{ position: "relative", width: "100%", maxWidth: 680, aspectRatio: "1 / 1" }}>
-      {/* Mount the shared SVG defs once per board so PieceFromChess can reach the gradients */}
       <PieceDefs />
 
-      {/* Wood frame — outer */}
       <div
         style={{
           position: "absolute",
@@ -52,7 +179,6 @@ export default function Board({
         }}
       />
 
-      {/* Inner playing surface — squares + pieces + annotations all live here */}
       <div
         style={{
           position: "absolute",
@@ -63,7 +189,6 @@ export default function Board({
           touchAction: "manipulation",
         }}
       >
-        {/* Squares grid */}
         <div
           style={{
             display: "grid",
@@ -88,12 +213,14 @@ export default function Board({
             const isLast = isLastFrom || isLastTo;
             const isCheckKing = inCheck && piece?.type === "k" && piece.color === turn;
 
-            // Two-tone wood gradient per square (matches design bundle)
+            // Hide the destination square's piece while the slide is in flight
+            const hidePieceForSlide =
+              !!slide && slide.toR === r && slide.toC === c && slideProgress < 1;
+
             const baseGradient = isLight
               ? "linear-gradient(180deg, #F5E2B8 0%, #E8CD9C 100%)"
               : "linear-gradient(180deg, #B88652 0%, #9C6E3C 100%)";
 
-            // Highlight overlays — order matters (last move under selected under check)
             const overlays: React.ReactNode[] = [];
             if (isLast) {
               overlays.push(
@@ -154,7 +281,6 @@ export default function Board({
                   userSelect: "none",
                 }}
               >
-                {/* Wood grain dust */}
                 <div
                   aria-hidden
                   style={{
@@ -166,11 +292,7 @@ export default function Board({
                     pointerEvents: "none",
                   }}
                 />
-
-                {/* Highlight overlays */}
                 {overlays}
-
-                {/* Coordinates: file letters on rank 1, rank numbers on file h */}
                 {r === 7 && (
                   <span
                     style={{
@@ -205,8 +327,6 @@ export default function Board({
                     {8 - r}
                   </span>
                 )}
-
-                {/* Legal-move dot */}
                 {isLegal && !isCaptureLegal && (
                   <div
                     style={{
@@ -220,8 +340,6 @@ export default function Board({
                     }}
                   />
                 )}
-
-                {/* Legal-capture ring */}
                 {isCaptureLegal && (
                   <div
                     style={{
@@ -233,9 +351,7 @@ export default function Board({
                     }}
                   />
                 )}
-
-                {/* Piece */}
-                {piece && (
+                {piece && !hidePieceForSlide && (
                   <div
                     style={{
                       position: "relative",
@@ -258,12 +374,20 @@ export default function Board({
           })}
         </div>
 
-        {/* Coach annotation overlay — arrows, circles, highlights.
-            Sits inside the rounded clip so nothing spills past the edge. */}
+        {/* Slide overlay — animated piece between squares */}
+        {slide && slideProgress < 1 && (
+          <SlideOverlay slide={slide} progress={easedSlideProgress} />
+        )}
+
+        {/* Particle bursts on every move */}
+        {bursts.map((b) => (
+          <ParticleBurst key={b.id} burst={b} />
+        ))}
+
         <BoardAnnotations annotation={annotation ?? null} voicePlaying={voicePlaying} />
       </div>
 
-      {/* Promotion modal */}
+      {/* Promotion modal — unchanged */}
       {showPromo && (
         <div
           style={{
@@ -351,5 +475,90 @@ export default function Board({
         </div>
       )}
     </div>
+  );
+}
+
+// ── Sliding piece overlay ─────────────────────────────────────────
+function SlideOverlay({ slide, progress }: { slide: SlideState; progress: number }) {
+  // Each square is 1/8 of the board. Position via percentage so the
+  // slide tracks the fluid sizing.
+  const fromX = (slide.fromC + 0.5) * 12.5; // %
+  const fromY = (slide.fromR + 0.5) * 12.5;
+  const toX = (slide.toC + 0.5) * 12.5;
+  const toY = (slide.toR + 0.5) * 12.5;
+  const x = fromX + (toX - fromX) * progress;
+  const y = fromY + (toY - fromY) * progress;
+  // Parabolic lift — peak at progress=0.5 (~3% of board height)
+  const liftPx = -Math.sin(progress * Math.PI) * 12;
+
+  return (
+    <div
+      aria-hidden
+      style={{
+        position: "absolute",
+        left: `${x}%`,
+        top: `${y}%`,
+        width: "12.5%",
+        height: "12.5%",
+        transform: `translate(-50%, -50%) translateY(${liftPx}px)`,
+        filter: `drop-shadow(0 ${4 + liftPx * -0.3}px ${6 + liftPx * -0.5}px rgba(0,0,0,0.5))`,
+        pointerEvents: "none",
+        zIndex: 8,
+      }}
+    >
+      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Piece type={slide.pieceType} color={slide.pieceColor} size={64} />
+      </div>
+    </div>
+  );
+}
+
+// ── Particle burst on a square ────────────────────────────────────
+function ParticleBurst({ burst }: { burst: { id: number; r: number; c: number; big: boolean; startedAt: number } }) {
+  const elapsed = (performance.now() - burst.startedAt) / 1000;
+  const t = Math.min(1, elapsed / 0.9);
+  if (t >= 1) return null;
+
+  const cx = (burst.c + 0.5) * 12.5;
+  const cy = (burst.r + 0.5) * 12.5;
+  const count = burst.big ? 16 : 8;
+  const colors = burst.big
+    ? ["#34D399", "#FCD34D", "#34D399", "#FCD34D"]
+    : ["#FCD34D", "#FCD34D"];
+
+  return (
+    <svg
+      aria-hidden
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        pointerEvents: "none",
+        zIndex: 9,
+      }}
+      preserveAspectRatio="none"
+      viewBox="0 0 100 100"
+    >
+      {Array.from({ length: count }, (_, i) => {
+        const ang = (i / count) * Math.PI * 2;
+        const r = 1 + t * (burst.big ? 9 : 5);
+        const px = cx + Math.cos(ang) * r;
+        const py = cy + Math.sin(ang) * r;
+        const op = Math.max(0, 1 - t);
+        const sz = (burst.big ? 0.55 : 0.4) * (1 - t * 0.6);
+        return (
+          <circle
+            key={i}
+            cx={px}
+            cy={py}
+            r={sz}
+            fill={colors[i % colors.length]}
+            opacity={op}
+            style={{ filter: "drop-shadow(0 0 0.8px currentColor)" }}
+          />
+        );
+      })}
+    </svg>
   );
 }

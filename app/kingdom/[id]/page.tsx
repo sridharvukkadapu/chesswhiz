@@ -6,6 +6,7 @@ import { notFound, useParams, useRouter } from "next/navigation";
 import { useGameStore } from "@/stores/gameStore";
 import { KINGDOMS, isKingdomLocked } from "@/lib/progression/data";
 
+import { StarField, MoteField } from "@/lib/design/atmosphere";
 const P = {
   cream: "#1A1238",
   creamDeep: "rgba(36,24,69,0.85)",
@@ -67,6 +68,8 @@ export default function KingdomDetailPage() {
       minHeight: "100dvh", background: "radial-gradient(ellipse at 50% 30%, #2D1B5C 0%, #15102A 45%, #07050F 100%)", color: P.ink,
       fontFamily: "var(--font-jakarta), sans-serif", position: "relative",
     }}>
+      <StarField count={70} seed={11} opacity={0.45} />
+      <MoteField count={14} seed={12} color="#FCD34D" />
       {/* Paper grain */}
       <div aria-hidden style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,

@@ -116,8 +116,8 @@ export default function JourneyPage() {
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 22, color: P.ink,
                 }}>{r.icon}</div>
-                <div style={{ fontSize: 11, fontWeight: 800, color: r.color, fontFamily: "var(--font-cormorant), serif" }}>{r.name}</div>
-                <div style={{ fontSize: 10, color: P.inkLight }}>{r.xpRequired} XP</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: r.color, fontFamily: "var(--font-cormorant), serif", fontStyle: "italic" }}>{r.name}</div>
+                <div style={{ fontSize: 11, color: P.inkLight, fontVariantNumeric: "tabular-nums" }}>{r.xpRequired} XP</div>
               </div>
             ))}
           </div>

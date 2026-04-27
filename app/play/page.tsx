@@ -32,6 +32,7 @@ import { Piece } from "@/components/ChessPieces";
 import { GoldFoilText, StarField, MoteField, useTime } from "@/lib/design/atmosphere";
 import { sfx } from "@/lib/audio/sfx";
 import { haptics } from "@/lib/audio/haptics";
+import { Target, RefreshCw, Undo2, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { T } from "@/lib/design/tokens";
 import type { Move } from "@/lib/chess/types";
 import type { PlayerProgression, RankId } from "@/lib/progression/types";
@@ -181,19 +182,7 @@ function VoiceToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => 
         boxShadow: enabled ? T.glowAmber : "none",
       }}
     >
-      {enabled ? (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-        </svg>
-      ) : (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-          <line x1="23" y1="9" x2="17" y2="15" />
-          <line x1="17" y1="9" x2="23" y2="15" />
-        </svg>
-      )}
+      {enabled ? <Volume2 aria-hidden size={18} strokeWidth={2.2} /> : <VolumeX aria-hidden size={18} strokeWidth={2.2} />}
     </button>
   );
 }
@@ -228,11 +217,7 @@ function MissionBanner({ mission }: { mission: import("@/lib/progression/types")
           boxShadow: T.glowAmber,
         }}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10" />
-          <circle cx="12" cy="12" r="6" />
-          <circle cx="12" cy="12" r="2" fill="currentColor" />
-        </svg>
+        <Target aria-hidden size={20} strokeWidth={2.2} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <span
@@ -799,10 +784,7 @@ export default function PlayPage() {
               (e.currentTarget as HTMLElement).style.color = T.textHi;
             }}
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-              <path d="M3 3v5h5" />
-            </svg>
+            <RefreshCw aria-hidden size={13} strokeWidth={2.5} />
             New Game
           </button>
         </div>
@@ -1014,10 +996,7 @@ export default function PlayPage() {
                 (e.currentTarget as HTMLElement).style.color = T.textMed;
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                <path d="M3 3v5h5" />
-              </svg>
+              <RefreshCw aria-hidden size={14} strokeWidth={2.5} />
               New Game
             </button>
             <button
@@ -1052,10 +1031,7 @@ export default function PlayPage() {
                 (e.currentTarget as HTMLElement).style.color = T.textMed;
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M9 14 4 9l5-5" />
-                <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11" />
-              </svg>
+              <Undo2 aria-hidden size={14} strokeWidth={2.5} />
               Undo
             </button>
           </div>

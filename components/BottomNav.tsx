@@ -87,6 +87,7 @@ export default function BottomNav() {
             <Link
               key={t.href}
               href={t.href}
+              className="bn-tap"
               aria-current={active ? "page" : undefined}
               aria-label={badge > 0 ? `${t.label} (${badge} new)` : t.label}
               style={{
@@ -99,7 +100,6 @@ export default function BottomNav() {
                 color: active ? T.amberGlow : T.textLo,
                 fontFamily: T.fontUI,
                 position: "relative",
-                transition: "color 200ms ease",
               }}
             >
               {active && (

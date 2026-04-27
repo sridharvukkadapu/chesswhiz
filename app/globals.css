@@ -79,6 +79,12 @@ a:focus-visible,
    Stops layout shift when XP / counts tick. */
 .tabular-nums { font-variant-numeric: tabular-nums; }
 
+/* ── Bottom-nav press feedback ──────────────────────
+   Brief scale + opacity flash on tap so kids know the tap
+   landed even before the route transition finishes. */
+.bn-tap { transition: transform 120ms ease, opacity 120ms ease; }
+.bn-tap:active { transform: scale(0.93); opacity: 0.7; }
+
 /* ── Reduced motion ──────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

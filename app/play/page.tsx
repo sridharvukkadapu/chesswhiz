@@ -296,8 +296,20 @@ function CapturedStrip({ chess, perspective }: { chess: Chess; perspective: "w" 
     p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen",
   };
 
+  // Build a screen-reader summary so the captured strip isn't an
+  // opaque pile of glyphs to assistive tech.
+  const PIECE_NAME: Record<string, string> = { p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen" };
+  const summary = captured
+    .map((c) => `${c.count} ${PIECE_NAME[c.type]}${c.count > 1 ? "s" : ""}`)
+    .join(", ");
+  const ariaLabel = perspective === "w"
+    ? `You have captured: ${summary || "nothing"}${diff !== 0 ? `. Material ${diff > 0 ? "advantage" : "deficit"}: ${Math.abs(diff)}.` : ""}`
+    : `The bot has captured: ${summary || "nothing"}${diff !== 0 ? `. Material ${diff > 0 ? "advantage" : "deficit"}: ${Math.abs(diff)}.` : ""}`;
+
   return (
     <div
+      role="group"
+      aria-label={ariaLabel}
       style={{
         minHeight: 26,
         display: "flex",
@@ -308,7 +320,7 @@ function CapturedStrip({ chess, perspective }: { chess: Chess; perspective: "w" 
       }}
     >
       {captured.map((c, i) => (
-        <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+        <span key={i} aria-hidden style={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
           {Array.from({ length: c.count }, (_, j) => (
             <span key={j} style={{ marginLeft: j === 0 ? 0 : -6, opacity: 0.85 }}>
               <Piece type={TYPE_TO_PIECE[c.type]} color={opp === "w" ? "white" : "black"} size={20} />

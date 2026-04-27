@@ -8,35 +8,39 @@ import { KINGDOMS, POWERS, getRankByXP, getNextRank, isKingdomLocked } from "@/l
 import type { Kingdom, PlayerProgression } from "@/lib/progression/types";
 import BottomNav from "@/components/BottomNav";
 import UpgradeModal from "@/components/UpgradeModal";
+import { T, KINGDOM_COLORS } from "@/lib/design/tokens";
+import { StarField, MoteField, GoldFoilText, useTime } from "@/lib/design/atmosphere";
+import { Piece, type PieceType } from "@/components/ChessPieces";
 
-// Matches the landing page (Storybook Noir) palette exactly.
-const P = {
-  cream: "#FBF7F0",
-  creamDeep: "#F5EFE4",
-  parchment: "#F0E8D8",
-  ink: "#1A1210",
-  inkSoft: "#2E2620",
-  inkMed: "#5C544A",
-  inkLight: "#8A8278",
-  inkFaint: "#B0A898",
-  inkGhost: "#D0C8BC",
-  emerald: "#1B7340",
-  emeraldBright: "#22C55E",
-  emeraldPale: "#E6F4EC",
-  gold: "#C7940A",
-  goldLight: "#F0D060",
-  goldPale: "#FDF6E3",
+// Visual layout for the world map (8 control points across a wide canvas).
+// These are tuned to feel like a winding fantasy path, not a grid.
+type Layout = { x: number; y: number; bossPiece: PieceType; emoji: string };
+
+const KINGDOM_LAYOUT: Record<string, Layout> = {
+  village:          { x: 240,  y: 720, bossPiece: "pawn",   emoji: "🏘️" },
+  fork_forest:      { x: 520,  y: 580, bossPiece: "knight", emoji: "🌲" },
+  pin_palace:       { x: 820,  y: 700, bossPiece: "bishop", emoji: "🏰" },
+  skewer_spire:     { x: 1080, y: 480, bossPiece: "rook",   emoji: "🗼" },
+  discovery_depths: { x: 1340, y: 660, bossPiece: "rook",   emoji: "⛏️" },
+  strategy_summit:  { x: 1620, y: 380, bossPiece: "queen",  emoji: "🏔️" },
+  endgame_throne:   { x: 1860, y: 580, bossPiece: "king",   emoji: "👑" },
 };
 
-function kingdomStatus(k: Kingdom, prog: PlayerProgression, rankLevel: number): "conquered" | "current" | "locked" | "tier_locked" {
+function kingdomStatus(
+  k: Kingdom,
+  prog: PlayerProgression,
+  rankLevel: number,
+): "conquered" | "current" | "locked" | "tier_locked" {
   if (prog.completedKingdoms.includes(k.id)) return "conquered";
-  // Tier gate takes precedence over rank — even a max-rank free user
-  // can't enter Fork Forest. This is the conversion trigger.
   if (isKingdomLocked(k.id, prog.tier)) return "tier_locked";
   if (k.level > rankLevel) return "locked";
   if (k.id === prog.currentKingdom) return "current";
   return "locked";
 }
+
+const RANK_PIECE: Record<string, PieceType> = {
+  pawn: "pawn", knight: "knight", bishop: "bishop", rook: "rook", queen: "queen", king: "king",
+};
 
 export default function KingdomPage() {
   return (
@@ -51,6 +55,7 @@ function KingdomPageInner() {
   const searchParams = useSearchParams();
   const [hydrated, setHydrated] = useState(false);
   const [upgradeFor, setUpgradeFor] = useState<Kingdom | null>(null);
+  const time = useTime();
 
   useEffect(() => {
     store.hydrateProgression();
@@ -58,7 +63,6 @@ function KingdomPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-open upgrade modal if redirected here from a locked kingdom URL
   useEffect(() => {
     if (!hydrated) return;
     const upgradeId = searchParams.get("upgrade");
@@ -73,203 +77,565 @@ function KingdomPageInner() {
   const prog = store.progression;
   const rank = getRankByXP(prog.xp);
   const nextRank = getNextRank(rank.id);
-  const floor = rank.xpRequired;
-  const ceil = nextRank ? nextRank.xpRequired : rank.xpRequired + 1;
-  const pct = nextRank ? Math.min(100, Math.max(0, ((prog.xp - floor) / (ceil - floor)) * 100)) : 100;
 
   return (
-    <div style={{
-      minHeight: "100dvh", background: P.cream, color: P.ink,
-      fontFamily: "var(--font-nunito), sans-serif",
-      position: "relative",
-    }}>
-      {/* Paper grain overlay */}
-      <div aria-hidden style={{
-        position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.022'/%3E%3C/svg%3E")`,
-      }} />
+    <div
+      style={{
+        minHeight: "100dvh",
+        background: T.bgRadial,
+        color: T.textHi,
+        fontFamily: T.fontUI,
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <StarField count={130} seed={11} opacity={0.7} />
+      <MoteField count={22} seed={12} color={T.amberGlow} />
+
+      {/* Atmospheric fog at the bottom of the map */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          top: "60%",
+          bottom: 0,
+          background:
+            "linear-gradient(180deg, transparent 0%, rgba(125,168,255,0.04) 40%, rgba(125,168,255,0.10) 100%)",
+          pointerEvents: "none",
+        }}
+      />
 
       {/* Header */}
-      <header style={{
-        position: "sticky", top: 0, zIndex: 10,
-        padding: "10px 20px",
-        background: "rgba(251,247,240,0.88)",
-        backdropFilter: "blur(20px) saturate(1.2)",
-        borderBottom: `1px solid ${P.inkGhost}40`,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-      }}>
-        <Link href="/play" style={{
-          display: "flex", alignItems: "center", gap: 8,
-          color: P.inkMed, textDecoration: "none", fontSize: 13, fontWeight: 700,
-          fontFamily: "var(--font-nunito), sans-serif",
-        }}>
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          padding: "14px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "rgba(7,5,15,0.6)",
+          backdropFilter: "blur(20px) saturate(1.4)",
+          borderBottom: `1px solid ${T.border}`,
+        }}
+      >
+        <Link
+          href="/play"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            color: T.textLo,
+            textDecoration: "none",
+            fontSize: 13,
+            fontWeight: 700,
+            fontFamily: T.fontUI,
+            letterSpacing: "0.08em",
+          }}
+        >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          Back to game
+          BACK TO GAME
         </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 20 }}>♟</span>
-          <span style={{
-            fontSize: 16, fontWeight: 900,
-            fontFamily: "var(--font-playfair), serif",
-            color: P.ink, letterSpacing: -0.4,
-          }}>The Kingdoms</span>
-        </div>
-        <Link href="/card" style={{
-          color: P.gold, textDecoration: "none", fontSize: 13, fontWeight: 700,
-          fontFamily: "var(--font-nunito), sans-serif",
-        }}>Your Card →</Link>
+        <Link
+          href="/card"
+          style={{
+            color: T.amberGlow,
+            textDecoration: "none",
+            fontSize: 13,
+            fontWeight: 700,
+            fontFamily: T.fontUI,
+            letterSpacing: "0.08em",
+          }}
+        >
+          YOUR CARD →
+        </Link>
       </header>
 
-      {/* Hero: player rank + streak */}
-      <section style={{ maxWidth: 720, margin: "0 auto", padding: "40px 20px 20px", position: "relative", zIndex: 1 }}>
-        <span style={{
-          fontFamily: "'Caveat', cursive", fontSize: 19, color: P.gold,
-          display: "block", textAlign: "center", marginBottom: 4,
-        }}>your journey so far</span>
-        <h1 style={{
-          textAlign: "center", margin: "0 0 24px",
-          fontSize: "clamp(28px, 4vw, 38px)", fontWeight: 900,
-          fontFamily: "var(--font-playfair), serif",
-          color: P.ink, letterSpacing: -0.8,
-        }}>The Chess Kingdom</h1>
-
-        <div style={{
-          padding: "24px",
-          background: "white",
-          border: `1px solid ${P.inkGhost}`,
-          borderRadius: 20,
-          boxShadow: `0 0 0 4px ${P.parchment}, 0 12px 40px rgba(26,18,16,0.08)`,
-          display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap",
-        }}>
-          <div style={{
-            width: 68, height: 68, borderRadius: "50%",
-            background: `radial-gradient(circle at 35% 30%, ${rank.color} 0%, #f5efe4 85%)`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 40, color: P.ink,
-            border: `2px solid ${rank.color}`,
-            boxShadow: `0 0 0 4px ${P.parchment}, 0 0 24px ${rank.color}30`,
-            flexShrink: 0,
-          }}>{rank.icon}</div>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{
-              fontSize: 11, fontWeight: 800, color: P.inkLight,
-              letterSpacing: 1.8, textTransform: "uppercase", marginBottom: 4,
-            }}>Current Rank</div>
-            <div style={{
-              fontSize: 24, fontWeight: 900, color: P.ink,
-              fontFamily: "var(--font-playfair), serif", letterSpacing: -0.4,
-            }}>{rank.name}</div>
-            <div style={{ fontSize: 13, color: P.inkLight, marginTop: 4 }}>
-              {prog.xp} XP {nextRank ? `· ${ceil - prog.xp} to ${nextRank.name}` : "· max rank"}
-            </div>
-            <div style={{ marginTop: 10, height: 6, borderRadius: 3, background: P.parchment, overflow: "hidden" }}>
-              <div style={{
-                width: `${pct}%`, height: "100%",
-                background: `linear-gradient(90deg, ${rank.color}, ${nextRank?.color ?? rank.color})`,
-                transition: "width 0.6s ease-out",
-              }} />
-            </div>
-          </div>
-          <div style={{ textAlign: "center", flexShrink: 0, paddingLeft: 12, borderLeft: `1px solid ${P.inkGhost}` }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: P.inkLight, letterSpacing: 1.8, textTransform: "uppercase" }}>Streak</div>
-            <div style={{
-              fontSize: 28, fontWeight: 900, color: P.gold,
-              fontFamily: "var(--font-playfair), serif", lineHeight: 1.1, marginTop: 4,
-            }}>{prog.streak}</div>
-            <div style={{ fontSize: 10, color: P.inkLight, fontWeight: 600 }}>{prog.streak === 1 ? "day" : "days"}</div>
-          </div>
+      {/* Title */}
+      <section
+        style={{
+          textAlign: "center",
+          padding: "44px 20px 16px",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: T.fontUI,
+            fontSize: 13,
+            fontWeight: 700,
+            color: T.amberGlow,
+            letterSpacing: "0.5em",
+            textTransform: "uppercase",
+            marginBottom: 8,
+            paddingLeft: "0.5em",
+          }}
+        >
+          Your journey so far
         </div>
+        <GoldFoilText fontSize={56} italic>
+          The Chess Kingdom
+        </GoldFoilText>
+      </section>
 
-        {/* Powers strip */}
-        <div style={{
-          marginTop: 14, padding: "12px 18px",
-          background: P.creamDeep, border: `1px solid ${P.inkGhost}`, borderRadius: 14,
-          display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap",
-        }}>
-          <span style={{ fontSize: 11, fontWeight: 800, color: P.inkLight, letterSpacing: 1.5, textTransform: "uppercase" }}>Powers</span>
-          <span style={{ fontSize: 14, fontWeight: 800, color: P.ink }}>
-            {prog.earnedPowers.length} / {POWERS.length}
-          </span>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", flex: 1, justifyContent: "flex-end" }}>
-            {POWERS.filter((p) => prog.earnedPowers.includes(p.id)).slice(0, 10).map((p) => (
-              <span key={p.id} title={p.name} style={{
-                fontSize: 15, lineHeight: 1,
-                padding: "5px 8px", borderRadius: 8,
-                background: "white", border: `1px solid ${P.gold}55`,
-              }}>{p.icon}</span>
-            ))}
-            {prog.earnedPowers.length === 0 && (
-              <span style={{ fontSize: 12, color: P.inkLight, fontStyle: "italic" }}>Complete a Battle Test to earn your first Power</span>
-            )}
+      {/* Progress strip */}
+      <section
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          padding: "0 16px 24px",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 22,
+            padding: "14px 28px",
+            background: "rgba(26,18,56,0.7)",
+            border: `1px solid ${T.borderStrong}`,
+            backdropFilter: "blur(12px)",
+            borderRadius: 100,
+            boxShadow: T.shadowCard,
+            flexWrap: "wrap",
+            justifyContent: "center",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: T.goldFoil,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                boxShadow: T.glowAmber,
+              }}
+            >
+              <Piece type={RANK_PIECE[rank.id] ?? "pawn"} color="white" size={28} />
+            </div>
+            <div>
+              <div
+                style={{
+                  fontFamily: T.fontUI,
+                  fontSize: 11,
+                  color: T.textLo,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Rank
+              </div>
+              <div
+                style={{
+                  fontFamily: T.fontDisplay,
+                  fontStyle: "italic",
+                  fontSize: 20,
+                  color: T.textHi,
+                  fontWeight: 600,
+                }}
+              >
+                {rank.name}
+              </div>
+            </div>
           </div>
+          <div style={{ width: 1, height: 30, background: T.border }} />
+          <Stat label="XP" value={prog.xp.toLocaleString()} />
+          <div style={{ width: 1, height: 30, background: T.border }} />
+          <Stat
+            label="Powers"
+            value={
+              <>
+                {prog.earnedPowers.length}
+                <span style={{ color: T.textDim, fontSize: 16 }}> / {POWERS.length}</span>
+              </>
+            }
+          />
+          <div style={{ width: 1, height: 30, background: T.border }} />
+          <Stat
+            label="Realms"
+            value={
+              <>
+                {prog.completedKingdoms.length}
+                <span style={{ color: T.textDim, fontSize: 16 }}> / {KINGDOMS.length}</span>
+              </>
+            }
+          />
+          <div style={{ width: 1, height: 30, background: T.border }} />
+          <Stat
+            label="Streak"
+            value={
+              <>
+                <span style={{ color: T.amberGlow }}>🔥 {prog.streak}</span>
+                <span style={{ color: T.textDim, fontSize: 14 }}>d</span>
+              </>
+            }
+          />
         </div>
       </section>
 
-      {/* Kingdom cards */}
-      <section style={{ maxWidth: 720, margin: "0 auto", padding: "8px 20px 32px", position: "relative", zIndex: 1 }}>
-        <h2 style={{
-          fontSize: 11, color: P.inkLight, letterSpacing: 1.8,
-          textTransform: "uppercase", fontWeight: 800, margin: "28px 0 14px",
-          fontFamily: "var(--font-nunito), sans-serif",
-        }}>Realms to Conquer</h2>
+      {/* World map — horizontally scrollable on narrow viewports */}
+      <section
+        aria-label="Kingdom map"
+        style={{
+          position: "relative",
+          zIndex: 1,
+          padding: "8px 0 100px",
+          overflowX: "auto",
+          overflowY: "hidden",
+        }}
+      >
+        <svg
+          width="2200"
+          height="900"
+          viewBox="0 0 2200 900"
+          style={{
+            display: "block",
+            margin: "0 auto",
+            minWidth: 1100,
+          }}
+        >
+          <defs>
+            <linearGradient id="kmMtnGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#5B4488" />
+              <stop offset="60%" stopColor="#2A1B4A" />
+              <stop offset="100%" stopColor="#15102A" />
+            </linearGradient>
+            <linearGradient id="kmSnow" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#E0BBFF" />
+              <stop offset="100%" stopColor="#7DA8FF" />
+            </linearGradient>
+            {KINGDOMS.map((k) => (
+              <radialGradient key={k.id} id={`kmRegion-${k.id}`} cx="0.4" cy="0.35" r="0.7">
+                <stop offset="0%" stopColor={KINGDOM_COLORS[k.id] ?? T.amber} stopOpacity="0.7" />
+                <stop offset="100%" stopColor="#15102A" stopOpacity="1" />
+              </radialGradient>
+            ))}
+          </defs>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {KINGDOMS.map((k) => {
+          {/* Distant mountains */}
+          <g opacity="0.5">
+            <polygon
+              points="0,650 200,400 380,580 540,420 720,560 900,470 1080,580 1280,440 1480,540 1660,400 1860,580 2200,470 2200,900 0,900"
+              fill="url(#kmMtnGrad)"
+            />
+          </g>
+          <g opacity="0.85">
+            <polygon
+              points="0,750 180,540 340,680 500,540 680,660 880,600 1080,700 1280,560 1500,660 1680,540 1900,680 2200,600 2200,900 0,900"
+              fill="#1A1238"
+            />
+            <polygon points="500,540 525,560 545,568 565,552" fill="url(#kmSnow)" opacity="0.7" />
+            <polygon points="1280,560 1305,580 1325,588 1345,572" fill="url(#kmSnow)" opacity="0.7" />
+            <polygon points="1680,540 1705,560 1725,568 1745,552" fill="url(#kmSnow)" opacity="0.7" />
+          </g>
+
+          {/* Path connecting regions */}
+          {KINGDOMS.slice(0, -1).map((k, i) => {
+            const next = KINGDOMS[i + 1];
+            const a = KINGDOM_LAYOUT[k.id];
+            const b = KINGDOM_LAYOUT[next.id];
+            if (!a || !b) return null;
             const status = kingdomStatus(k, prog, rank.level);
+            const nextStatus = kingdomStatus(next, prog, rank.level);
+            const isUnlockedSegment =
+              (status === "conquered" || status === "current") &&
+              nextStatus !== "tier_locked";
+            const mx = (a.x + b.x) / 2;
+            const my = (a.y + b.y) / 2 - 40 + i * 8;
+            const path = `M ${a.x} ${a.y} Q ${mx} ${my} ${b.x} ${b.y}`;
             return (
-              <KingdomRow
-                key={k.id}
-                kingdom={k}
-                status={status}
-                progression={prog}
-                onTierLockedClick={() => setUpgradeFor(k)}
-              />
+              <g key={`path-${i}`}>
+                <path
+                  d={path}
+                  stroke={isUnlockedSegment ? "#FCD34D" : "rgba(155,145,180,0.35)"}
+                  strokeWidth="6"
+                  strokeDasharray={isUnlockedSegment ? "none" : "14 10"}
+                  strokeLinecap="round"
+                  fill="none"
+                  opacity={isUnlockedSegment ? 0.75 : 0.4}
+                  style={isUnlockedSegment ? { filter: "drop-shadow(0 0 8px rgba(252,211,77,0.6))" } : undefined}
+                />
+                {isUnlockedSegment &&
+                  [...Array(5)].map((_, j) => {
+                    const t = (j + 1) / 6;
+                    const px = (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * mx + t * t * b.x;
+                    const py = (1 - t) * (1 - t) * a.y + 2 * (1 - t) * t * my + t * t * b.y;
+                    const pulse = 0.5 + 0.5 * Math.sin(time * 3 - j * 0.6);
+                    return <circle key={j} cx={px} cy={py} r={3} fill="#FCD34D" opacity={pulse} />;
+                  })}
+              </g>
             );
           })}
-        </div>
 
-        {/* Visitor CTA — shows for new players (no XP yet, default progression) */}
-        {prog.xp === 0 && prog.completedKingdoms.length === 0 && prog.earnedPowers.length === 0 && (
-          <div style={{
-            marginTop: 32, padding: "24px 22px",
-            background: "white", borderRadius: 18,
-            border: `1px solid ${P.gold}40`,
-            boxShadow: `0 0 0 4px ${P.goldPale}, 0 8px 24px rgba(199,148,10,0.12)`,
-            textAlign: "center",
-          }}>
-            <span style={{
-              fontFamily: "'Caveat', cursive", fontSize: 18, color: P.gold,
-              display: "block", marginBottom: 4,
-            }}>start your quest →</span>
-            <h3 style={{
-              fontSize: 20, fontWeight: 900, color: P.ink,
-              fontFamily: "var(--font-playfair), serif",
-              margin: "0 0 8px", letterSpacing: -0.4,
-            }}>Pawn Village awaits</h3>
-            <p style={{
-              margin: "0 0 18px", fontSize: 14, lineHeight: 1.7,
-              color: P.inkLight, maxWidth: 380, marginLeft: "auto", marginRight: "auto",
-              fontFamily: "var(--font-nunito), sans-serif",
-            }}>
-              Play your first game to begin. Defeat the Knight Twins, earn Powers, and climb from Pawn to King.
-            </p>
-            <Link href="/onboard" style={{
-              display: "inline-block",
-              background: P.emerald, color: "white",
-              borderRadius: 14, padding: "14px 32px",
-              fontSize: 15, fontWeight: 800,
-              textDecoration: "none",
-              boxShadow: "0 6px 22px rgba(27,115,64,0.25)",
-              letterSpacing: 0.3,
-              fontFamily: "var(--font-nunito), sans-serif",
-            }}>Play your first game free</Link>
-          </div>
-        )}
+          {/* Region nodes */}
+          {KINGDOMS.map((k) => {
+            const layout = KINGDOM_LAYOUT[k.id];
+            if (!layout) return null;
+            const status = kingdomStatus(k, prog, rank.level);
+            const isCurrent = status === "current";
+            const isCompleted = status === "conquered";
+            const isLocked = status !== "current" && status !== "conquered";
+            const isTierLocked = status === "tier_locked";
+            const baseRadius = 60;
+            const haloPulse = isCurrent ? 1.1 + 0.1 * Math.sin(time * 2.5) : 1;
+            const accent = KINGDOM_COLORS[k.id] ?? T.amber;
+            const handleClick = () => {
+              if (isTierLocked) {
+                setUpgradeFor(k);
+              }
+            };
 
-        <div style={{ height: 80 }} />
+            return (
+              <g
+                key={k.id}
+                transform={`translate(${layout.x} ${layout.y})`}
+                onClick={handleClick}
+                style={{ cursor: isTierLocked ? "pointer" : isCurrent || isCompleted ? "pointer" : "default" }}
+              >
+                {/* Halo */}
+                {!isLocked && (
+                  <circle
+                    r={baseRadius * 1.6 * haloPulse}
+                    fill={accent}
+                    opacity={isCurrent ? 0.2 : 0.1}
+                    style={{ filter: "blur(10px)" }}
+                  />
+                )}
+                {/* Outer ring */}
+                <circle
+                  r={baseRadius + 8}
+                  fill="none"
+                  stroke={isLocked ? "rgba(155,145,180,0.35)" : accent}
+                  strokeWidth={isCurrent ? 4 : 2.5}
+                  strokeDasharray={isLocked ? "6 6" : "none"}
+                  opacity={0.9}
+                  style={{ filter: `drop-shadow(0 0 ${isCurrent ? 14 : 6}px ${accent}88)` }}
+                />
+                {/* Plinth shadow */}
+                <ellipse cx="0" cy={baseRadius + 14} rx={baseRadius * 0.85} ry="6" fill="rgba(0,0,0,0.45)" filter="blur(2px)" />
+                {/* Plinth */}
+                <circle r={baseRadius} fill={isLocked ? "rgba(40,30,70,0.85)" : `url(#kmRegion-${k.id})`} />
+                {/* Boss icon (chess piece) */}
+                <g
+                  transform={`translate(-30 -32)`}
+                  opacity={isLocked ? 0.35 : 1}
+                  style={isLocked ? { filter: "grayscale(1) brightness(0.5)" } : undefined}
+                >
+                  <foreignObject x="0" y="0" width="60" height="60">
+                    <div
+                      style={{
+                        width: 60,
+                        height: 60,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Piece type={layout.bossPiece} color="white" size={56} />
+                    </div>
+                  </foreignObject>
+                </g>
+                {/* Lock badge */}
+                {isLocked && (
+                  <g transform="translate(0 8)">
+                    <rect x="-12" y="0" width="24" height="22" rx="3" fill="#FCD34D" stroke="#7A5418" strokeWidth="1.5" />
+                    <path
+                      d="M -8 0 L -8 -6 Q -8 -14 0 -14 Q 8 -14 8 -6 L 8 0"
+                      fill="none"
+                      stroke="#FCD34D"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                    />
+                    <circle cx="0" cy="10" r="2.5" fill="#7A5418" />
+                  </g>
+                )}
+                {/* Conquered checkmark */}
+                {isCompleted && (
+                  <g transform="translate(48 -48)">
+                    <circle r="14" fill={T.emerald} stroke="#FFF" strokeWidth="2" />
+                    <path d="M -6 0 L -2 4 L 6 -4" stroke="#FFF" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                  </g>
+                )}
+                {/* Current quest banner */}
+                {isCurrent && (
+                  <g transform="translate(0 -90)" opacity={0.5 + 0.5 * Math.sin(time * 3)}>
+                    <rect x="-50" y="-14" width="100" height="28" rx="14" fill="#FCD34D" stroke="#7A5418" strokeWidth="1.5" />
+                    <text
+                      x="0"
+                      y="5"
+                      fontSize="13"
+                      fontWeight="700"
+                      fontFamily='"Plus Jakarta Sans", sans-serif'
+                      textAnchor="middle"
+                      fill="#1A1210"
+                      letterSpacing="0.1em"
+                    >
+                      QUEST
+                    </text>
+                  </g>
+                )}
+                {/* Region name */}
+                <text
+                  x="0"
+                  y={baseRadius + 38}
+                  fontSize="22"
+                  fontFamily='"Cormorant Garamond", serif'
+                  fontStyle="italic"
+                  fontWeight="600"
+                  textAnchor="middle"
+                  fill={isLocked ? "#9A8FB5" : T.textHi}
+                  style={isLocked ? undefined : { filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.7))" }}
+                >
+                  {k.name}
+                </text>
+                {/* CHAMPION pill on tier-locked regions */}
+                {isTierLocked && (
+                  <g transform={`translate(0 ${baseRadius + 60})`}>
+                    <rect
+                      x="-44"
+                      y="-10"
+                      width="88"
+                      height="20"
+                      rx="10"
+                      fill="rgba(192,132,252,0.2)"
+                      stroke="rgba(192,132,252,0.5)"
+                      strokeWidth="1"
+                    />
+                    <text
+                      x="0"
+                      y="4"
+                      fontSize="10"
+                      fontWeight="700"
+                      fontFamily='"Plus Jakarta Sans", sans-serif'
+                      textAnchor="middle"
+                      fill="#C084FC"
+                      letterSpacing="0.15em"
+                    >
+                      ✦ CHAMPION
+                    </text>
+                  </g>
+                )}
+              </g>
+            );
+          })}
+
+          {/* Player avatar — flag on current kingdom */}
+          {(() => {
+            const currentLayout = KINGDOM_LAYOUT[prog.currentKingdom];
+            if (!currentLayout) return null;
+            const yOff = -60 + Math.sin(time * 2) * 4;
+            return (
+              <g transform={`translate(${currentLayout.x} ${currentLayout.y + yOff})`}>
+                <circle r="32" fill="#FCD34D" opacity="0.3" style={{ filter: "blur(8px)" }} />
+                <line x1="0" y1="0" x2="0" y2="-50" stroke="#7A5418" strokeWidth="2" />
+                <path
+                  d="M 0 -50 L 24 -42 L 18 -32 L 24 -22 L 0 -28 Z"
+                  fill={T.amber}
+                  stroke="#7A5418"
+                  strokeWidth="1"
+                />
+                <text
+                  x="12"
+                  y="-32"
+                  fontSize="12"
+                  textAnchor="middle"
+                  fontFamily='"Cormorant Garamond"'
+                  fill="#1A1210"
+                  fontWeight="800"
+                >
+                  {rank.name.charAt(0)}
+                </text>
+                <ellipse cx="0" cy="0" rx="14" ry="4" fill="rgba(0,0,0,0.5)" />
+                <circle r="6" fill="#FCD34D" stroke="#7A5418" strokeWidth="1.5" />
+              </g>
+            );
+          })()}
+        </svg>
       </section>
+
+      {/* Visitor CTA — only shown for unauthenticated players */}
+      {prog.xp === 0 && prog.completedKingdoms.length === 0 && prog.earnedPowers.length === 0 && (
+        <section
+          style={{
+            position: "relative",
+            zIndex: 1,
+            maxWidth: 520,
+            margin: "0 auto 100px",
+            padding: "24px",
+            textAlign: "center",
+            background: "rgba(26,18,56,0.85)",
+            border: `1.5px solid ${T.amber}`,
+            borderRadius: 22,
+            boxShadow: T.glowAmber,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: T.fontHand,
+              fontSize: 19,
+              color: T.amberGlow,
+              transform: "rotate(-2deg)",
+              display: "inline-block",
+              marginBottom: 4,
+            }}
+          >
+            start your quest →
+          </span>
+          <h3
+            style={{
+              fontFamily: T.fontDisplay,
+              fontStyle: "italic",
+              fontSize: 26,
+              fontWeight: 600,
+              color: T.textHi,
+              margin: "4px 0 10px",
+            }}
+          >
+            Pawn Village awaits
+          </h3>
+          <p
+            style={{
+              fontFamily: T.fontUI,
+              fontSize: 14,
+              lineHeight: 1.7,
+              color: T.textMed,
+              maxWidth: 380,
+              margin: "0 auto 18px",
+            }}
+          >
+            Play your first game to begin. Defeat the Knight Twins, earn Powers, and climb from Pawn to King.
+          </p>
+          <Link
+            href="/onboard"
+            style={{
+              display: "inline-block",
+              background: T.goldFoil,
+              color: T.inkDeep,
+              borderRadius: 14,
+              padding: "14px 30px",
+              fontSize: 15,
+              fontWeight: 800,
+              textDecoration: "none",
+              boxShadow: T.glowAmber,
+              letterSpacing: "0.05em",
+              fontFamily: T.fontUI,
+            }}
+          >
+            ✦ Play your first game free ✦
+          </Link>
+        </section>
+      )}
 
       <BottomNav />
 
@@ -277,199 +643,36 @@ function KingdomPageInner() {
         open={!!upgradeFor}
         onClose={() => setUpgradeFor(null)}
         blockedKingdomName={upgradeFor?.name}
-        blockedKingdomIcon={upgradeFor?.boss?.emoji?.slice(0, 2)}
+        blockedKingdomIcon={upgradeFor ? KINGDOM_LAYOUT[upgradeFor.id]?.emoji : undefined}
       />
     </div>
   );
 }
 
-function KingdomRow({
-  kingdom, status, progression, onTierLockedClick,
-}: {
-  kingdom: Kingdom;
-  status: "conquered" | "current" | "locked" | "tier_locked";
-  progression: PlayerProgression;
-  onTierLockedClick: () => void;
-}) {
-  const [expanded, setExpanded] = useState(status === "current");
-
-  const badge = {
-    conquered:   { label: "CONQUERED", color: P.emerald, bg: P.emeraldPale, icon: "✓" },
-    current:     { label: "CURRENT QUEST", color: P.gold, bg: P.goldPale, icon: "⚑" },
-    locked:      { label: "LOCKED", color: P.inkFaint, bg: "#F5F0E5", icon: "🔒" },
-    tier_locked: { label: "CHAMPION", color: P.gold, bg: P.goldPale, icon: "🔒" },
-  }[status];
-
-  const mastered = kingdom.strategies.filter((s) =>
-    progression.masteredStrategies.includes(s.id)
-  ).length;
-
-  const isInert = status === "locked"; // rank-locked, no upgrade path
-  const isTierLocked = status === "tier_locked";
-
+function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div style={{
-      background: "white",
-      border: `${status === "current" || isTierLocked ? 2 : 1}px solid ${
-        status === "current" ? P.gold : isTierLocked ? `${P.gold}80` : P.inkGhost
-      }`,
-      borderRadius: 18,
-      boxShadow: status === "current"
-        ? `0 0 0 4px ${P.goldPale}, 0 12px 36px rgba(199,148,10,0.18)`
-        : isTierLocked
-        ? `0 0 0 3px ${P.goldPale}, 0 6px 20px rgba(199,148,10,0.10)`
-        : `0 4px 14px rgba(26,18,16,0.05)`,
-      opacity: isInert ? 0.62 : 1,
-      transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-      overflow: "hidden",
-    }}>
-      <button
-        onClick={() => {
-          if (isTierLocked) { onTierLockedClick(); return; }
-          if (isInert) return;
-          setExpanded((v) => !v);
-        }}
-        disabled={isInert}
-        aria-label={isTierLocked ? `Unlock ${kingdom.name} with Champion` : undefined}
+    <div>
+      <div
         style={{
-          width: "100%", padding: "18px 20px",
-          background: "transparent", border: "none",
-          display: "flex", alignItems: "center", gap: 16,
-          cursor: isInert ? "not-allowed" : "pointer",
-          textAlign: "left", color: "inherit", fontFamily: "inherit",
+          fontFamily: T.fontUI,
+          fontSize: 11,
+          color: T.textLo,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
         }}
       >
-        <div style={{
-          width: 48, height: 48, borderRadius: 14,
-          background: `linear-gradient(135deg, ${kingdom.color}22 0%, ${P.parchment} 100%)`,
-          border: `1.5px solid ${kingdom.color}66`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 22, flexShrink: 0,
-        }}>{kingdom.boss?.emoji?.slice(0, 2) ?? "♟"}</div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-            <span style={{
-              display: "inline-flex", alignItems: "center", gap: 4,
-              padding: "2px 8px", borderRadius: 6,
-              background: badge.bg, border: `1px solid ${badge.color}44`,
-              fontSize: 10, fontWeight: 800, color: badge.color,
-              letterSpacing: 1, textTransform: "uppercase",
-            }}>
-              <span>{badge.icon}</span> {badge.label}
-            </span>
-            {!isInert && (
-              <span style={{ fontSize: 11, color: P.inkLight, fontWeight: 600 }}>
-                {isTierLocked
-                  ? `${kingdom.strategies.length} strategies · 1 boss`
-                  : `${mastered}/${kingdom.strategies.length} strategies`}
-              </span>
-            )}
-          </div>
-          <div style={{
-            fontSize: 18, fontWeight: 800, color: P.ink,
-            fontFamily: "var(--font-playfair), serif", letterSpacing: -0.3,
-          }}>{kingdom.name}</div>
-          <div style={{ fontSize: 13, color: P.inkLight, marginTop: 2 }}>{kingdom.subtitle}</div>
-        </div>
-        {!isInert && !isTierLocked && (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={P.inkLight} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ transform: expanded ? "rotate(180deg)" : "none", transition: "transform 0.2s", flexShrink: 0 }}>
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        )}
-        {isTierLocked && (
-          <span style={{
-            fontSize: 11, fontWeight: 800, color: P.gold,
-            letterSpacing: 0.4, flexShrink: 0,
-            display: "inline-flex", alignItems: "center", gap: 4,
-          }}>
-            Unlock
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-          </span>
-        )}
-      </button>
-
-      {expanded && !isInert && !isTierLocked && (
-        <div style={{ padding: "0 20px 20px", borderTop: `1px solid ${P.parchment}` }}>
-          <p style={{
-            fontSize: 14, lineHeight: 1.75, color: P.inkSoft, margin: "16px 0 18px",
-          }}>{kingdom.description}</p>
-
-          {kingdom.boss && (
-            <div style={{
-              padding: "14px 16px", borderRadius: 14,
-              background: P.creamDeep, border: `1px solid ${P.inkGhost}`,
-              marginBottom: 18,
-            }}>
-              <div style={{
-                fontSize: 10, fontWeight: 800, color: "#DC2626",
-                letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8,
-              }}>Boss</div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                <span style={{ fontSize: 26 }}>{kingdom.boss.emoji}</span>
-                <div>
-                  <div style={{
-                    fontSize: 16, fontWeight: 800, color: P.ink,
-                    fontFamily: "var(--font-playfair), serif",
-                  }}>{kingdom.boss.name}</div>
-                  <div style={{ fontSize: 12, color: P.inkLight, fontStyle: "italic" }}>{kingdom.boss.signature}</div>
-                </div>
-              </div>
-              <p style={{ fontSize: 13, lineHeight: 1.7, color: P.inkSoft, margin: "0 0 10px" }}>
-                {kingdom.boss.personality}
-              </p>
-              <div style={{ fontSize: 10, color: P.inkLight, letterSpacing: 1, textTransform: "uppercase", fontWeight: 700, marginTop: 10, marginBottom: 4 }}>
-                Dialogue
-              </div>
-              {kingdom.boss.dialogue.map((line, i) => (
-                <div key={i} style={{
-                  fontSize: 13, color: P.inkSoft, margin: "4px 0", paddingLeft: 10,
-                  borderLeft: `2px solid ${kingdom.color}`, fontStyle: "italic",
-                }}>&ldquo;{line}&rdquo;</div>
-              ))}
-            </div>
-          )}
-
-          <div style={{ fontSize: 11, fontWeight: 800, color: P.inkLight, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 8 }}>
-            Strategies
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {kingdom.strategies.map((s) => {
-              const done = progression.masteredStrategies.includes(s.id);
-              return (
-                <div key={s.id} style={{
-                  padding: "10px 12px", borderRadius: 10,
-                  background: done ? P.emeraldPale : P.creamDeep,
-                  border: `1px solid ${done ? P.emerald : P.inkGhost}`,
-                  display: "flex", alignItems: "center", gap: 10,
-                }}>
-                  <span style={{
-                    fontSize: 13, color: done ? P.emerald : P.inkLight,
-                    width: 20, textAlign: "center", flexShrink: 0, fontWeight: 800,
-                  }}>{done ? "✓" : "○"}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: done ? P.ink : P.inkSoft }}>{s.name}</div>
-                    <div style={{ fontSize: 12, color: P.inkLight, marginTop: 2 }}>{s.description}</div>
-                  </div>
-                  <span style={{ fontSize: 11, color: P.gold, fontWeight: 800 }}>+{s.xpReward}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          <Link href={`/kingdom/${kingdom.id}`} style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            marginTop: 16, padding: "10px 20px", borderRadius: 12,
-            background: P.ink, color: P.cream,
-            fontSize: 13, fontWeight: 800, textDecoration: "none",
-            letterSpacing: 0.3, fontFamily: "var(--font-nunito), sans-serif",
-            boxShadow: "0 4px 14px rgba(26,18,16,0.15)",
-            transition: "all 0.2s cubic-bezier(0.34,1.56,0.64,1)",
-          }}>Enter Kingdom →</Link>
-        </div>
-      )}
+        {label}
+      </div>
+      <div
+        style={{
+          fontFamily: T.fontDisplay,
+          fontSize: 22,
+          color: T.textHi,
+          fontWeight: 600,
+        }}
+      >
+        {value}
+      </div>
     </div>
   );
 }

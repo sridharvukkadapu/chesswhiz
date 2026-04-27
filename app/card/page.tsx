@@ -6,25 +6,15 @@ import KnightCard from "@/components/KnightCard";
 import BottomNav from "@/components/BottomNav";
 import { useGameStore } from "@/stores/gameStore";
 import { getRankByXP } from "@/lib/progression/data";
-
-const P = {
-  cream: "#FBF7F0",
-  creamDeep: "#F5EFE4",
-  parchment: "#F0E8D8",
-  ink: "#1A1210",
-  inkMed: "#5C544A",
-  inkLight: "#8A8278",
-  inkFaint: "#B0A898",
-  inkGhost: "#D0C8BC",
-  emerald: "#1B7340",
-  gold: "#C7940A",
-};
+import { T } from "@/lib/design/tokens";
+import { StarField, MoteField, GoldFoilText, useTime } from "@/lib/design/atmosphere";
 
 export default function CardPage() {
   const store = useGameStore();
   const [hydrated, setHydrated] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const time = useTime();
 
   useEffect(() => {
     store.hydrateProgression();
@@ -65,7 +55,6 @@ export default function CardPage() {
             // User canceled; fall through to download.
           }
         }
-        // Fallback: download
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -83,110 +72,218 @@ export default function CardPage() {
 
   const prog = store.progression;
   const rank = getRankByXP(prog.xp);
+  const playerName = store.playerName || "Player";
 
-  // v1 stats: only real values make it onto the card.
   const stats = {
-    gamesWon: prog.defeatedBosses.length,  // for v1 "games won" = bosses defeated
+    gamesWon: prog.defeatedBosses.length,
     puzzlesSolved: 0,
     longestStreak: prog.streak,
   };
 
   return (
-    <div style={{
-      minHeight: "100dvh", background: P.cream, color: P.ink,
-      fontFamily: "var(--font-nunito), sans-serif", position: "relative",
-    }}>
-      {/* Paper grain */}
-      <div aria-hidden style={{
-        position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.022'/%3E%3C/svg%3E")`,
-      }} />
+    <div
+      style={{
+        minHeight: "100dvh",
+        background: T.bgRadial,
+        color: T.textHi,
+        fontFamily: T.fontUI,
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <StarField count={140} seed={13} opacity={0.7} />
+      <MoteField count={20} seed={14} color={T.amberGlow} />
+
+      {/* Light burst behind card */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "min(90vw, 800px)",
+          height: "min(90vw, 800px)",
+          borderRadius: "50%",
+          background:
+            "radial-gradient(circle, rgba(245,182,56,0.30) 0%, rgba(192,132,252,0.18) 35%, transparent 65%)",
+          filter: "blur(20px)",
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Spinning rays */}
+      <svg
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: `translate(-50%,-50%) rotate(${time * 4}deg)`,
+          width: "min(95vw, 900px)",
+          height: "min(95vw, 900px)",
+          pointerEvents: "none",
+        }}
+        viewBox="-450 -450 900 900"
+      >
+        {[...Array(14)].map((_, i) => (
+          <polygon
+            key={i}
+            points="0,-420 6,-120 -6,-120"
+            fill="rgba(252,211,77,0.10)"
+            transform={`rotate(${(i / 14) * 360})`}
+          />
+        ))}
+      </svg>
 
       {/* Header */}
-      <header style={{
-        position: "sticky", top: 0, zIndex: 10,
-        padding: "10px 20px",
-        background: "rgba(251,247,240,0.88)",
-        backdropFilter: "blur(20px) saturate(1.2)",
-        borderBottom: `1px solid ${P.inkGhost}40`,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-      }}>
-        <Link href="/kingdom" style={{
-          display: "flex", alignItems: "center", gap: 8,
-          color: P.inkMed, textDecoration: "none", fontSize: 13, fontWeight: 700,
-        }}>
+      <header
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          padding: "14px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "rgba(7,5,15,0.6)",
+          backdropFilter: "blur(20px) saturate(1.4)",
+          borderBottom: `1px solid ${T.border}`,
+        }}
+      >
+        <Link
+          href="/play"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            color: T.textLo,
+            textDecoration: "none",
+            fontSize: 13,
+            fontWeight: 700,
+            fontFamily: T.fontUI,
+            letterSpacing: "0.08em",
+          }}
+        >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>
-          Kingdoms
+          BACK
         </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 20 }}>♟</span>
-          <span style={{ fontSize: 16, fontWeight: 900, fontFamily: "var(--font-playfair), serif", color: P.ink }}>
+          <span style={{ fontSize: 18 }}>🃏</span>
+          <span
+            style={{
+              fontFamily: T.fontDisplay,
+              fontStyle: "italic",
+              fontWeight: 600,
+              fontSize: 18,
+              color: T.textHi,
+              letterSpacing: "-0.01em",
+            }}
+          >
             Knight Card
           </span>
         </div>
-        <div style={{ width: 90 }} />
-      </header>
-
-      <section style={{ maxWidth: 500, margin: "0 auto", padding: "36px 20px 80px", textAlign: "center", position: "relative", zIndex: 1 }}>
-        <span style={{
-          fontFamily: "'Caveat', cursive", fontSize: 19, color: P.gold,
-          display: "block", marginBottom: 6,
-        }}>share your chess journey</span>
-        <h1 style={{
-          margin: "0 0 28px", fontSize: "clamp(28px, 4vw, 38px)", fontWeight: 900,
-          fontFamily: "var(--font-playfair), serif", color: P.ink, letterSpacing: -0.8,
-        }}>Your Knight Card</h1>
-
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
-          <KnightCard
-            ref={cardRef}
-            playerName={store.playerName || "Chess Traveler"}
-            progression={prog}
-            rank={rank}
-            stats={stats}
-          />
-        </div>
-
         <button
           onClick={handleShare}
           style={{
-            background: P.emerald, color: "white", border: "none",
-            borderRadius: 16, padding: "16px 36px", fontSize: 16,
-            fontWeight: 800, cursor: "pointer",
-            fontFamily: "var(--font-nunito), sans-serif",
-            boxShadow: "0 8px 28px rgba(27,115,64,0.3)",
-            transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)",
-            display: "inline-flex", alignItems: "center", gap: 8,
+            background: T.goldFoil,
+            color: T.inkDeep,
+            border: "none",
+            borderRadius: 10,
+            padding: "8px 18px",
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: "pointer",
+            fontFamily: T.fontUI,
+            letterSpacing: "0.05em",
+            boxShadow: T.glowAmber,
           }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px) scale(1.03)"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0) scale(1)"; }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-            <polyline points="16 6 12 2 8 6" />
-            <line x1="12" y1="2" x2="12" y2="15" />
-          </svg>
-          Share Card
+          ✦ Share
         </button>
+      </header>
 
-        <div style={{ marginTop: 14, color: P.inkFaint, fontSize: 13 }}>
-          Share with family, post to your wall, or save as a keepsake.
+      {/* Main */}
+      <main
+        style={{
+          position: "relative",
+          zIndex: 1,
+          minHeight: "calc(100dvh - 70px)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "40px 16px 120px",
+          gap: 28,
+        }}
+      >
+        {/* Sub-tag */}
+        <div style={{ textAlign: "center", marginTop: -16 }}>
+          <div
+            style={{
+              fontFamily: T.fontUI,
+              fontSize: 12,
+              fontWeight: 700,
+              color: T.amberGlow,
+              letterSpacing: "0.4em",
+              textTransform: "uppercase",
+              marginBottom: 6,
+            }}
+          >
+            Your identity. Shareable.
+          </div>
         </div>
-      </section>
 
+        {/* The card itself */}
+        <div ref={cardRef}>
+          <KnightCard playerName={playerName} progression={prog} rank={rank} stats={stats} />
+        </div>
+
+        {/* Footer caption */}
+        <div
+          style={{
+            textAlign: "center",
+            fontFamily: T.fontDisplay,
+            fontStyle: "italic",
+            fontSize: 22,
+            color: T.textHi,
+            letterSpacing: "-0.01em",
+            maxWidth: 520,
+            padding: "0 16px",
+          }}
+        >
+          &ldquo;Mom — look at MY card.&rdquo;
+        </div>
+      </main>
+
+      {/* Toast */}
       {toast && (
-        <div style={{
-          position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)",
-          padding: "12px 22px", borderRadius: 14,
-          background: P.ink, color: P.cream,
-          fontWeight: 700, fontSize: 14,
-          boxShadow: "0 12px 36px rgba(26,18,16,0.35)",
-          zIndex: 100,
-        }}>{toast}</div>
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: "fixed",
+            bottom: 100,
+            left: "50%",
+            transform: "translateX(-50%)",
+            padding: "10px 20px",
+            borderRadius: 14,
+            background: T.amethystBg,
+            color: T.textHi,
+            border: `1px solid ${T.borderStrong}`,
+            fontWeight: 700,
+            fontSize: 13,
+            fontFamily: T.fontUI,
+            boxShadow: T.shadowDeep,
+            zIndex: 100,
+          }}
+        >
+          {toast}
+        </div>
       )}
-      <div style={{ height: 80 }} />
+
       <BottomNav />
     </div>
   );

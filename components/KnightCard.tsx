@@ -1,25 +1,11 @@
 "use client";
 
-import { forwardRef } from "react";
+import React from "react";
 import type { PlayerProgression, Rank } from "@/lib/progression/types";
-import { KINGDOMS, POWERS } from "@/lib/progression/data";
-
-const P = {
-  cream: "#FBF7F0",
-  creamDeep: "#F5EFE4",
-  parchment: "#F0E8D8",
-  ink: "#1A1210",
-  inkSoft: "#2E2620",
-  inkMed: "#5C544A",
-  inkLight: "#8A8278",
-  inkFaint: "#B0A898",
-  inkGhost: "#D0C8BC",
-  emerald: "#1B7340",
-  emeraldPale: "#E6F4EC",
-  gold: "#C7940A",
-  goldLight: "#F0D060",
-  goldPale: "#FDF6E3",
-};
+import { KINGDOMS, getPowersForKingdom } from "@/lib/progression/data";
+import { T, KINGDOM_COLORS } from "@/lib/design/tokens";
+import { useTime, GoldFoilText } from "@/lib/design/atmosphere";
+import { Piece, type PieceType } from "@/components/ChessPieces";
 
 interface KnightCardProps {
   playerName: string;
@@ -28,173 +14,384 @@ interface KnightCardProps {
   stats: { gamesWon: number; puzzlesSolved: number; longestStreak: number };
 }
 
+const RANK_PIECE: Record<string, PieceType> = {
+  pawn: "pawn",
+  knight: "knight",
+  bishop: "bishop",
+  rook: "rook",
+  queen: "queen",
+  king: "king",
+};
+
 function titleFromProgression(prog: PlayerProgression): string {
-  // Pick the most recently defeated boss's kingdom name as a title.
   const last = prog.defeatedBosses[prog.defeatedBosses.length - 1];
-  if (!last) return "Apprentice of the Pawn Village";
-  const kingdom = KINGDOMS.find((k) => k.boss?.name === last);
-  if (!kingdom) return "Chess Traveler";
-  return `${kingdom.name} Champion`;
-}
-
-function rarestAchievement(prog: PlayerProgression): { icon: string; label: string } | null {
-  const order: Record<string, number> = { common: 1, rare: 2, epic: 3, legendary: 4 };
-  let best: { icon: string; label: string; rank: number } | null = null;
-  for (const id of prog.earnedPowers) {
-    const pw = POWERS.find((p) => p.id === id);
-    if (!pw) continue;
-    const r = order[pw.rarity] ?? 0;
-    if (!best || r > best.rank) best = { icon: pw.icon, label: pw.name, rank: r };
+  if (last) {
+    const k = KINGDOMS.find((kk) => kk.boss?.name === last);
+    if (k) return `${k.name} Champion`;
   }
-  return best ? { icon: best.icon, label: best.label } : null;
+  if (prog.completedKingdoms.length > 0) {
+    const idx = prog.completedKingdoms.length - 1;
+    const k = KINGDOMS.find((kk) => kk.id === prog.completedKingdoms[idx]);
+    if (k) return `${k.name} Champion`;
+  }
+  return "Rising Apprentice";
 }
 
-const KnightCard = forwardRef<HTMLDivElement, KnightCardProps>(function KnightCard(
-  { playerName, progression, rank, stats },
-  ref
-) {
+function rarity(prog: PlayerProgression): "common" | "uncommon" | "rare" | "epic" | "legendary" {
+  if (prog.earnedPowers.length >= 18) return "legendary";
+  if (prog.earnedPowers.length >= 12) return "epic";
+  if (prog.earnedPowers.length >= 6) return "rare";
+  if (prog.earnedPowers.length >= 2) return "uncommon";
+  return "common";
+}
+
+const RARITY_TINT: Record<string, { color: string; bg: string; border: string }> = {
+  common: { color: T.textMed, bg: "rgba(255,255,255,0.08)", border: "rgba(255,255,255,0.20)" },
+  uncommon: { color: T.emeraldGlow, bg: "rgba(52,211,153,0.15)", border: "rgba(52,211,153,0.4)" },
+  rare: { color: T.sapphireGlow, bg: "rgba(125,168,255,0.15)", border: "rgba(125,168,255,0.5)" },
+  epic: { color: T.amethystGlow, bg: "rgba(192,132,252,0.18)", border: "rgba(192,132,252,0.5)" },
+  legendary: { color: T.amberGlow, bg: "rgba(245,182,56,0.18)", border: "rgba(252,211,77,0.6)" },
+};
+
+function dateCode(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function KnightCard({ playerName, progression, rank, stats }: KnightCardProps) {
+  const time = useTime();
+  // Subtle 3D tilt that gently oscillates
+  const tiltX = Math.sin(time * 0.5) * 1.5;
+  const tiltY = Math.cos(time * 0.6) * 2;
+  // Holographic shimmer sweep — moves across card
+  const shimmerX = ((time * 0.6) % 2) - 0.3;
+
   const title = titleFromProgression(progression);
-  const rare = rarestAchievement(progression);
-  const totalPowers = POWERS.length;
+  const r = rarity(progression);
+  const tint = RARITY_TINT[r];
+
+  // Bosses defeated chips
+  const bossTags = progression.defeatedBosses
+    .map((bossName) => {
+      const k = KINGDOMS.find((kk) => kk.boss?.name === bossName);
+      return k ? { name: k.boss!.name, color: KINGDOM_COLORS[k.id] ?? T.amber } : null;
+    })
+    .filter(Boolean) as { name: string; color: string }[];
+
+  const playerCode = playerName.toUpperCase().replace(/\s+/g, "").slice(0, 8) || "PLAYER";
+  const cardId = `CW-${dateCode()}-${playerCode} · #${String(progression.xp % 99999).padStart(5, "0")}`;
 
   return (
     <div
-      ref={ref}
       style={{
-        width: 360,
-        background: P.cream,
-        border: `1px solid ${P.inkGhost}`,
-        borderRadius: 24,
-        boxShadow: `0 0 0 6px ${P.parchment}, 0 28px 72px rgba(26,18,16,0.2), 0 4px 14px rgba(26,18,16,0.1)`,
-        padding: "28px 24px",
-        position: "relative",
-        fontFamily: "var(--font-nunito), sans-serif",
-        color: P.ink,
-        overflow: "hidden",
+        transform: `perspective(2400px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
+        transformStyle: "preserve-3d",
+        width: "min(520px, 92vw)",
+        aspectRatio: "520 / 760",
+        animation: "kcIn 1.0s cubic-bezier(0.34,1.56,0.64,1) both",
       }}
     >
-      {/* Subtle corner ornaments */}
-      <div aria-hidden style={{ position: "absolute", inset: 8, borderRadius: 18, border: `1px dashed ${P.inkGhost}`, pointerEvents: "none" }} />
+      {/* CARD BODY (outer foil rim) */}
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          borderRadius: 32,
+          background: "linear-gradient(155deg, #2A1B5C 0%, #1A1238 30%, #0E0A1F 70%, #1A1238 100%)",
+          padding: 4,
+          boxShadow: `${T.shadowDeep}, 0 0 60px rgba(192,132,252,0.4), inset 0 0 0 2px rgba(252,211,77,0.5)`,
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Holographic shimmer overlay */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: 32,
+            background: `linear-gradient(${110 + Math.sin(time * 0.3) * 10}deg,
+              transparent 0%,
+              transparent ${(shimmerX * 100) | 0}%,
+              rgba(255,255,255,0.30) ${((shimmerX + 0.08) * 100) | 0}%,
+              rgba(252,211,77,0.20) ${((shimmerX + 0.16) * 100) | 0}%,
+              transparent ${((shimmerX + 0.24) * 100) | 0}%,
+              transparent 100%)`,
+            mixBlendMode: "screen",
+            pointerEvents: "none",
+            zIndex: 5,
+          }}
+        />
 
-      {/* Header */}
-      <div style={{ textAlign: "center", position: "relative" }}>
-        <div style={{
-          fontFamily: "'Caveat', cursive", fontSize: 16, color: P.gold,
-          letterSpacing: 1, marginBottom: 4,
-        }}>knight of the chess kingdom</div>
-        <div style={{
-          fontSize: 28, lineHeight: 1, color: rank.color, margin: "4px 0",
-          filter: `drop-shadow(0 3px 8px ${rank.color}40)`,
-        }}>{rank.icon}</div>
-        <div style={{
-          fontSize: 26, fontWeight: 900,
-          fontFamily: "var(--font-playfair), serif",
-          color: P.ink, letterSpacing: -0.4,
-        }}>{playerName || "Anonymous"}</div>
-        <div style={{
-          display: "inline-block", marginTop: 6, padding: "3px 10px", borderRadius: 6,
-          background: P.goldPale, border: `1px solid ${P.gold}44`,
-          fontSize: 10, fontWeight: 800, color: P.gold, letterSpacing: 1,
-          textTransform: "uppercase",
-        }}>{title}</div>
-      </div>
+        {/* Inner card surface */}
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            borderRadius: 28,
+            background: "linear-gradient(170deg, #1A1238 0%, #0A0814 100%)",
+            border: "1px solid rgba(252,211,77,0.35)",
+            padding: "28px 24px",
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          {/* foil corner accents */}
+          {(["tl", "tr", "bl", "br"] as const).map((corner) => {
+            const pos: React.CSSProperties = {
+              tl: { top: 14, left: 14 },
+              tr: { top: 14, right: 14 },
+              bl: { bottom: 14, left: 14 },
+              br: { bottom: 14, right: 14 },
+            }[corner];
+            const rot = { tl: 0, tr: 90, bl: 270, br: 180 }[corner];
+            return (
+              <svg
+                key={corner}
+                width="32"
+                height="32"
+                viewBox="0 0 36 36"
+                style={{ position: "absolute", ...pos, transform: `rotate(${rot}deg)` }}
+                aria-hidden
+              >
+                <defs>
+                  <linearGradient id={`kcCorner-${corner}`} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#FCD34D" />
+                    <stop offset="100%" stopColor="#B07A0E" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M 4 4 L 32 4 M 4 4 L 4 32 M 4 4 L 14 14"
+                  stroke={`url(#kcCorner-${corner})`}
+                  strokeWidth="2"
+                  fill="none"
+                  strokeLinecap="round"
+                />
+              </svg>
+            );
+          })}
 
-      {/* Rank + XP */}
-      <div style={{
-        marginTop: 18, padding: "14px 16px", borderRadius: 14,
-        background: "white", border: `1px solid ${P.inkGhost}`,
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-      }}>
-        <div>
-          <div style={{ fontSize: 10, fontWeight: 800, color: P.inkLight, letterSpacing: 1.5, textTransform: "uppercase" }}>
-            Rank
+          {/* Header — rank chip + rarity badge */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 6 }}>
+            <div
+              style={{
+                fontFamily: T.fontUI,
+                fontSize: 11,
+                fontWeight: 700,
+                color: T.amberGlow,
+                letterSpacing: "0.3em",
+                textTransform: "uppercase",
+              }}
+            >
+              ♘ {rank.name} Rank
+            </div>
+            <div
+              style={{
+                padding: "4px 10px",
+                background: tint.bg,
+                border: `1px solid ${tint.border}`,
+                borderRadius: 6,
+                fontFamily: T.fontUI,
+                fontSize: 10,
+                fontWeight: 700,
+                color: tint.color,
+                letterSpacing: "0.2em",
+                textTransform: "uppercase",
+              }}
+            >
+              {r}
+            </div>
           </div>
-          <div style={{
-            fontSize: 18, fontWeight: 800, color: P.ink,
-            fontFamily: "var(--font-playfair), serif",
-          }}>{rank.name}</div>
-        </div>
-        <div style={{ textAlign: "right" }}>
-          <div style={{ fontSize: 10, fontWeight: 800, color: P.inkLight, letterSpacing: 1.5, textTransform: "uppercase" }}>
-            XP
-          </div>
-          <div style={{
-            fontSize: 18, fontWeight: 800, color: P.emerald,
-            fontFamily: "var(--font-playfair), serif",
-          }}>{progression.xp.toLocaleString()}</div>
-        </div>
-      </div>
 
-      {/* Stats grid */}
-      <div style={{
-        marginTop: 10, padding: "14px 16px", borderRadius: 14,
-        background: P.creamDeep, border: `1px solid ${P.inkGhost}`,
-        display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10,
-      }}>
-        <Stat label="Bosses" value={stats.gamesWon} />
-        <Stat label="Powers" value={`${progression.earnedPowers.length}/${totalPowers}`} />
-        <Stat label="Streak" value={`${stats.longestStreak}d`} />
-      </div>
-
-      {/* Bosses */}
-      {progression.defeatedBosses.length > 0 && (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ fontSize: 10, fontWeight: 800, color: P.inkLight, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 6 }}>
-            Bosses Defeated
+          {/* Player name (gold foil) */}
+          <div style={{ marginBottom: 4 }}>
+            <GoldFoilText fontSize={48} italic>
+              {playerName || "Player"}
+            </GoldFoilText>
           </div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {progression.defeatedBosses.map((b) => (
-              <span key={b} style={{
-                padding: "4px 10px", borderRadius: 8,
-                background: P.emeraldPale, border: `1px solid ${P.emerald}44`,
-                fontSize: 11, fontWeight: 700, color: P.emerald,
-              }}>{b}</span>
+          <div
+            style={{
+              fontFamily: T.fontHand,
+              fontSize: 22,
+              color: T.amberSoft,
+              transform: "rotate(-1.5deg)",
+              marginBottom: 18,
+            }}
+          >
+            {title}
+          </div>
+
+          {/* Big piece in frame */}
+          <div
+            style={{
+              flex: 1,
+              position: "relative",
+              borderRadius: 18,
+              background: "radial-gradient(ellipse at 50% 30%, rgba(192,132,252,0.30) 0%, rgba(26,18,56,0.6) 60%, rgba(10,8,20,1) 100%)",
+              border: "1px solid rgba(252,211,77,0.25)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              boxShadow: "inset 0 0 30px rgba(0,0,0,0.5)",
+              minHeight: 220,
+            }}
+          >
+            {/* radial sunburst */}
+            <svg style={{ position: "absolute", inset: 0 }} viewBox="0 0 460 360" aria-hidden>
+              {[...Array(20)].map((_, i) => (
+                <line
+                  key={i}
+                  x1="230"
+                  y1="180"
+                  x2={230 + Math.cos((i / 20) * Math.PI * 2 + time * 0.3) * 300}
+                  y2={180 + Math.sin((i / 20) * Math.PI * 2 + time * 0.3) * 300}
+                  stroke="rgba(252,211,77,0.15)"
+                  strokeWidth="1"
+                />
+              ))}
+            </svg>
+            <div
+              style={{
+                filter: "drop-shadow(0 0 24px rgba(252,211,77,0.7))",
+                transform: `translateY(${Math.sin(time * 1.5) * 4}px)`,
+              }}
+            >
+              <Piece type={RANK_PIECE[rank.id] ?? "knight"} color="white" size={180} />
+            </div>
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                bottom: 30,
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 200,
+                height: 22,
+                borderRadius: "50%",
+                background: "radial-gradient(ellipse, rgba(252,211,77,0.6) 0%, transparent 70%)",
+                filter: "blur(8px)",
+              }}
+            />
+          </div>
+
+          {/* Stats row */}
+          <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+            {[
+              { label: "GAMES WON", value: String(stats.gamesWon), color: T.emerald },
+              { label: "POWERS", value: `${progression.earnedPowers.length}`, color: T.amethyst },
+              { label: "STREAK", value: `${stats.longestStreak}d`, color: T.amber },
+            ].map((s) => (
+              <div
+                key={s.label}
+                style={{
+                  flex: 1,
+                  padding: "10px 8px",
+                  background: "rgba(255,255,255,0.04)",
+                  border: `1px solid ${s.color}55`,
+                  borderRadius: 10,
+                  textAlign: "center",
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: T.fontDisplay,
+                    fontStyle: "italic",
+                    fontWeight: 700,
+                    fontSize: 24,
+                    color: s.color,
+                    lineHeight: 1,
+                  }}
+                >
+                  {s.value}
+                </div>
+                <div
+                  style={{
+                    fontFamily: T.fontUI,
+                    fontSize: 9,
+                    color: T.textLo,
+                    letterSpacing: "0.15em",
+                    marginTop: 4,
+                  }}
+                >
+                  {s.label}
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      )}
 
-      {/* Rarest achievement */}
-      {rare && (
-        <div style={{
-          marginTop: 14, padding: "12px 14px", borderRadius: 12,
-          background: `linear-gradient(135deg, ${P.goldPale} 0%, ${P.emeraldPale} 100%)`,
-          border: `1px solid ${P.gold}55`,
-          display: "flex", alignItems: "center", gap: 10,
-        }}>
-          <span style={{ fontSize: 24 }}>{rare.icon}</span>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 800, color: P.gold, letterSpacing: 1, textTransform: "uppercase" }}>
-              Rarest Achievement
+          {/* Bosses defeated tags */}
+          {bossTags.length > 0 && (
+            <div style={{ marginTop: 12, display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {bossTags.slice(0, 3).map((b, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: 100,
+                    background: `${b.color}22`,
+                    border: `1px solid ${b.color}66`,
+                    fontFamily: T.fontUI,
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: b.color,
+                    letterSpacing: "0.05em",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  ✦ {b.name}
+                </div>
+              ))}
             </div>
-            <div style={{ fontSize: 14, fontWeight: 800, color: P.ink, fontFamily: "var(--font-playfair), serif" }}>
-              {rare.label}
+          )}
+
+          {/* Footer ID + brand mark */}
+          <div
+            style={{
+              marginTop: "auto",
+              paddingTop: 12,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                fontFamily: T.fontMono,
+                fontSize: 9,
+                color: T.textDim,
+                letterSpacing: "0.15em",
+              }}
+            >
+              {cardId}
+            </div>
+            <div
+              style={{
+                fontFamily: T.fontDisplay,
+                fontStyle: "italic",
+                fontSize: 14,
+                fontWeight: 600,
+                background: T.goldFoil,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              ChessWhiz
             </div>
           </div>
         </div>
-      )}
-
-      {/* Footer */}
-      <div style={{
-        marginTop: 18, textAlign: "center",
-        fontSize: 10, color: P.inkFaint, letterSpacing: 1.5, textTransform: "uppercase",
-      }}>
-        ChessWhiz · Made with ♥
       </div>
-    </div>
-  );
-});
 
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return (
-    <div style={{ textAlign: "center" }}>
-      <div style={{
-        fontSize: 20, fontWeight: 900, color: P.ink,
-        fontFamily: "var(--font-playfair), serif",
-      }}>{value}</div>
-      <div style={{ fontSize: 9, fontWeight: 800, color: P.inkLight, letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>
-        {label}
-      </div>
+      <style>{`
+        @keyframes kcIn {
+          from { opacity: 0; transform: perspective(2400px) translateY(60px) scale(0.5); }
+          to   { opacity: 1; transform: perspective(2400px) translateY(0) scale(1); }
+        }
+      `}</style>
     </div>
   );
 }

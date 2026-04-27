@@ -70,6 +70,15 @@ function KingdomPageInner() {
     if (upgradeId) {
       const k = KINGDOMS.find((kk) => kk.id === upgradeId);
       if (k) setUpgradeFor(k);
+      // Strip the query so the browser back button doesn't replay
+      // the bounce from /kingdom/[id] → /kingdom?upgrade=X. Without
+      // this, back lands on /kingdom/[id] which redirects right back
+      // here, creating a navigation trap.
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("upgrade");
+        window.history.replaceState({}, "", url.toString());
+      }
     }
   }, [hydrated, searchParams]);
 

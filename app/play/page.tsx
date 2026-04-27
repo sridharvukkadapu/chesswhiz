@@ -959,8 +959,26 @@ export default function PlayPage() {
 
           <MoveHistory moves={moveHistory} />
 
-          {/* Action row */}
-          <div style={{ display: "flex", gap: 8 }}>
+          {/* Action row — sticky bottom so New Game / Undo are always
+              within thumb reach without scrolling to the end of the
+              right column. Sits above the 64px bottom nav. */}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              position: "sticky",
+              bottom: "calc(72px + env(safe-area-inset-bottom))",
+              zIndex: 5,
+              padding: "8px 0",
+              background:
+                "linear-gradient(180deg, transparent 0%, rgba(7,5,15,0.65) 30%, rgba(7,5,15,0.85) 100%)",
+              backdropFilter: "blur(6px)",
+              WebkitBackdropFilter: "blur(6px)",
+              marginInline: -4,
+              paddingInline: 4,
+              borderRadius: 14,
+            }}
+          >
             <button
               onClick={() => store.resetGame()}
               style={{
@@ -972,7 +990,7 @@ export default function PlayPage() {
                 background: "rgba(255,255,255,0.04)",
                 border: `1.5px solid ${T.border}`,
                 borderRadius: 12,
-                minHeight: 46,
+                minHeight: 52,
                 fontSize: 13,
                 fontWeight: 700,
                 color: T.textMed,
@@ -1007,7 +1025,7 @@ export default function PlayPage() {
                 background: "rgba(255,255,255,0.04)",
                 border: `1.5px solid ${T.border}`,
                 borderRadius: 12,
-                minHeight: 46,
+                minHeight: 52,
                 fontSize: 13,
                 fontWeight: 700,
                 color: T.textMed,

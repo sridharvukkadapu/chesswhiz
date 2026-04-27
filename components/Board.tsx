@@ -36,6 +36,7 @@ interface BoardProps {
   voicePlaying?: boolean;
   onSquareClick: (r: number, c: number) => void;
   onPromo: (piece: string) => void;
+  onCancelPromo?: () => void;
 }
 
 // ── Slide animation: when lastMove changes, render an overlay piece
@@ -57,7 +58,7 @@ interface SlideState {
 export default function Board({
   chess, selected, legalHighlights, lastMove,
   showPromo, status, botThinking, annotation, voicePlaying,
-  onSquareClick, onPromo,
+  onSquareClick, onPromo, onCancelPromo,
 }: BoardProps) {
   const board = chess.board();
   const inCheck = chess.isCheck();
@@ -68,6 +69,18 @@ export default function Board({
   const lastSeenMoveRef = useRef<LastMove | null>(null);
   const [slide, setSlide] = useState<SlideState | null>(null);
   const [slideTick, setSlideTick] = useState(0); // forces re-render during animation
+
+  // Promotion modal: autofocus the queen option when shown, and let Escape dismiss.
+  const promoFirstOptionRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!showPromo) return;
+    promoFirstOptionRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && onCancelPromo) onCancelPromo();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showPromo, onCancelPromo]);
 
   useEffect(() => {
     if (!lastMove) {
@@ -429,9 +442,10 @@ export default function Board({
               Promote pawn
             </span>
             <div style={{ display: "flex", gap: 10 }}>
-              {(["q", "r", "b", "n"] as const).map((p) => (
-                <button
+              {(["q", "r", "b", "n"] as const).map((p, i) => (
+                <button type="button"
                   key={p}
+                  ref={i === 0 ? promoFirstOptionRef : undefined}
                   onClick={() => onPromo(p)}
                   style={{
                     display: "flex",
@@ -450,7 +464,17 @@ export default function Board({
                     (e.currentTarget as HTMLElement).style.boxShadow = T.glowAmber;
                     (e.currentTarget as HTMLElement).style.transform = "scale(1.08)";
                   }}
+                  onFocus={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = T.amber;
+                    (e.currentTarget as HTMLElement).style.boxShadow = T.glowAmber;
+                    (e.currentTarget as HTMLElement).style.transform = "scale(1.08)";
+                  }}
                   onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.borderColor = T.border;
+                    (e.currentTarget as HTMLElement).style.boxShadow = "none";
+                    (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+                  }}
+                  onBlur={(e) => {
                     (e.currentTarget as HTMLElement).style.borderColor = T.border;
                     (e.currentTarget as HTMLElement).style.boxShadow = "none";
                     (e.currentTarget as HTMLElement).style.transform = "scale(1)";

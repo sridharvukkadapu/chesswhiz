@@ -1150,7 +1150,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div style={{ borderBottom: `1px solid ${T.border}`, padding: "16px 0" }}>
-      <button
+      <button type="button"
         onClick={() => setOpen(!open)}
         style={{
           width: "100%",

@@ -64,7 +64,7 @@ export default function UpgradeModal({
           animation: "umPop 0.45s cubic-bezier(0.16,1,0.3,1)",
         }}
       >
-        <button
+        <button type="button"
           onClick={onClose}
           aria-label="Close"
           style={{
@@ -261,7 +261,7 @@ export default function UpgradeModal({
         >
           ✦ Start 7-day free trial ✦
         </Link>
-        <button
+        <button type="button"
           onClick={onClose}
           style={{
             display: "block",

@@ -162,7 +162,7 @@ function RankUpToast({ rankId, onDone }: { rankId: RankId; onDone: () => void })
 // ── Voice toggle button (header chip) ──
 function VoiceToggle({ enabled, onToggle }: { enabled: boolean; onToggle: () => void }) {
   return (
-    <button
+    <button type="button"
       onClick={onToggle}
       aria-label={enabled ? "Turn off coach voice" : "Turn on coach voice"}
       aria-pressed={enabled}
@@ -770,7 +770,7 @@ export default function PlayPage() {
           {speech.supported && <VoiceToggle enabled={speech.enabled} onToggle={speech.toggle} />}
 
           {/* New Game */}
-          <button
+          <button type="button"
             onClick={() => store.resetGame()}
             style={{
               display: "flex",
@@ -791,7 +791,15 @@ export default function PlayPage() {
               (e.currentTarget as HTMLElement).style.borderColor = T.amber;
               (e.currentTarget as HTMLElement).style.color = T.amberGlow;
             }}
+            onFocus={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = T.amber;
+              (e.currentTarget as HTMLElement).style.color = T.amberGlow;
+            }}
             onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = T.border;
+              (e.currentTarget as HTMLElement).style.color = T.textHi;
+            }}
+            onBlur={(e) => {
               (e.currentTarget as HTMLElement).style.borderColor = T.border;
               (e.currentTarget as HTMLElement).style.color = T.textHi;
             }}
@@ -924,6 +932,7 @@ export default function PlayPage() {
                   voicePlaying={voicePlayback === "playing"}
                   onSquareClick={handleSquareClick}
                   onPromo={handlePromo}
+                  onCancelPromo={() => store.hidePromoModal()}
                 />
               </div>
 
@@ -980,7 +989,7 @@ export default function PlayPage() {
               borderRadius: 14,
             }}
           >
-            <button
+            <button type="button"
               onClick={() => store.resetGame()}
               style={{
                 flex: 1,
@@ -1003,7 +1012,15 @@ export default function PlayPage() {
                 (e.currentTarget as HTMLElement).style.borderColor = T.emerald;
                 (e.currentTarget as HTMLElement).style.color = T.emeraldGlow;
               }}
+              onFocus={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = T.emerald;
+                (e.currentTarget as HTMLElement).style.color = T.emeraldGlow;
+              }}
               onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = T.border;
+                (e.currentTarget as HTMLElement).style.color = T.textMed;
+              }}
+              onBlur={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = T.border;
                 (e.currentTarget as HTMLElement).style.color = T.textMed;
               }}
@@ -1011,7 +1028,7 @@ export default function PlayPage() {
               <RefreshCw aria-hidden size={14} strokeWidth={2.5} />
               New Game
             </button>
-            <button
+            <button type="button"
               onClick={() => store.undo()}
               disabled={stateHistory.length < 2 || status !== "playing"}
               style={{
@@ -1038,7 +1055,17 @@ export default function PlayPage() {
                   (e.currentTarget as HTMLElement).style.color = T.amberGlow;
                 }
               }}
+              onFocus={(e) => {
+                if (stateHistory.length >= 2 && status === "playing") {
+                  (e.currentTarget as HTMLElement).style.borderColor = T.amber;
+                  (e.currentTarget as HTMLElement).style.color = T.amberGlow;
+                }
+              }}
               onMouseLeave={(e) => {
+                (e.currentTarget as HTMLElement).style.borderColor = T.border;
+                (e.currentTarget as HTMLElement).style.color = T.textMed;
+              }}
+              onBlur={(e) => {
                 (e.currentTarget as HTMLElement).style.borderColor = T.border;
                 (e.currentTarget as HTMLElement).style.color = T.textMed;
               }}

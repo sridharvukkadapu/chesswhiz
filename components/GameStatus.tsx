@@ -75,7 +75,7 @@ export default function GameStatusBar({ status, playerName, onReset }: GameStatu
       >
         {config.label}
       </span>
-      <button
+      <button type="button"
         onClick={onReset}
         style={{
           padding: "10px 20px",

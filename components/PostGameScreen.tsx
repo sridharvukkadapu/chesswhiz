@@ -317,7 +317,7 @@ export default function PostGameScreen({
 
       {/* 03 Quest / Upgrade pitch */}
       {showUpgradePitch && forkForest ? (
-        <button
+        <button type="button"
           onClick={() => setUpgradeOpen(true)}
           aria-label="Unlock the Fork Forest with Champion"
           style={{
@@ -337,7 +337,13 @@ export default function PostGameScreen({
           onMouseEnter={(e) => {
             (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
           }}
+          onFocus={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)";
+          }}
           onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+          }}
+          onBlur={(e) => {
             (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
           }}
         >
@@ -414,7 +420,7 @@ export default function PostGameScreen({
 
       {/* Three actions */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-        <button
+        <button type="button"
           onClick={onPlayAgain}
           style={{
             display: "flex",
@@ -433,7 +439,9 @@ export default function PostGameScreen({
             transition: "transform 200ms cubic-bezier(0.34,1.56,0.64,1)",
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
+          onFocus={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+          onBlur={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
         >
           <span style={{ fontSize: 18 }}>♟</span>
           <span style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.08em" }}>Play Again</span>
@@ -459,7 +467,15 @@ export default function PostGameScreen({
             (e.currentTarget as HTMLElement).style.borderColor = T.amber;
             (e.currentTarget as HTMLElement).style.color = T.amberGlow;
           }}
+          onFocus={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = T.amber;
+            (e.currentTarget as HTMLElement).style.color = T.amberGlow;
+          }}
           onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = T.border;
+            (e.currentTarget as HTMLElement).style.color = T.textMed;
+          }}
+          onBlur={(e) => {
             (e.currentTarget as HTMLElement).style.borderColor = T.border;
             (e.currentTarget as HTMLElement).style.color = T.textMed;
           }}
@@ -488,7 +504,15 @@ export default function PostGameScreen({
             (e.currentTarget as HTMLElement).style.borderColor = T.amethyst;
             (e.currentTarget as HTMLElement).style.color = T.amethystGlow;
           }}
+          onFocus={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = T.amethyst;
+            (e.currentTarget as HTMLElement).style.color = T.amethystGlow;
+          }}
           onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.borderColor = T.border;
+            (e.currentTarget as HTMLElement).style.color = T.textMed;
+          }}
+          onBlur={(e) => {
             (e.currentTarget as HTMLElement).style.borderColor = T.border;
             (e.currentTarget as HTMLElement).style.color = T.textMed;
           }}

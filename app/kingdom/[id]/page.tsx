@@ -235,7 +235,7 @@ export default function KingdomDetailPage() {
 
       {/* Enter Kingdom CTA */}
       <section style={{ maxWidth: 720, margin: "0 auto", padding: "36px 20px 80px", position: "relative", zIndex: 1, textAlign: "center" }}>
-        <button
+        <button type="button"
           onClick={enterKingdom}
           style={{
             background: P.emerald, color: "white", border: "none",
@@ -247,7 +247,9 @@ export default function KingdomDetailPage() {
             letterSpacing: 0.2,
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-3px) scale(1.03)"; }}
+          onFocus={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-3px) scale(1.03)"; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0) scale(1)"; }}
+          onBlur={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0) scale(1)"; }}
         >
           {defeated ? "Play here again" : `Enter the ${kingdom.name}`}
         </button>

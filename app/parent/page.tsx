@@ -165,7 +165,7 @@ export default function ParentPage() {
               }}>{error}</div>
             )}
 
-            <button
+            <button type="button"
               onClick={handleSubmit}
               style={{
                 marginTop: 18, width: "100%", padding: "14px", borderRadius: 14,
@@ -175,13 +175,15 @@ export default function ParentPage() {
                 transition: "all 0.25s cubic-bezier(0.34,1.56,0.64,1)",
               }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
+              onFocus={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
+              onBlur={(e) => { (e.currentTarget as HTMLElement).style.transform = "translateY(0)"; }}
             >
               {mode === "set" ? "Set PIN & Continue" : "Unlock"}
             </button>
 
             {mode === "enter" && (
-              <button
+              <button type="button"
                 onClick={() => {
                   const ok = typeof window !== "undefined" && window.confirm(
                     "Reset PIN?\n\nThis will clear the parent PIN. " +
@@ -462,7 +464,7 @@ function Dashboard() {
                 : "Pawn Village only. Upgrade to unlock the rest."}
             </div>
           </div>
-          <button
+          <button type="button"
             onClick={() => store.setTier(prog.tier === "champion" ? "free" : "champion")}
             style={{
               background: prog.tier === "champion" ? "white" : P.emerald,
@@ -559,7 +561,7 @@ function ToggleRow({
           fontSize: 12, color: P.inkLight, marginTop: 2,
         }}>{hint}</div>
       </div>
-      <button
+      <button type="button"
         role="switch"
         aria-checked={on}
         aria-label={`${label}: ${on ? "on" : "off"}`}

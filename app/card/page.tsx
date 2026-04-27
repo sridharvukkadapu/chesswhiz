@@ -185,7 +185,7 @@ export default function CardPage() {
             Knight Card
           </span>
         </div>
-        <button
+        <button type="button"
           onClick={handleShare}
           style={{
             background: T.goldFoil,

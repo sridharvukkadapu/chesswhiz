@@ -132,8 +132,13 @@ export default function Onboarding({ onStart }: OnboardingProps) {
           </div>
         </div>
 
-        {/* Form card */}
-        <div
+        {/* Form card — wrapped in <form> so the keyboard "Go" button on
+            iOS Safari + Enter on desktop submits the quest. */}
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (canStart) onStart(name.trim(), age, difficulty);
+          }}
           style={{
             width: "min(540px, 100%)",
             background: "linear-gradient(180deg, rgba(26,18,56,0.95) 0%, rgba(14,10,31,0.95) 100%)",
@@ -208,7 +213,7 @@ export default function Onboarding({ onStart }: OnboardingProps) {
               {AGE_OPTIONS.map((opt) => {
                 const active = age === opt.value;
                 return (
-                  <button
+                  <button type="button"
                     key={opt.value}
                     onClick={() => setAge(opt.value)}
                     aria-pressed={active}
@@ -245,7 +250,7 @@ export default function Onboarding({ onStart }: OnboardingProps) {
               {DIFF_OPTIONS.map((d) => {
                 const active = difficulty === d.value;
                 return (
-                  <button
+                  <button type="button"
                     key={d.value}
                     onClick={() => setDifficulty(d.value)}
                     aria-pressed={active}
@@ -321,8 +326,7 @@ export default function Onboarding({ onStart }: OnboardingProps) {
           )}
 
           {/* CTA */}
-          <button
-            onClick={() => canStart && onStart(name.trim(), age, difficulty)}
+          <button type="submit"
             disabled={!canStart}
             aria-label="Begin your quest"
             style={{
@@ -343,12 +347,14 @@ export default function Onboarding({ onStart }: OnboardingProps) {
               transform: "scale(1)",
             }}
             onMouseEnter={(e) => { if (canStart) (e.currentTarget as HTMLElement).style.transform = "translateY(-2px) scale(1.02)"; }}
+            onFocus={(e) => { if (canStart) (e.currentTarget as HTMLElement).style.transform = "translateY(-2px) scale(1.02)"; }}
             onMouseLeave={(e) => { if (canStart) (e.currentTarget as HTMLElement).style.transform = "translateY(0) scale(1)"; }}
+            onBlur={(e) => { if (canStart) (e.currentTarget as HTMLElement).style.transform = "translateY(0) scale(1)"; }}
             onMouseDown={(e) => { if (canStart) (e.currentTarget as HTMLElement).style.transform = "scale(0.97)"; }}
           >
             {canStart ? `✦  Enter Pawn Village, ${firstName}  ✦` : "Type your name to begin"}
           </button>
-        </div>
+        </form>
       </div>
 
       <style>{`

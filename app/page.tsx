@@ -1409,6 +1409,53 @@ export default function LandingPage() {
         overflowX: "hidden",
       }}
     >
+      {/* Schema.org structured data — improves Google rich snippets
+          and gives AI search crawlers (GPTBot, ClaudeBot, PerplexityBot)
+          a structured product description to cite. */}
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "ChessWhiz",
+            applicationCategory: "EducationalApplication",
+            operatingSystem: "Web",
+            description:
+              "Free AI chess coach that plays alongside your child and explains every move in their language. Ages 5–12.",
+            url: "https://chesswhiz.vercel.app",
+            audience: { "@type": "PeopleAudience", suggestedMinAge: 5, suggestedMaxAge: 12 },
+            offers: [
+              {
+                "@type": "Offer",
+                name: "Free",
+                price: "0",
+                priceCurrency: "USD",
+                description: "3 games per day, basic coaching, Pawn Village kingdom.",
+              },
+              {
+                "@type": "Offer",
+                name: "Champion",
+                price: "4.99",
+                priceCurrency: "USD",
+                description:
+                  "Unlimited games, all 7 kingdoms, 20 Powers, Knight Card, missions, parent dashboard.",
+                eligibleDuration: { "@type": "QuantitativeValue", unitCode: "MON", value: 1 },
+              },
+            ],
+            featureList: [
+              "Real-time AI coaching from Coach Pawn (powered by Claude)",
+              "Voice narration via ElevenLabs",
+              "Visual board annotations synced to coach voice",
+              "7-region Chess Kingdom progression",
+              "Boss battles and collectible Powers",
+              "Shareable Knight Card profile",
+            ],
+          }),
+        }}
+      />
+
       {/* Cosmic atmosphere — global, behind everything */}
       <StarField count={120} seed={1} opacity={0.55} />
       <MoteField count={20} seed={2} color={T.amberGlow} />

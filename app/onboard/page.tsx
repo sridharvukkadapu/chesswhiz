@@ -184,5 +184,6 @@ export default function Home() {
     );
   }
 
-  return <Onboarding onStart={handleStart} />;
+  const firstSessionComplete = useGameStore((s) => s.firstSessionComplete);
+  return <Onboarding onStart={handleStart} firstSessionComplete={firstSessionComplete} />;
 }

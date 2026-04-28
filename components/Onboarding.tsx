@@ -7,6 +7,8 @@ import type { Difficulty } from "@/lib/chess/types";
 import { T } from "@/lib/design/tokens";
 import { WarmDust, MoteField } from "@/lib/design/atmosphere";
 import CoachPawn, { SpeechBubble } from "@/components/CoachPawn";
+import { computeDifficulty } from "@/lib/progression/adaptive-difficulty";
+import { useGameStore } from "@/stores/gameStore";
 import {
   getNextStep,
   getAgeValue,
@@ -25,6 +27,7 @@ const PawnMiniGame = dynamic(() => import("@/components/PawnMiniGame"), {
 
 interface OnboardingProps {
   onStart: (name: string, age: number, difficulty: Difficulty) => void;
+  firstSessionComplete?: boolean;
 }
 
 const COACH_MESSAGES: Record<string, string> = {
@@ -35,7 +38,8 @@ const COACH_MESSAGES: Record<string, string> = {
   ready: "You're all set! Let the adventure begin!",
 };
 
-export default function Onboarding({ onStart }: OnboardingProps) {
+export default function Onboarding({ onStart, firstSessionComplete }: OnboardingProps) {
+  const progression = useGameStore((s) => s.progression);
   const [wizardState, setWizardState] = useState<OnboardingState>({
     step: "name",
     name: null,
@@ -183,7 +187,9 @@ export default function Onboarding({ onStart }: OnboardingProps) {
   }
 
   // Step: ready
-  const difficulty: Difficulty = wizardState.experience === "yes" ? 2 : 1;
+  const difficulty: Difficulty = firstSessionComplete
+    ? computeDifficulty(progression)
+    : (wizardState.experience === "yes" ? 2 : 1);
   const age = wizardState.ageBand ? getAgeValue(wizardState.ageBand) : 9;
 
   return (

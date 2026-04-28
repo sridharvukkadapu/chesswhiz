@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useGameStore } from "@/stores/gameStore";
 import { KINGDOMS, POWERS, getRankByXP, getNextRank } from "@/lib/progression/data";
+import { modelToDisplayItems, getMemoryStats } from "@/lib/coaching/memory-display";
+import { T } from "@/lib/design/tokens";
 
 import { StarField, MoteField } from "@/lib/design/atmosphere";
 import { sfx, getSfxEnabled, setSfxEnabled } from "@/lib/audio/sfx";
@@ -482,6 +484,55 @@ function Dashboard() {
         </div>
       )}
 
+      {/* Memory section — mastered concepts, in progress, recurring errors */}
+      <div style={{ marginTop: 24, padding: "20px 22px", background: "rgba(255,252,245,0.92)", border: `1px solid ${P.inkGhost}`, borderRadius: 18, boxShadow: `0 4px 14px rgba(26,18,16,0.05)` }}>
+        {(() => {
+          const learnerModel = store.learnerModel;
+          const stats = getMemoryStats(learnerModel);
+          const items = modelToDisplayItems(learnerModel);
+          const masteredItems = items.filter((i) => i.type === "mastered");
+          const learningItems = items.filter((i) => i.type === "learning" || i.type === "struggling");
+          const errorItems = items.filter((i) => i.type === "error");
+          return (
+            <div style={{ marginBottom: 0 }}>
+              <div style={{ fontFamily: T.fontUI, fontWeight: 700, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12, color: P.inkLight }}>
+                What Coach Pawn Knows
+              </div>
+              <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                {[
+                  { label: "Games", value: stats.gamesPlayed },
+                  { label: "Tactics found", value: stats.tacticsSpotted },
+                  { label: "Mastered", value: stats.masteredCount },
+                ].map((s) => (
+                  <div key={s.label} style={{ flex: 1, borderRadius: 10, padding: "10px 8px", textAlign: "center", background: "rgba(31,42,68,0.05)" }}>
+                    <div style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: 22, color: P.ink }}>{s.value}</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: P.inkLight }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {masteredItems.map((item) => (
+                <div key={item.id} style={{ fontSize: 13, padding: "5px 0", borderBottom: "1px solid rgba(31,42,68,0.08)", color: P.inkSoft }}>
+                  ✓ Coach Pawn {item.text}.
+                </div>
+              ))}
+              {learningItems.map((item) => (
+                <div key={item.id} style={{ fontSize: 13, padding: "5px 0", borderBottom: "1px solid rgba(31,42,68,0.08)", color: P.inkSoft }}>
+                  → Coach Pawn {item.text}.
+                </div>
+              ))}
+              {errorItems.map((item) => (
+                <div key={item.id} style={{ fontSize: 13, padding: "5px 0", borderBottom: "1px solid rgba(31,42,68,0.08)", color: P.inkSoft }}>
+                  ⚠ Your child {item.text}.
+                </div>
+              ))}
+              {items.length === 0 && (
+                <div style={{ fontSize: 13, fontStyle: "italic", color: P.inkLight }}>No memory data yet — play some games first!</div>
+              )}
+            </div>
+          );
+        })()}
+      </div>
+
       {/* Voice usage meter — ElevenLabs cost sanity check.
           Creator plan ships 100,000 chars/month; we show the daily burn
           and the projected monthly so a parent (or the dev) can spot
@@ -539,8 +590,72 @@ function Dashboard() {
         </div>
       </div>
 
+      <ChallengeLevelCard />
+
       <SoundAndFeelCard />
     </section>
+  );
+}
+
+function ChallengeLevelCard() {
+  const store = useGameStore();
+  const bias = store.progression.challengeBias ?? "balanced";
+
+  const options: Array<{ value: "relaxed" | "balanced" | "sharp"; label: string; hint: string }> = [
+    { value: "relaxed", label: "Relaxed", hint: "Bot stays a bit easier" },
+    { value: "balanced", label: "Balanced", hint: "Bot adjusts automatically" },
+    { value: "sharp", label: "Sharp", hint: "Bot stays a bit harder" },
+  ];
+
+  return (
+    <div style={{
+      marginTop: 24, padding: "20px 22px",
+      background: "rgba(255,252,245,0.92)", border: `1px solid ${P.inkGhost}`,
+      borderRadius: 18,
+      boxShadow: `0 4px 14px rgba(26,18,16,0.05)`,
+    }}>
+      <div style={{
+        fontSize: 11, fontWeight: 800, color: P.inkLight,
+        letterSpacing: 1.6, textTransform: "uppercase", marginBottom: 6,
+      }}>Challenge Level</div>
+      <div style={{ fontSize: 13, color: P.inkLight, marginBottom: 14, lineHeight: 1.5 }}>
+        Nudge the bot difficulty up or down. The app still adapts to your child&apos;s win/loss history — this just shifts the baseline.
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        {options.map((opt) => {
+          const active = bias === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => store.setChallengeLevel(opt.value)}
+              style={{
+                flex: 1,
+                padding: "12px 8px",
+                borderRadius: 14,
+                border: `1.5px solid ${active ? P.emerald : P.inkGhost}`,
+                background: active ? P.emeraldPale : "transparent",
+                cursor: "pointer",
+                textAlign: "center",
+                transition: "all 0.2s ease",
+                boxShadow: active ? `0 0 0 3px ${P.emerald}22` : "none",
+              }}
+            >
+              <div style={{
+                fontSize: 14, fontWeight: 800,
+                color: active ? P.emerald : P.inkMed,
+                fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic",
+              }}>{opt.label}</div>
+              <div style={{
+                fontSize: 11, color: active ? P.emerald : P.inkLight,
+                marginTop: 3, lineHeight: 1.4,
+                fontFamily: "var(--font-jakarta), sans-serif",
+              }}>{opt.hint}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

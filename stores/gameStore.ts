@@ -7,11 +7,24 @@ import type { PlayerProgression, Mission, RankId, TacticDetection, Power } from 
 import { getRankByXP, XP_REWARDS, getStreakMultiplier, POWERS, KINGDOMS } from "@/lib/progression/data";
 import { generateMission, missionMatchesTactic, findStrategyForTactic } from "@/lib/progression/missions";
 import { getGameStatus } from "@/lib/chess/engine";
-import type { LearnerModel, LearnerSignal } from "@/lib/learner/types";
+import type { LearnerModel, LearnerSignal, ConceptId, ErrorPatternId } from "@/lib/learner/types";
 import type { CoachResponse } from "@/lib/coaching/schema";
 import { loadLearnerModel, saveLearnerModel, derivePlayerId } from "@/lib/learner/persistence";
+import { computeDifficulty, recordResult } from "@/lib/progression/adaptive-difficulty";
 import { applySignal, recordCoachMessage, startNewGame, incrementMoveCount, summarizeForPrompt } from "@/lib/learner/model";
 import { createEmptyLearnerModel } from "@/lib/learner/model";
+
+let _syncTimer: ReturnType<typeof setTimeout> | null = null;
+function debouncedSync(model: LearnerModel, playerName: string, playerAge: number) {
+  if (_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => {
+    import("@/lib/learner/persistence").then(({ syncToServer }) => {
+      import("@/lib/coaching/schema").then(({ ageToBand }) => {
+        syncToServer(model, playerName, ageToBand(playerAge));
+      });
+    });
+  }, 3000);
+}
 
 const PROGRESSION_KEY = "chesswhiz.progression";
 const PROGRESSION_SALT = "cw-v1";
@@ -151,6 +164,8 @@ const DEFAULT_PROGRESSION: PlayerProgression = {
   streak: 0,
   lastPlayedDate: "",
   tier: "free",
+  challengeBias: "balanced",
+  recentResults: [],
 };
 
 function loadProgression(): PlayerProgression {
@@ -228,6 +243,10 @@ interface GameStore {
   // Structured coach response (replaces individual addCoachMessage calls for AI coaching)
   currentCoachResponse: CoachResponse | null;
 
+  // First-session onboarding flags
+  isFirstSession: boolean;
+  firstSessionComplete: boolean;
+
   // Actions
   setSettings: (name: string, age: number, difficulty: Difficulty) => void;
   selectSquare: (square: Square, moves: Move[]) => void;
@@ -259,11 +278,21 @@ interface GameStore {
   handleTacticDetected: (tactic: TacticDetection) => void;
   dismissAha: () => void;
   resumeGame: (saved: SavedGame) => void;
+  markFirstSessionComplete: () => void;
+  setChallengeLevel: (bias: "relaxed" | "balanced" | "sharp") => void;
+
+  // Boss mechanics
+  bossTacticAppliedThisGame: boolean;
+  currentBossKingdom: string | null;
+  recordBossTacticApplied: () => void;
+  setBossKingdom: (kingdom: string | null) => void;
 
   // Learner model actions
   ingestLearnerSignal: (signal: LearnerSignal) => void;
   setCoachResponse: (response: CoachResponse | null) => void;
   resetForNewGame: () => void;
+  forgetConcept: (conceptId: ConceptId) => void;
+  forgetErrorPattern: (patternId: ErrorPatternId) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -294,6 +323,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   voicePlayback: "idle",
   learnerModel: createEmptyLearnerModel("p_default"),
   currentCoachResponse: null,
+  isFirstSession: false,
+  firstSessionComplete: false,
+  bossTacticAppliedThisGame: false,
+  currentBossKingdom: null,
 
   setSettings: (name, age, difficulty) => {
     // Update streak on session start
@@ -323,12 +356,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const playerId = derivePlayerId(name, age);
     const learnerModel = loadLearnerModel(playerId);
 
+    const firstSessionDone = typeof window !== "undefined"
+      ? localStorage.getItem("chesswhiz.firstSessionDone") === "1"
+      : false;
+
     set({
       playerName: name,
       playerAge: age,
       difficulty,
       screen: "playing",
       learnerModel,
+      isFirstSession: !firstSessionDone,
       chess: new Chess(),
       moveHistory: [],
       stateHistory: [],
@@ -446,6 +484,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   grantGameEndXP: (status) => {
     const { difficulty } = get();
+
+    // Record result for adaptive difficulty
+    const result: "win" | "loss" | "draw" =
+      status === "white_wins" ? "win" :
+      status === "black_wins" ? "loss" : "draw";
+    const updatedProg = recordResult(get().progression, result);
+    saveProgression(updatedProg);
+    set({ progression: updatedProg });
+
     if (status === "white_wins") {
       get().addXP(XP_REWARDS.winGame[difficulty], `Won a ${["Easy","Medium","Hard"][difficulty-1]} game`);
     } else if (status === "stalemate" || status === "draw") {
@@ -578,7 +625,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   hydrateProgression: () => {
     const prog = loadProgression();
-    set({ progression: prog, voiceUsage: loadVoiceUsage() });
+    const firstSessionDone = typeof window !== "undefined"
+      ? localStorage.getItem("chesswhiz.firstSessionDone") === "1"
+      : false;
+    set({ progression: prog, voiceUsage: loadVoiceUsage(), firstSessionComplete: firstSessionDone });
     // If there's no active mission, try to assign one.
     if (!prog.activeMission) {
       const mission = generateMission(prog);
@@ -601,9 +651,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   handleTacticDetected: (tactic) => {
-    const { progression, ahaCelebration } = get();
-    if (!progression.activeMission) return;
+    const { progression, ahaCelebration, currentBossKingdom, bossTacticAppliedThisGame } = get();
     if (!tactic.detected) return;
+
+    // Boss defeat check — fires unconditionally whenever the tactic is detected
+    if (currentBossKingdom && !bossTacticAppliedThisGame) {
+      const bossKingdom = KINGDOMS.find((k) => k.id === currentBossKingdom);
+      if (bossKingdom?.boss?.defeatTactic === tactic.type) {
+        get().recordBossTacticApplied();
+      }
+    }
+
+    if (!progression.activeMission) return;
     if (ahaCelebration) return; // already celebrating; don't clobber
     if (!missionMatchesTactic(progression.activeMission, tactic.type)) return;
 
@@ -664,11 +723,28 @@ export const useGameStore = create<GameStore>((set, get) => ({
     clearSavedGame();
   },
 
+  markFirstSessionComplete: () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("chesswhiz.firstSessionDone", "1");
+    }
+    set({ firstSessionComplete: true });
+  },
+
+  setChallengeLevel: (bias) => {
+    const next = { ...get().progression, challengeBias: bias };
+    saveProgression(next);
+    set({ progression: next });
+  },
+
+  recordBossTacticApplied: () => { set({ bossTacticAppliedThisGame: true }); },
+  setBossKingdom: (kingdom) => { set({ currentBossKingdom: kingdom, bossTacticAppliedThisGame: false }); },
+
   ingestLearnerSignal: (signal) => {
     const { learnerModel } = get();
     const updated = applySignal(learnerModel, signal);
     saveLearnerModel(updated);
     set({ learnerModel: updated });
+    debouncedSync(updated, get().playerName, get().playerAge);
   },
 
   setCoachResponse: (response) => {
@@ -686,6 +762,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const updated = startNewGame(learnerModel);
     saveLearnerModel(updated);
     clearSavedGame();
+    const newDifficulty = computeDifficulty(get().progression);
     set({
       chess: new Chess(),
       selected: null,
@@ -701,6 +778,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       boardAnnotation: null,
       learnerModel: updated,
       currentCoachResponse: null,
+      difficulty: newDifficulty,
       coachMessages: [
         {
           id: crypto.randomUUID(),
@@ -709,6 +787,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
       ],
     });
+  },
+  forgetConcept: (conceptId) => {
+    const { learnerModel } = get();
+    const updated: LearnerModel = {
+      ...learnerModel,
+      conceptsIntroduced: learnerModel.conceptsIntroduced.filter((c) => c.conceptId !== conceptId),
+    };
+    saveLearnerModel(updated);
+    set({ learnerModel: updated });
+  },
+
+  forgetErrorPattern: (patternId) => {
+    const { learnerModel } = get();
+    const updated: LearnerModel = {
+      ...learnerModel,
+      recurringErrors: learnerModel.recurringErrors.filter((e) => e.patternId !== patternId),
+    };
+    saveLearnerModel(updated);
+    set({ learnerModel: updated });
   },
 }));
 

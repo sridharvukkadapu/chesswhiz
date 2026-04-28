@@ -7,8 +7,10 @@ import type { PlayerProgression, Mission } from "@/lib/progression/types";
 import type { GameStatus, CoachMessage } from "@/lib/chess/types";
 import UpgradeModal from "./UpgradeModal";
 import CoachPawn from "./CoachPawn";
+import ShowParentCard from "./ShowParentCard";
 import { T, KINGDOM_COLORS } from "@/lib/design/tokens";
 import { Piece, type PieceType } from "@/components/ChessPieces";
+import { useGameStore } from "@/stores/gameStore";
 
 const KINGDOM_ICONS: Record<string, string> = {
   village: "🏘️",
@@ -162,6 +164,12 @@ export default function PostGameScreen({
   const showUpgradePitch = progression.tier === "free" && isReadyForNextKingdom(progression.masteredStrategies);
   const forkForest = KINGDOMS.find((k) => k.id === "fork_forest");
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [showParent, setShowParent] = useState(false);
+  const learnerModel = useGameStore((s) => s.learnerModel);
+
+  const gameResult: "win" | "loss" | "draw" =
+    status === "white_wins" ? "win" :
+    status === "black_wins" ? "loss" : "draw";
 
   return (
     <div
@@ -418,6 +426,48 @@ export default function PostGameScreen({
         </div>
       )}
 
+      {/* Show to grown-up */}
+      <button type="button"
+        onClick={() => setShowParent(true)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          marginBottom: 12,
+          padding: "13px 16px",
+          borderRadius: 14,
+          background: "rgba(127,191,232,0.08)",
+          border: `1.5px solid rgba(127,191,232,0.40)`,
+          fontFamily: T.fontUI,
+          fontSize: 14,
+          fontWeight: 700,
+          color: T.ink,
+          cursor: "pointer",
+          transition: "all 160ms",
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLElement).style.background = "rgba(127,191,232,0.16)";
+          (e.currentTarget as HTMLElement).style.borderColor = T.sky;
+        }}
+        onFocus={(e) => {
+          (e.currentTarget as HTMLElement).style.background = "rgba(127,191,232,0.16)";
+          (e.currentTarget as HTMLElement).style.borderColor = T.sky;
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLElement).style.background = "rgba(127,191,232,0.08)";
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(127,191,232,0.40)";
+        }}
+        onBlur={(e) => {
+          (e.currentTarget as HTMLElement).style.background = "rgba(127,191,232,0.08)";
+          (e.currentTarget as HTMLElement).style.borderColor = "rgba(127,191,232,0.40)";
+        }}
+      >
+        <span style={{ fontSize: 18 }}>👋</span>
+        Show this to a grown-up!
+      </button>
+
       {/* Three actions */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
         <button type="button"
@@ -534,6 +584,14 @@ export default function PostGameScreen({
         onClose={() => setUpgradeOpen(false)}
         blockedKingdomName={forkForest?.name}
         blockedKingdomIcon="🌲"
+      />
+
+      <ShowParentCard
+        open={showParent}
+        onClose={() => setShowParent(false)}
+        playerName={playerName}
+        learnerModel={learnerModel}
+        gameResult={gameResult}
       />
     </div>
   );

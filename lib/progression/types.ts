@@ -26,6 +26,10 @@ export interface Boss {
   personality: string;
   signature: string;
   dialogue: string[];
+  signatureLesson: string;
+  openingFEN: string;
+  defeatTactic: TacticType;
+  voicedIntro: string;
 }
 
 export interface Strategy {
@@ -85,6 +89,8 @@ export interface PlayerProgression {
   streak: number;
   lastPlayedDate: string; // ISO date (YYYY-MM-DD)
   tier: Tier;
+  challengeBias: "relaxed" | "balanced" | "sharp";
+  recentResults: Array<"win" | "loss" | "draw">;
 }
 
 // Tactic detection

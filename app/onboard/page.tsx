@@ -122,6 +122,7 @@ export default function Home() {
   const router = useRouter();
   const setSettings = useGameStore((s) => s.setSettings);
   const resumeGame = useGameStore((s) => s.resumeGame);
+  const firstSessionComplete = useGameStore((s) => s.firstSessionComplete);
   const [savedGame, setSavedGame] = useState<SavedGame | null>(null);
   const [lastPlayer, setLastPlayer] = useState<LastPlayer | null>(null);
   const [checked, setChecked] = useState(false);
@@ -184,5 +185,5 @@ export default function Home() {
     );
   }
 
-  return <Onboarding onStart={handleStart} />;
+  return <Onboarding onStart={handleStart} firstSessionComplete={firstSessionComplete} />;
 }

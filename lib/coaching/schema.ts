@@ -53,6 +53,14 @@ export const FollowUpChipSchema = z.object({
 
 export type FollowUpChip = z.infer<typeof FollowUpChipSchema>;
 
+export const ReplayStepSchema = z.object({
+  fen: z.string(),
+  narration: z.string().max(150),
+  annotation: AnnotationSchema.optional(),
+  moveLabel: z.string().optional(),  // e.g. "3. Nxe5"
+});
+export type ReplayStep = z.infer<typeof ReplayStepSchema>;
+
 export const CoachResponseSchema = z.object({
   shouldSpeak: z.boolean(),
   message: z.string().max(280),
@@ -61,8 +69,8 @@ export const CoachResponseSchema = z.object({
   followUpChips: z.array(FollowUpChipSchema).max(3).optional(),
   conceptTaught: z.string().optional(),
   emotion: z.enum(["happy", "thinking", "concerned", "excited", "neutral"]).optional(),
+  replay: z.array(ReplayStepSchema).max(3).optional(),
 });
-
 export type CoachResponse = z.infer<typeof CoachResponseSchema>;
 
 export const CoachRequestSchema = z.object({

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSpeech } from "@/lib/speech";
-import { getRankByXP, getNextRank, RANKS } from "@/lib/progression/data";
+import { getRankByXP, getNextRank, RANKS, KINGDOMS } from "@/lib/progression/data";
 // AhaCelebration is heavy (80-particle confetti + crystal + spinning
 // rays) and only fires when the kid earns a Power. Lazy-load it so the
 // initial /play bundle is lighter.
@@ -11,6 +11,7 @@ const AhaCelebration = dynamic(() => import("@/components/AhaCelebration"), {
   ssr: false,
   loading: () => null,
 });
+import BossIntroModal from "@/components/BossIntroModal";
 import PostGameScreen from "@/components/PostGameScreen";
 import ProgressStrip from "@/components/ProgressStrip";
 import BottomNav from "@/components/BottomNav";
@@ -24,11 +25,16 @@ import { FALLBACKS } from "@/lib/coaching/prompts";
 import { generateAnnotation } from "@/lib/coaching/annotations";
 import { findBestMove } from "@/lib/chess/ai";
 import { ageToBand } from "@/lib/coaching/schema";
+import { getDeviceId } from "@/lib/identity/device";
 import type { FollowUpChip } from "@/lib/coaching/schema";
+import type { ReplayStep } from "@/lib/coaching/schema";
+import MoveReplayOverlay from "@/components/MoveReplayOverlay";
+import { buildReplaySequence } from "@/lib/coaching/replay";
 import Board from "@/components/Board";
 import CoachPanel from "@/components/CoachPanel";
 import CoachErrorBoundary from "@/components/CoachErrorBoundary";
 import MoveHistory from "@/components/MoveHistory";
+import ImStuckOverlay from "@/components/ImStuckOverlay";
 import PlayerBar from "@/components/PlayerBar";
 import GameStatusBar from "@/components/GameStatus";
 import { Piece } from "@/components/ChessPieces";
@@ -364,7 +370,17 @@ export default function PlayPage() {
     currentCoachResponse, learnerModel, lastCoachMove, moveCount,
   } = store;
 
+  const { isFirstSession, firstSessionComplete, markFirstSessionComplete } = store;
+  const setBossKingdom = useGameStore((s) => s.setBossKingdom);
+  const bossTacticAppliedThisGame = useGameStore((s) => s.bossTacticAppliedThisGame);
+  const currentBossKingdom = useGameStore((s) => s.currentBossKingdom);
+  const [showFirstGameCelebration, setShowFirstGameCelebration] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [showStuck, setShowStuck] = useState(false);
+  const [replaySteps, setReplaySteps] = useState<ReplayStep[]>([]);
+  const knightCardRef = useRef<HTMLDivElement>(null);
+  const [showBossIntro, setShowBossIntro] = useState(false);
+  const [pendingBoss, setPendingBoss] = useState<import("@/lib/progression/types").Boss | null>(null);
   const requestReset = () => {
     if (moveHistory.length > 0 && status === "playing") {
       setResetConfirmOpen(true);
@@ -400,6 +416,110 @@ export default function PlayPage() {
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Boss intro — show once per kingdom session when entering a boss kingdom
+  useEffect(() => {
+    if (screen !== "playing") return;
+    const kingdom = KINGDOMS.find((k) => k.id === progression.currentKingdom);
+    if (!kingdom?.boss) return;
+    const alreadyDefeated = progression.defeatedBosses.includes(kingdom.boss.name);
+    if (alreadyDefeated) return;
+    const shownKey = `boss_intro_shown_${kingdom.id}`;
+    if (typeof window !== "undefined" && sessionStorage.getItem(shownKey)) return;
+    setPendingBoss(kingdom.boss);
+    setShowBossIntro(true);
+    setBossKingdom(kingdom.id);
+    if (typeof window !== "undefined") sessionStorage.setItem(shownKey, "1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, progression.currentKingdom]);
+
+  // Game-start: fetch personalized welcome-back callback from /api/coach/session
+  useEffect(() => {
+    if (screen !== "playing") return;
+    const deviceId = getDeviceId();
+    if (!deviceId) return;
+    fetch("/api/coach/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        deviceId,
+        playerName,
+        ageBand: ageToBand(playerAge),
+        phase: "game_start",
+      }),
+    })
+      .then((r) => r.json())
+      .then((data: { message?: string }) => {
+        if (data.message) {
+          // Replace the first coach message (intro) with the personalized callback
+          store.addCoachMessage({ type: "intro", text: data.message });
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
+
+  // Game-end: send result to /api/coach/session for memory storage
+  const gameEndFiredRef = useRef(false);
+  useEffect(() => {
+    if (status === "playing") { gameEndFiredRef.current = false; return; }
+    if (gameEndFiredRef.current) return;
+    gameEndFiredRef.current = true;
+    const deviceId = getDeviceId();
+    if (!deviceId) return;
+    const gameResult = status === "white_wins" ? "win" : status === "black_wins" ? "loss" : "draw";
+    fetch("/api/coach/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        deviceId,
+        playerName,
+        ageBand: ageToBand(playerAge),
+        phase: "game_end",
+        gameResult,
+        moveCount,
+        tacticsSpotted: learnerModel.stats.tacticsSpotted,
+        model: learnerModel,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data: { narrative?: string }) => {
+        if (data.narrative) {
+          localStorage.setItem("chesswhiz.lastNarrative", data.narrative);
+        }
+      })
+      .catch(() => {});
+
+    // Boss defeat check
+    if (currentBossKingdom && status === "white_wins") {
+      const bossKingdom = KINGDOMS.find((k) => k.id === currentBossKingdom);
+      if (bossKingdom?.boss) {
+        if (!bossTacticAppliedThisGame) {
+          store.addCoachMessage({
+            type: "tip",
+            text: `Great win! But ${bossKingdom.boss.name} is still standing — use a ${bossKingdom.boss.defeatTactic.replace(/_/g, " ")} to truly defeat them!`,
+          });
+        } else {
+          store.defeatBoss(bossKingdom.boss.name);
+          setBossKingdom(null);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
+
+  // First-game Pawn Village celebration — fires at most once per game end
+  const celebrationFiredRef = useRef(false);
+  useEffect(() => {
+    if (status === "playing") { celebrationFiredRef.current = false; return; }
+    if (celebrationFiredRef.current) return;
+    if (isFirstSession && !firstSessionComplete) {
+      celebrationFiredRef.current = true;
+      setShowFirstGameCelebration(true);
+      markFirstSessionComplete();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   // Voice-synced annotation reveal
   const pendingAnnotationRef = useRef<typeof boardAnnotation>(null);
@@ -476,7 +596,10 @@ export default function PlayPage() {
 
       const res = await fetch("/api/coach", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-device-id": getDeviceId() ?? "",
+        },
         body: JSON.stringify({
           fen,
           lastMove: { from: lastMoveFrom, to: lastMoveTo, san: lastMoveSan },
@@ -516,6 +639,17 @@ export default function PlayPage() {
           }
         }
         store.setCoachResponse(data);
+
+        // Replay trigger for significant tactical events
+        const REPLAY_TRIGGERS = ["BLUNDER", "BOT_TACTIC_INCOMING", "TACTIC_AVAILABLE"];
+        if (REPLAY_TRIGGERS.includes(analysis.trigger)) {
+          const steps: ReplayStep[] = (data as { replay?: ReplayStep[] }).replay?.length
+            ? (data as { replay?: ReplayStep[] }).replay!
+            : buildReplaySequence(moveHistory, moveHistory.length - 1);
+          if (steps.length > 0) {
+            setTimeout(() => setReplaySteps(steps), 800);
+          }
+        }
       } else {
         throw new Error("Empty response");
       }
@@ -773,11 +907,24 @@ export default function PlayPage() {
         overflow: "hidden",
       }}
     >
+      {/* Boss intro modal */}
+      <BossIntroModal
+        boss={showBossIntro ? pendingBoss : null}
+        onFight={() => setShowBossIntro(false)}
+        onRetreat={() => { setShowBossIntro(false); router.push("/journey"); }}
+      />
+
+      <MoveReplayOverlay
+        steps={replaySteps}
+        onDismiss={() => setReplaySteps([])}
+      />
+
       {/* Aha celebration overlay */}
       <AhaCelebration
         celebration={ahaCelebration}
         onDismiss={() => store.dismissAha()}
         playerName={playerName}
+        knightCardRef={knightCardRef}
       />
 
       {/* Toasts */}
@@ -1051,6 +1198,7 @@ export default function PlayPage() {
 
         {/* RIGHT — coach + moves + actions */}
         <div
+          ref={knightCardRef}
           style={{
             display: "flex",
             flexDirection: "column",
@@ -1177,11 +1325,102 @@ export default function PlayPage() {
               <Undo2 aria-hidden size={14} strokeWidth={2.5} />
               Undo
             </button>
+            {status === "playing" && (
+              <button type="button"
+                onClick={() => setShowStuck(true)}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  background: "#FFFCF5",
+                  border: `1.5px solid ${T.border}`,
+                  borderRadius: 12,
+                  minHeight: 52,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: T.inkLow,
+                  cursor: "pointer",
+                  fontFamily: T.fontUI,
+                  transition: "all 200ms cubic-bezier(0.34,1.56,0.64,1)",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = T.butter;
+                  (e.currentTarget as HTMLElement).style.color = T.butterDeep;
+                }}
+                onFocus={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = T.butter;
+                  (e.currentTarget as HTMLElement).style.color = T.butterDeep;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = T.border;
+                  (e.currentTarget as HTMLElement).style.color = T.inkLow;
+                }}
+                onBlur={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = T.border;
+                  (e.currentTarget as HTMLElement).style.color = T.inkLow;
+                }}
+              >
+                I&apos;m Stuck
+              </button>
+            )}
           </div>
         </div>
       </main>
 
+      <ImStuckOverlay
+        open={showStuck}
+        onClose={() => setShowStuck(false)}
+        playerName={playerName}
+        onShowHint={() => {
+          store.addCoachMessage({ type: "tip", text: "Look carefully at all your pieces — is any of them able to attack something valuable?" });
+          setShowStuck(false);
+        }}
+        onLearnTrick={() => {
+          store.addCoachMessage({ type: "tip", text: "Remember: always check if your pieces are safe before moving! Look for forks, pins, and hanging pieces." });
+          setShowStuck(false);
+        }}
+        onStartOver={() => {
+          setShowStuck(false);
+          requestReset();
+        }}
+      />
+
       <BottomNav />
+
+      {showFirstGameCelebration && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "radial-gradient(ellipse at 50% 40%, #FFF8E3 0%, #F5ECDC 60%, #FBF6EC 100%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 20,
+            padding: 24,
+            animation: "ahaIn 0.5s ease-out",
+          }}
+          onClick={() => setShowFirstGameCelebration(false)}
+        >
+          <div style={{ fontSize: 64, animation: "ahaCrystalIn 1s cubic-bezier(0.34,1.56,0.64,1) both" }}>🏘️</div>
+          <div style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: "clamp(36px,7vw,72px)", color: T.ink, textAlign: "center", lineHeight: 1.1 }}>
+            Welcome to<br />Pawn Village!
+          </div>
+          <div style={{ fontFamily: T.fontHand, fontSize: "clamp(18px,2.5vw,28px)", color: T.coral, textAlign: "center" }}>
+            {playerName}, you&apos;re officially on your quest! 🎉
+          </div>
+          <div style={{ marginTop: 12, fontFamily: T.fontUI, fontSize: 14, color: T.inkLow }}>
+            Tap to continue
+          </div>
+          <style>{`@keyframes ahaIn { from { opacity: 0; } to { opacity: 1; } } @keyframes ahaCrystalIn { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }`}</style>
+        </div>
+      )}
 
       {resetConfirmOpen && (
         <div

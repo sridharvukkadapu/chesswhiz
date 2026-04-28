@@ -115,6 +115,10 @@ export const KINGDOMS: Kingdom[] = [
         "You'll never catch us — we jump over EVERYTHING! Try to block THAT!",
         "Wait... did YOU just fork US?! That's... that's OUR move! No fair! ...Okay, fine. You earned it.",
       ],
+      signatureLesson: "We move together — one knight here, one knight there. Two attacks at once! That's a Fork, little one. Hehe.",
+      openingFEN: "r1bqkb1r/pppp1ppp/2n2n2/4p3/4P3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 4 4",
+      defeatTactic: "fork",
+      voicedIntro: "Hehe! We are the Knight Twins — and we attack from TWO directions at once!",
     },
     strategies: [
       {
@@ -183,6 +187,10 @@ export const KINGDOMS: Kingdom[] = [
         "In my palace, every piece is a prisoner of its own loyalty. The more you protect, the less you can move.",
         "Interesting. You've learned to break my pins. Perhaps you are worthy of leaving this palace... alive.",
       ],
+      signatureLesson: "I stare down the diagonal and FREEZE your piece. It cannot move — or your king is exposed. That is the Pin.",
+      openingFEN: "rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+      defeatTactic: "pin",
+      voicedIntro: "I am the Shadow Bishop. My gaze freezes everything it touches.",
     },
     strategies: [
       {
@@ -240,7 +248,7 @@ export const KINGDOMS: Kingdom[] = [
     description:
       "A towering crystal spire rising from the mountains where the Rook Queen commands long, straight corridors with absolute authority. She attacks the most valuable piece first — and when it flees in panic, she captures whatever was hiding behind it. Nothing escapes her line of sight.",
     boss: {
-      name: "The Rook Queen",
+      name: "The Lancer",
       emoji: "♜",
       personality:
         "Regal, direct, and devastatingly efficient. Never wastes a move. Speaks with the confidence of someone who controls every open file on the board.",
@@ -251,6 +259,10 @@ export const KINGDOMS: Kingdom[] = [
         "Never stand behind your king on an open file. I am always watching. Always.",
         "You skewered ME? I... I must admit, I respect that. The student becomes the master.",
       ],
+      signatureLesson: "I charge your most powerful piece — and the one hiding BEHIND it gets skewered! The Skewer: big piece first, then the one behind.",
+      openingFEN: "r1bqk2r/ppp2ppp/2np1n2/4p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 0 6",
+      defeatTactic: "skewer",
+      voicedIntro: "I am the Lancer! I charge through your strongest pieces!",
     },
     strategies: [
       {
@@ -297,7 +309,7 @@ export const KINGDOMS: Kingdom[] = [
     description:
       "Deep underground caverns lit by flickering torchlight where the Phantom General commands an invisible army. One piece moves aside to reveal a devastating attack from the piece behind it — you never see it coming until it's too late. In these depths, the most dangerous move is the one you DON'T see.",
     boss: {
-      name: "The Phantom General",
+      name: "Hidden Rook",
       emoji: "👻",
       personality:
         "Mysterious and ethereal. Speaks in whispers. Appears from nowhere. Every move has a hidden purpose — the real threat is always the one you can't see.",
@@ -308,6 +320,10 @@ export const KINGDOMS: Kingdom[] = [
         "Two attackers. One move. Your king has nowhere to hide and nothing can save it. Welcome to the depths.",
         "You've learned to see the invisible. Not many survive these caverns with that wisdom. The depths have taught you well.",
       ],
+      signatureLesson: "I hide behind my own pieces. When they step aside — surprise! My power is REVEALED. That is a Discovered Attack.",
+      openingFEN: "r1bqkb1r/ppp2ppp/2np1n2/4p3/3PP3/2NB1N2/PPP2PPP/R1BQK2R w KQkq - 0 6",
+      defeatTactic: "discovered_attack",
+      voicedIntro: "You cannot see me... until it is too late. I am the Hidden Rook!",
     },
     strategies: [
       {
@@ -354,7 +370,7 @@ export const KINGDOMS: Kingdom[] = [
     description:
       "The windswept mountain peak above the clouds where chess becomes more than tricks and traps. The Grand Strategist sees patterns that take 10, 20, 30 moves to unfold. Pawn structures, piece coordination, space control — this is where chess transforms from a game of tactics into an art of long-term planning.",
     boss: {
-      name: "The Grand Strategist",
+      name: "Elder Queen",
       emoji: "🧙",
       personality:
         "Ancient, wise, infinitely patient. Never rushes. Wins without flashy tactics — just relentless, suffocating improvement. Every move makes a position slightly better until you can't breathe.",
@@ -365,6 +381,10 @@ export const KINGDOMS: Kingdom[] = [
         "Every move I make improves my worst piece. Tell me — what does YOUR move improve?",
         "Tactics win battles. Strategy wins wars. You have climbed the summit. Now you see the whole board. Welcome.",
       ],
+      signatureLesson: "I use every piece together. But today's lesson: the Double Check — two checkers at once. The king MUST run!",
+      openingFEN: "r1bq1rk1/ppp2ppp/2np1n2/2b1p3/4P3/2NP1N2/PPP1BPPP/R1BQ1RK1 w - - 0 8",
+      defeatTactic: "double_check",
+      voicedIntro: "I am the Elder Queen. Every piece has a purpose — and today, yours must too.",
     },
     strategies: [
       {
@@ -433,7 +453,7 @@ export const KINGDOMS: Kingdom[] = [
     description:
       "The final throne room at the heart of the Chess Kingdom, bathed in golden light. The Immortal King has played a thousand games and never lost an endgame. He sits motionless, watching, waiting. To claim the throne, you must master the art of converting advantages when few pieces remain — the most precise, demanding phase of chess.",
     boss: {
-      name: "The Immortal King",
+      name: "King Eternal",
       emoji: "♔",
       personality:
         "Ancient beyond measure. Speaks rarely, and every word carries weight. Moves with absolute precision. Has never lost an endgame in a thousand years. Respects only those who earn his respect through perfect technique.",
@@ -444,6 +464,10 @@ export const KINGDOMS: Kingdom[] = [
         "One pawn. One king. That is all I need to defeat you. Do you understand now?",
         "You have reached the throne. The kingdom is yours. But hear me, young champion: the learning... it never ends. Every game teaches something new. Go, and teach others what the Kingdom taught you.",
       ],
+      signatureLesson: "I have survived a thousand battles. My weakness? The back rank. Sneak a rook or queen behind my pawns and I fall.",
+      openingFEN: "6k1/5ppp/8/8/8/8/5PPP/6K1 w - - 0 1",
+      defeatTactic: "back_rank_mate",
+      voicedIntro: "I am King Eternal. None have reached my throne. Will you be the first?",
     },
     strategies: [
       {

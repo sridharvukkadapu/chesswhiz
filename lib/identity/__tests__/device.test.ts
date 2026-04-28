@@ -9,10 +9,10 @@ describe("getDeviceId", () => {
     jest.resetModules();
   });
 
-  it("returns a UUID string", () => {
+  it("returns a string (not null) in browser environment", () => {
     const id = getDeviceId();
     expect(typeof id).toBe("string");
-    expect(id.length).toBeGreaterThan(10);
+    expect(id!.length).toBeGreaterThan(10);
   });
 
   it("returns the same ID on second call", () => {
@@ -22,7 +22,7 @@ describe("getDeviceId", () => {
   });
 
   it("persists across instances (reads from localStorage)", () => {
-    const first = getDeviceId();
+    const first = getDeviceId()!;
     localStorage.setItem("chesswhiz.deviceId", first);
     const second = getDeviceId();
     expect(second).toBe(first);

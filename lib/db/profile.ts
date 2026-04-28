@@ -19,7 +19,7 @@ export async function getOrCreateProfile(
       (playerName && existing.player_name !== playerName) ||
       (ageBand && existing.age_band !== ageBand)
     ) {
-      const { data: updated } = await db
+      const { data: updated, error: updateError } = await db
         .from("kid_profile")
         .update({
           player_name: playerName ?? existing.player_name,
@@ -29,6 +29,7 @@ export async function getOrCreateProfile(
         .eq("id", existing.id)
         .select("*")
         .single();
+      if (updateError) console.warn("[profile] update failed:", updateError.message);
       return (updated ?? existing) as KidProfileRow;
     }
     return existing as KidProfileRow;

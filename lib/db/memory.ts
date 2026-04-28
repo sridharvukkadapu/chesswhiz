@@ -14,7 +14,7 @@ export async function loadMemoryFromDB(profileId: string): Promise<LearnerModel 
 
 export async function saveMemoryToDB(profileId: string, model: LearnerModel): Promise<void> {
   const db = getSupabaseClient();
-  await db
+  const { error } = await db
     .from("kid_memory")
     .upsert(
       {
@@ -24,4 +24,5 @@ export async function saveMemoryToDB(profileId: string, model: LearnerModel): Pr
       },
       { onConflict: "profile_id" }
     );
+  if (error) console.warn("[memory] save failed:", error.message);
 }

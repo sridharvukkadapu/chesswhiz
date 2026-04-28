@@ -66,12 +66,23 @@ export function buildCoachPrompt(req: CoachRequest): CoachPrompt {
     BOT_TACTIC_INCOMING: `The bot just set up a tactic: ${(req.tacticsAvailableForBot ?? []).join(", ")}.`,
   };
 
-  const user = `Position FEN: ${req.fen}
-Last move: ${req.lastMove ? `${req.lastMove.san} (${req.lastMove.from}→${req.lastMove.to})` : "none"}
-Mover: ${req.mover}
-Situation: ${triggerDesc[req.trigger] ?? req.trigger}${req.activeMissionConcept ? `\nActive mission concept: ${req.activeMissionConcept}` : ""}
-
-Respond with valid JSON only. No markdown, no prose outside the JSON.`;
+  const userLines: string[] = [
+    `Position FEN: ${req.fen}`,
+    `Last move: ${req.lastMove ? `${req.lastMove.san} (${req.lastMove.from}→${req.lastMove.to})` : "none"}`,
+    `Mover: ${req.mover}`,
+    `Situation: ${triggerDesc[req.trigger] ?? req.trigger}`,
+  ];
+  if (req.activeMissionConcept) {
+    userLines.push(`Active mission concept: ${req.activeMissionConcept}`);
+  }
+  if (req.opportunityDetail) {
+    userLines.push(`Opportunity detected: ${req.opportunityDetail.type} — ${req.opportunityDetail.details}`);
+    if (req.opportunityDetail.squares?.length) {
+      userLines.push(`Key squares: ${req.opportunityDetail.squares.join(", ")}`);
+    }
+  }
+  userLines.push("", "Respond with valid JSON only. No markdown, no prose outside the JSON.");
+  const user = userLines.join("\n");
 
   return { system, user };
 }

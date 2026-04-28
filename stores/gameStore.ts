@@ -279,6 +279,7 @@ interface GameStore {
   dismissAha: () => void;
   resumeGame: (saved: SavedGame) => void;
   markFirstSessionComplete: () => void;
+  setChallengeLevel: (bias: "relaxed" | "balanced" | "sharp") => void;
 
   // Learner model actions
   ingestLearnerSignal: (signal: LearnerSignal) => void;
@@ -708,6 +709,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       localStorage.setItem("chesswhiz.firstSessionDone", "1");
     }
     set({ firstSessionComplete: true });
+  },
+
+  setChallengeLevel: (bias) => {
+    const next = { ...get().progression, challengeBias: bias };
+    saveProgression(next);
+    set({ progression: next });
   },
 
   ingestLearnerSignal: (signal) => {

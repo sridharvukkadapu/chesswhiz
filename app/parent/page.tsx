@@ -539,8 +539,72 @@ function Dashboard() {
         </div>
       </div>
 
+      <ChallengeLevelCard />
+
       <SoundAndFeelCard />
     </section>
+  );
+}
+
+function ChallengeLevelCard() {
+  const store = useGameStore();
+  const bias = store.progression.challengeBias ?? "balanced";
+
+  const options: Array<{ value: "relaxed" | "balanced" | "sharp"; label: string; hint: string }> = [
+    { value: "relaxed", label: "Relaxed", hint: "Bot stays a bit easier" },
+    { value: "balanced", label: "Balanced", hint: "Bot adjusts automatically" },
+    { value: "sharp", label: "Sharp", hint: "Bot stays a bit harder" },
+  ];
+
+  return (
+    <div style={{
+      marginTop: 24, padding: "20px 22px",
+      background: "rgba(255,252,245,0.92)", border: `1px solid ${P.inkGhost}`,
+      borderRadius: 18,
+      boxShadow: `0 4px 14px rgba(26,18,16,0.05)`,
+    }}>
+      <div style={{
+        fontSize: 11, fontWeight: 800, color: P.inkLight,
+        letterSpacing: 1.6, textTransform: "uppercase", marginBottom: 6,
+      }}>Challenge Level</div>
+      <div style={{ fontSize: 13, color: P.inkLight, marginBottom: 14, lineHeight: 1.5 }}>
+        Nudge the bot difficulty up or down. The app still adapts to your child&apos;s win/loss history — this just shifts the baseline.
+      </div>
+      <div style={{ display: "flex", gap: 10 }}>
+        {options.map((opt) => {
+          const active = bias === opt.value;
+          return (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => store.setChallengeLevel(opt.value)}
+              style={{
+                flex: 1,
+                padding: "12px 8px",
+                borderRadius: 14,
+                border: `1.5px solid ${active ? P.emerald : P.inkGhost}`,
+                background: active ? P.emeraldPale : "transparent",
+                cursor: "pointer",
+                textAlign: "center",
+                transition: "all 0.2s ease",
+                boxShadow: active ? `0 0 0 3px ${P.emerald}22` : "none",
+              }}
+            >
+              <div style={{
+                fontSize: 14, fontWeight: 800,
+                color: active ? P.emerald : P.inkMed,
+                fontFamily: "var(--font-dm-serif), serif", fontStyle: "italic",
+              }}>{opt.label}</div>
+              <div style={{
+                fontSize: 11, color: active ? P.emerald : P.inkLight,
+                marginTop: 3, lineHeight: 1.4,
+                fontFamily: "var(--font-jakarta), sans-serif",
+              }}>{opt.hint}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

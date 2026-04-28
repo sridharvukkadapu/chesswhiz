@@ -61,7 +61,7 @@ No JSON. Plain text only.`;
 async function buildGameEndSummary(
   playerName: string,
   ageBand: string,
-  gameResult: string,
+  gameResult: "win" | "loss" | "draw",
   moveCount: number,
   tacticsSpotted: number,
   memory: LearnerModel
@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
     const { narrative, memoryEntry } = await buildGameEndSummary(
       playerName,
       ageBand,
-      gameResult ?? "unknown",
+      gameResult ?? "draw",
       moveCount ?? 0,
       tacticsSpotted ?? 0,
       currentModel

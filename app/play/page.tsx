@@ -24,6 +24,7 @@ import { FALLBACKS } from "@/lib/coaching/prompts";
 import { generateAnnotation } from "@/lib/coaching/annotations";
 import { findBestMove } from "@/lib/chess/ai";
 import { ageToBand } from "@/lib/coaching/schema";
+import { getDeviceId } from "@/lib/identity/device";
 import type { FollowUpChip } from "@/lib/coaching/schema";
 import Board from "@/components/Board";
 import CoachPanel from "@/components/CoachPanel";
@@ -404,9 +405,7 @@ export default function PlayPage() {
   // Game-start: fetch personalized welcome-back callback from /api/coach/session
   useEffect(() => {
     if (screen !== "playing") return;
-    const deviceId = typeof window !== "undefined"
-      ? localStorage.getItem("chesswhiz.deviceId") ?? ""
-      : "";
+    const deviceId = getDeviceId();
     if (!deviceId) return;
     fetch("/api/coach/session", {
       method: "POST",
@@ -430,11 +429,12 @@ export default function PlayPage() {
   }, [screen]);
 
   // Game-end: send result to /api/coach/session for memory storage
+  const gameEndFiredRef = useRef(false);
   useEffect(() => {
-    if (status === "playing") return;
-    const deviceId = typeof window !== "undefined"
-      ? localStorage.getItem("chesswhiz.deviceId") ?? ""
-      : "";
+    if (status === "playing") { gameEndFiredRef.current = false; return; }
+    if (gameEndFiredRef.current) return;
+    gameEndFiredRef.current = true;
+    const deviceId = getDeviceId();
     if (!deviceId) return;
     const gameResult = status === "white_wins" ? "win" : status === "black_wins" ? "loss" : "draw";
     fetch("/api/coach/session", {

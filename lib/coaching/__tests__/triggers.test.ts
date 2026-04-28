@@ -1,4 +1,5 @@
 import { shouldCoach } from "../triggers";
+import { findTemplate, requiresLLM } from "../templates";
 import type { MoveAnalysis } from "@/lib/chess/types";
 
 function makeAnalysis(overrides: Partial<MoveAnalysis>): MoveAnalysis {
@@ -45,5 +46,29 @@ describe("shouldCoach", () => {
     // moveCount=10, lastCoachMove=5 — past cooldown, but OK_MOVE has no explicit random gate
     // shouldCoach returns false for severity=1 unless opening
     expect(shouldCoach(analysis, 10, 5)).toBe(false);
+  });
+});
+
+describe("requiresLLM", () => {
+  it("returns true for BLUNDER", () => {
+    expect(requiresLLM("BLUNDER")).toBe(true);
+  });
+
+  it("returns true for INACCURACY", () => {
+    expect(requiresLLM("INACCURACY")).toBe(true);
+  });
+
+  it("returns true for RECURRING_ERROR", () => {
+    expect(requiresLLM("RECURRING_ERROR")).toBe(true);
+  });
+
+  it("returns false for GREAT_MOVE (still uses templates)", () => {
+    expect(requiresLLM("GREAT_MOVE")).toBe(false);
+  });
+
+  it("findTemplate returns null for BLUNDER (no template should fire)", () => {
+    expect(findTemplate("BLUNDER", "8-10")).toBeNull();
+    expect(findTemplate("BLUNDER", "5-7")).toBeNull();
+    expect(findTemplate("BLUNDER", "11+")).toBeNull();
   });
 });

@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useGameStore } from "@/stores/gameStore";
 import { KINGDOMS, POWERS, getRankByXP, getNextRank } from "@/lib/progression/data";
+import { modelToDisplayItems, getMemoryStats } from "@/lib/coaching/memory-display";
+import { T } from "@/lib/design/tokens";
 
 import { StarField, MoteField } from "@/lib/design/atmosphere";
 import { sfx, getSfxEnabled, setSfxEnabled } from "@/lib/audio/sfx";
@@ -481,6 +483,55 @@ function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Memory section — mastered concepts, in progress, recurring errors */}
+      <div style={{ marginTop: 24, padding: "20px 22px", background: "rgba(255,252,245,0.92)", border: `1px solid ${P.inkGhost}`, borderRadius: 18, boxShadow: `0 4px 14px rgba(26,18,16,0.05)` }}>
+        {(() => {
+          const learnerModel = store.learnerModel;
+          const stats = getMemoryStats(learnerModel);
+          const items = modelToDisplayItems(learnerModel);
+          const masteredItems = items.filter((i) => i.type === "mastered");
+          const learningItems = items.filter((i) => i.type === "learning" || i.type === "struggling");
+          const errorItems = items.filter((i) => i.type === "error");
+          return (
+            <div style={{ marginBottom: 0 }}>
+              <div style={{ fontFamily: T.fontUI, fontWeight: 700, fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 12, color: P.inkLight }}>
+                What Coach Pawn Knows
+              </div>
+              <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+                {[
+                  { label: "Games", value: stats.gamesPlayed },
+                  { label: "Tactics found", value: stats.tacticsSpotted },
+                  { label: "Mastered", value: stats.masteredCount },
+                ].map((s) => (
+                  <div key={s.label} style={{ flex: 1, borderRadius: 10, padding: "10px 8px", textAlign: "center", background: "rgba(31,42,68,0.05)" }}>
+                    <div style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: 22, color: P.ink }}>{s.value}</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", color: P.inkLight }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {masteredItems.map((item) => (
+                <div key={item.id} style={{ fontSize: 13, padding: "5px 0", borderBottom: "1px solid rgba(31,42,68,0.08)", color: P.inkSoft }}>
+                  ✓ Coach Pawn {item.text}.
+                </div>
+              ))}
+              {learningItems.map((item) => (
+                <div key={item.id} style={{ fontSize: 13, padding: "5px 0", borderBottom: "1px solid rgba(31,42,68,0.08)", color: P.inkSoft }}>
+                  → Coach Pawn {item.text}.
+                </div>
+              ))}
+              {errorItems.map((item) => (
+                <div key={item.id} style={{ fontSize: 13, padding: "5px 0", borderBottom: "1px solid rgba(31,42,68,0.08)", color: P.inkSoft }}>
+                  ⚠ Your child {item.text}.
+                </div>
+              ))}
+              {items.length === 0 && (
+                <div style={{ fontSize: 13, fontStyle: "italic", color: P.inkLight }}>No memory data yet — play some games first!</div>
+              )}
+            </div>
+          );
+        })()}
+      </div>
 
       {/* Voice usage meter — ElevenLabs cost sanity check.
           Creator plan ships 100,000 chars/month; we show the daily burn

@@ -159,7 +159,8 @@ export function findTemplate(
   ageBand: AgeBand,
   context?: { recurringErrorPattern?: string; tacticPattern?: string }
 ): TemplatePartial | null {
-  // LLM-required triggers should not use templates
+  // Defence-in-depth: callers outside the router (tests, future callers) must not
+  // receive a template for LLM-required triggers even if templates exist for them.
   if (requiresLLM(trigger)) return null;
 
   // Try most-specific key first

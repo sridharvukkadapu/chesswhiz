@@ -71,4 +71,12 @@ describe("requiresLLM", () => {
     expect(findTemplate("BLUNDER", "5-7")).toBeNull();
     expect(findTemplate("BLUNDER", "11+")).toBeNull();
   });
+
+  it("findTemplate returns null for INACCURACY and RECURRING_ERROR", () => {
+    expect(findTemplate("INACCURACY", "8-10")).toBeNull();
+    expect(findTemplate("RECURRING_ERROR", "8-10")).toBeNull();
+    // RECURRING_ERROR has concrete template entries under the pattern key —
+    // the guard clause must suppress them even when a pattern is provided
+    expect(findTemplate("RECURRING_ERROR", "8-10", { recurringErrorPattern: "hangs_queen" })).toBeNull();
+  });
 });

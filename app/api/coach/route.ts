@@ -10,7 +10,8 @@ const client = new Anthropic();
 const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 const SONNET_MODEL = "claude-sonnet-4-6";
 
-// Module-level parse failure tracking (resets on cold start — that's fine)
+// Tracks LLM output quality — counts only calls that received a response.
+// Resets on cold start; instance-local metric, not fleet-wide.
 let parseFailureCount = 0;
 let callCount = 0;
 
@@ -40,7 +41,6 @@ function checkRateLimit(ip: string): { limited: boolean; remaining: number } {
 async function callLLM(req: CoachRequest, model: "haiku" | "sonnet"): Promise<CoachResponse> {
   const { system, user } = buildCoachPrompt(req);
   const modelId = model === "haiku" ? HAIKU_MODEL : SONNET_MODEL;
-  callCount++;
 
   try {
     const response = await client.messages.create({
@@ -49,6 +49,7 @@ async function callLLM(req: CoachRequest, model: "haiku" | "sonnet"): Promise<Co
       system,
       messages: [{ role: "user", content: user }],
     });
+    callCount++; // count only calls that received a response
 
     const text = response.content[0]?.type === "text" ? response.content[0].text : "";
     const json = text.replace(/^```json?\s*/i, "").replace(/```\s*$/, "").trim();

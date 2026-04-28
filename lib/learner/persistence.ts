@@ -1,5 +1,6 @@
 import type { LearnerModel } from "./types";
 import { createEmptyLearnerModel } from "./model";
+import { getDeviceId } from "@/lib/identity/device";
 
 const LEARNER_KEY_PREFIX = "chesswhiz.learner.";
 
@@ -44,4 +45,19 @@ export function saveLearnerModel(model: LearnerModel): void {
     const payload = { ...model, _cs: modelChecksum(model) };
     localStorage.setItem(LEARNER_KEY_PREFIX + model.playerId, JSON.stringify(payload));
   } catch {}
+}
+
+export async function syncToServer(model: LearnerModel, playerName?: string, ageBand?: string): Promise<void> {
+  if (typeof window === "undefined") return;
+  const deviceId = getDeviceId();
+  if (!deviceId) return; // null on SSR
+  try {
+    await fetch("/api/memory/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deviceId, playerName, ageBand, model }),
+    });
+  } catch (err) {
+    console.warn("[memory/sync] offline or error:", err);
+  }
 }

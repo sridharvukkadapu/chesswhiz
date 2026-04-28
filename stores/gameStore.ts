@@ -13,6 +13,18 @@ import { loadLearnerModel, saveLearnerModel, derivePlayerId } from "@/lib/learne
 import { applySignal, recordCoachMessage, startNewGame, incrementMoveCount, summarizeForPrompt } from "@/lib/learner/model";
 import { createEmptyLearnerModel } from "@/lib/learner/model";
 
+let _syncTimer: ReturnType<typeof setTimeout> | null = null;
+function debouncedSync(model: LearnerModel, playerName: string, playerAge: number) {
+  if (_syncTimer) clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => {
+    import("@/lib/learner/persistence").then(({ syncToServer }) => {
+      import("@/lib/coaching/schema").then(({ ageToBand }) => {
+        syncToServer(model, playerName, ageToBand(playerAge));
+      });
+    });
+  }, 3000);
+}
+
 const PROGRESSION_KEY = "chesswhiz.progression";
 const PROGRESSION_SALT = "cw-v1";
 
@@ -669,6 +681,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const updated = applySignal(learnerModel, signal);
     saveLearnerModel(updated);
     set({ learnerModel: updated });
+    debouncedSync(updated, get().playerName, get().playerAge);
   },
 
   setCoachResponse: (response) => {

@@ -649,12 +649,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   handleTacticDetected: (tactic) => {
-    const { progression, ahaCelebration } = get();
+    const { progression, ahaCelebration, currentBossKingdom, bossTacticAppliedThisGame } = get();
     if (!tactic.detected) return;
 
     // Boss defeat check — fires unconditionally whenever the tactic is detected
-    const { currentBossKingdom } = get();
-    if (currentBossKingdom) {
+    if (currentBossKingdom && !bossTacticAppliedThisGame) {
       const bossKingdom = KINGDOMS.find((k) => k.id === currentBossKingdom);
       if (bossKingdom?.boss?.defeatTactic === tactic.type) {
         get().recordBossTacticApplied();

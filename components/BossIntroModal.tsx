@@ -61,7 +61,7 @@ export default function BossIntroModal({ boss, onFight, onRetreat }: BossIntroMo
         {phase === "ready" && (
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: "clamp(18px,2.5vw,26px)", color: "#fff", marginBottom: 20 }}>
-              Use a <strong style={{ color: T.coral }}>{boss.defeatTactic.replace(/_/g, " ")}</strong> to truly defeat {boss.name}!
+              Use a <strong style={{ color: T.coral }}>{boss.defeatTactic?.replace(/_/g, " ") ?? "special technique"}</strong> to truly defeat {boss.name}!
             </div>
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <button type="button" onClick={onFight} style={{ padding: "14px 28px", borderRadius: 100, background: T.coral, color: "#fff", fontFamily: T.fontUI, fontWeight: 800, fontSize: 16, border: "none", cursor: "pointer" }}>Fight! ⚔️</button>

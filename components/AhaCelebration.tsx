@@ -61,6 +61,8 @@ export default function AhaCelebration({
   const crystalRef = useRef<HTMLDivElement>(null);
   const { speak } = useSpeech();
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const onDismissRef = useRef(onDismiss);
+  useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
 
   useEffect(() => {
     if (!celebration) {
@@ -85,33 +87,37 @@ export default function AhaCelebration({
       setFrame(4);
       sfx.xp();
       haptics.aha();
-      if (knightCardRef?.current && crystalRef.current) {
-        const cardRect = knightCardRef.current.getBoundingClientRect();
-        const crystalRect = crystalRef.current.getBoundingClientRect();
-        const dx = cardRect.left + cardRect.width / 2 - (crystalRect.left + crystalRect.width / 2);
-        const dy = cardRect.top + cardRect.height / 2 - (crystalRect.top + crystalRect.height / 2);
-        setCrystalPos({ x: dx, y: dy });
-        setFlyingToCard(true);
-      }
     }, 50 + FRAME_1_DURATION + FRAME_2_DURATION + FRAME_3_DURATION);
     const t5 = setTimeout(() => {
       setFrame(5);
     }, 50 + FRAME_1_DURATION + FRAME_2_DURATION + FRAME_3_DURATION + FRAME_4_DURATION);
     const tDismiss = setTimeout(() => {
-      onDismiss();
+      onDismissRef.current();
     }, 50 + FRAME_1_DURATION + FRAME_2_DURATION + FRAME_3_DURATION + FRAME_4_DURATION + FRAME_5_DURATION + 200);
 
     timersRef.current = [t1, t2, t3, t4, t5, tDismiss];
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" || e.key === " " || e.key === "Enter") onDismiss();
+      if (e.key === "Escape" || e.key === " " || e.key === "Enter") onDismissRef.current();
     };
     window.addEventListener("keydown", onKey);
     return () => {
       timersRef.current.forEach(clearTimeout);
       window.removeEventListener("keydown", onKey);
     };
-  }, [celebration, onDismiss, speak, knightCardRef]);
+  }, [celebration, speak]);
+
+  // Compute crystal-fly destination after frame 4 renders (crystalRef is only mounted then)
+  useEffect(() => {
+    if (frame !== 4) return;
+    if (!knightCardRef?.current || !crystalRef.current) return;
+    const cardRect = knightCardRef.current.getBoundingClientRect();
+    const crystalRect = crystalRef.current.getBoundingClientRect();
+    const dx = cardRect.left + cardRect.width / 2 - (crystalRect.left + crystalRect.width / 2);
+    const dy = cardRect.top + cardRect.height / 2 - (crystalRect.top + crystalRect.height / 2);
+    setCrystalPos({ x: dx, y: dy });
+    setFlyingToCard(true);
+  }, [frame, knightCardRef]);
 
   if (!celebration) return null;
 

@@ -212,6 +212,7 @@ interface GameStore {
   coachMessages: CoachMessage[];
   coachLoading: boolean;
   lastCoachMove: number;
+  tacticAvailableCount: number;
   moveCount: number;
 
   // UI state
@@ -293,6 +294,7 @@ interface GameStore {
   resetForNewGame: () => void;
   forgetConcept: (conceptId: ConceptId) => void;
   forgetErrorPattern: (patternId: ErrorPatternId) => void;
+  incrementTacticAvailableCount: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -309,6 +311,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   coachMessages: [],
   coachLoading: false,
   lastCoachMove: -3,
+  tacticAvailableCount: 0,
   moveCount: 0,
   screen: "onboarding",
   showPromo: null,
@@ -374,6 +377,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       lastMove: null,
       moveCount: 0,
       lastCoachMove: -3,
+      tacticAvailableCount: 0,
       progression: nextProg,
       coachMessages: [
         {
@@ -430,6 +434,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     })),
 
   setCoachLoading: (val) => set({ coachLoading: val }),
+
+  incrementTacticAvailableCount: () =>
+    set((state) => ({ tacticAvailableCount: state.tacticAvailableCount + 1 })),
 
   resetGame: () => {
     get().resetForNewGame();
@@ -712,6 +719,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       boardAnnotation: null,
       learnerModel,
       currentCoachResponse: null,
+      tacticAvailableCount: 0,
       coachMessages: [
         {
           id: crypto.randomUUID(),
@@ -773,6 +781,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       status: "playing",
       moveCount: 0,
       lastCoachMove: -3,
+      tacticAvailableCount: 0,
       botThinking: false,
       showPromo: null,
       boardAnnotation: null,

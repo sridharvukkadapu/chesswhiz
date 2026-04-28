@@ -90,7 +90,7 @@ export function analyzeOpportunities(
       // Skip pieces still on their starting square (noise — they haven't moved out)
       if (isOnStartingSquare(sq, p.type as PieceType, botColor)) continue;
       const { attackers, defenders } = countAttackersAndDefenders(chess, sq, botColor);
-      if (defenders === 0) {
+      if (attackers > 0 && attackers > defenders) {
         if (!bestHanging || val > bestHanging.value) {
           bestHanging = { square: sq, value: val, type: p.type as PieceType };
         }
@@ -138,7 +138,9 @@ export function analyzeOpportunities(
       const clone = new Chess(chess.fen());
       clone.move(lm);
 
-      // Check for mate in 1
+      // Mate-in-1 takes highest priority: no fork or pin announcement should
+      // override a checkmate opportunity. This deviates from the plan's priority
+      // order (which listed mate 4th) but is the correct pedagogical choice.
       if (clone.isCheckmate() && !mateResult) {
         mateResult = {
           type: "mate_in_1",

@@ -240,6 +240,10 @@ interface GameStore {
   // Structured coach response (replaces individual addCoachMessage calls for AI coaching)
   currentCoachResponse: CoachResponse | null;
 
+  // First-session onboarding flags
+  isFirstSession: boolean;
+  firstSessionComplete: boolean;
+
   // Actions
   setSettings: (name: string, age: number, difficulty: Difficulty) => void;
   selectSquare: (square: Square, moves: Move[]) => void;
@@ -271,6 +275,7 @@ interface GameStore {
   handleTacticDetected: (tactic: TacticDetection) => void;
   dismissAha: () => void;
   resumeGame: (saved: SavedGame) => void;
+  markFirstSessionComplete: () => void;
 
   // Learner model actions
   ingestLearnerSignal: (signal: LearnerSignal) => void;
@@ -306,6 +311,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   voicePlayback: "idle",
   learnerModel: createEmptyLearnerModel("p_default"),
   currentCoachResponse: null,
+  isFirstSession: false,
+  firstSessionComplete: false,
 
   setSettings: (name, age, difficulty) => {
     // Update streak on session start
@@ -335,12 +342,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const playerId = derivePlayerId(name, age);
     const learnerModel = loadLearnerModel(playerId);
 
+    const firstSessionDone = typeof window !== "undefined"
+      ? localStorage.getItem("chesswhiz.firstSessionDone") === "1"
+      : false;
+
     set({
       playerName: name,
       playerAge: age,
       difficulty,
       screen: "playing",
       learnerModel,
+      isFirstSession: !firstSessionDone,
       chess: new Chess(),
       moveHistory: [],
       stateHistory: [],
@@ -590,7 +602,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   hydrateProgression: () => {
     const prog = loadProgression();
-    set({ progression: prog, voiceUsage: loadVoiceUsage() });
+    const firstSessionDone = typeof window !== "undefined"
+      ? localStorage.getItem("chesswhiz.firstSessionDone") === "1"
+      : false;
+    set({ progression: prog, voiceUsage: loadVoiceUsage(), firstSessionComplete: firstSessionDone });
     // If there's no active mission, try to assign one.
     if (!prog.activeMission) {
       const mission = generateMission(prog);
@@ -674,6 +689,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ],
     });
     clearSavedGame();
+  },
+
+  markFirstSessionComplete: () => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("chesswhiz.firstSessionDone", "1");
+    }
+    set({ firstSessionComplete: true });
   },
 
   ingestLearnerSignal: (signal) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { LearnerModel } from "@/lib/learner/types";
 import { modelToDisplayItems, getMemoryStats } from "@/lib/coaching/memory-display";
 import { T, Z } from "@/lib/design/tokens";
@@ -31,7 +31,10 @@ export default function ShowParentCard({ open, onClose, playerName, learnerModel
     ? `They recently mastered the ${latestMastered.text.replace("knows about the ", "").replace(" (", " — ").replace(")", "")}.`
     : `They've played ${stats.gamesPlayed} game${stats.gamesPlayed === 1 ? "" : "s"} so far.`;
 
-  const voiceScript = `Hi! I'm Coach Pawn. Today, ${playerName} ${resultText} their game. They've spotted ${stats.tacticsSpotted} tactic${stats.tacticsSpotted === 1 ? "" : "s"} so far. ${masteryText} They'd love it if you watched their next game!`;
+  const voiceScript = useMemo(
+    () => `Hi! I'm Coach Pawn. Today, ${playerName} ${resultText} their game. They've spotted ${stats.tacticsSpotted} tactic${stats.tacticsSpotted === 1 ? "" : "s"} so far. ${masteryText} They'd love it if you watched their next game!`,
+    [playerName, resultText, stats.tacticsSpotted, masteryText]
+  );
 
   useEffect(() => {
     if (open && !voiced) {

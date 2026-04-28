@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { Chess } from "chess.js";
 import { useGameStore } from "@/stores/gameStore";
 import { getDailyPuzzle, type DailyPuzzle } from "@/lib/puzzle/daily";
@@ -21,7 +21,7 @@ function PuzzleBoard({ fen, selected, highlights, onSquareClick }: {
   highlights?: string[];
   onSquareClick?: (sq: string) => void;
 }) {
-  const board = new Chess(fen).board();
+  const board = useMemo(() => new Chess(fen).board(), [fen]);
   const sqSize = 52;
   return (
     <div style={{ display: "grid", gridTemplateColumns: `repeat(8,${sqSize}px)`, gridTemplateRows: `repeat(8,${sqSize}px)`, border: `2px solid ${T.border}`, borderRadius: 8, overflow: "hidden" }}>

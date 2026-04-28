@@ -28,7 +28,7 @@ const PUZZLE_BANK: Record<string, Array<[string, string, string]>> = {
   ],
 };
 
-const CONCEPT_PRIORITY = ["hanging_piece", "fork", "pin", "skewer", "back_rank_mate", "discovered_attack"];
+const CONCEPT_PRIORITY = ["hanging_piece", "fork", "pin", "skewer", "back_rank_mate"];
 
 function selectConcept(model: LearnerModel): string {
   const introduced = model.conceptsIntroduced;

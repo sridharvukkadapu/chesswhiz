@@ -538,7 +538,7 @@ export default function PlayPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-device-id": typeof window !== "undefined" ? localStorage.getItem("chesswhiz.deviceId") ?? "" : "",
+          "x-device-id": getDeviceId() ?? "",
         },
         body: JSON.stringify({
           fen,

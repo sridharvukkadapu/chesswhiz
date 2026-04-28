@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSpeech } from "@/lib/speech";
-import { getRankByXP, getNextRank, RANKS } from "@/lib/progression/data";
+import { getRankByXP, getNextRank, RANKS, KINGDOMS } from "@/lib/progression/data";
 // AhaCelebration is heavy (80-particle confetti + crystal + spinning
 // rays) and only fires when the kid earns a Power. Lazy-load it so the
 // initial /play bundle is lighter.
@@ -11,6 +11,7 @@ const AhaCelebration = dynamic(() => import("@/components/AhaCelebration"), {
   ssr: false,
   loading: () => null,
 });
+import BossIntroModal from "@/components/BossIntroModal";
 import PostGameScreen from "@/components/PostGameScreen";
 import ProgressStrip from "@/components/ProgressStrip";
 import BottomNav from "@/components/BottomNav";
@@ -366,9 +367,14 @@ export default function PlayPage() {
   } = store;
 
   const { isFirstSession, firstSessionComplete, markFirstSessionComplete } = store;
+  const setBossKingdom = useGameStore((s) => s.setBossKingdom);
+  const bossTacticAppliedThisGame = useGameStore((s) => s.bossTacticAppliedThisGame);
+  const currentBossKingdom = useGameStore((s) => s.currentBossKingdom);
   const [showFirstGameCelebration, setShowFirstGameCelebration] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const knightCardRef = useRef<HTMLDivElement>(null);
+  const [showBossIntro, setShowBossIntro] = useState(false);
+  const [pendingBoss, setPendingBoss] = useState<import("@/lib/progression/types").Boss | null>(null);
   const requestReset = () => {
     if (moveHistory.length > 0 && status === "playing") {
       setResetConfirmOpen(true);
@@ -404,6 +410,22 @@ export default function PlayPage() {
     setHydrated(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Boss intro — show once per kingdom session when entering a boss kingdom
+  useEffect(() => {
+    if (screen !== "playing") return;
+    const kingdom = KINGDOMS.find((k) => k.id === progression.currentKingdom);
+    if (!kingdom?.boss) return;
+    const alreadyDefeated = progression.defeatedBosses.includes(kingdom.boss.name);
+    if (alreadyDefeated) return;
+    const shownKey = `boss_intro_shown_${kingdom.id}`;
+    if (typeof window !== "undefined" && sessionStorage.getItem(shownKey)) return;
+    setPendingBoss(kingdom.boss);
+    setShowBossIntro(true);
+    setBossKingdom(kingdom.id);
+    if (typeof window !== "undefined") sessionStorage.setItem(shownKey, "1");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, progression.currentKingdom]);
 
   // Game-start: fetch personalized welcome-back callback from /api/coach/session
   useEffect(() => {
@@ -461,6 +483,22 @@ export default function PlayPage() {
         }
       })
       .catch(() => {});
+
+    // Boss defeat check
+    if (currentBossKingdom && status === "white_wins") {
+      const bossKingdom = KINGDOMS.find((k) => k.id === currentBossKingdom);
+      if (bossKingdom?.boss) {
+        if (!bossTacticAppliedThisGame) {
+          store.addCoachMessage({
+            type: "tip",
+            text: `Great win! But ${bossKingdom.boss.name} is still standing — use a ${bossKingdom.boss.defeatTactic.replace(/_/g, " ")} to truly defeat them!`,
+          });
+        } else {
+          store.defeatBoss(bossKingdom.boss.name);
+          setBossKingdom(null);
+        }
+      }
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
@@ -852,6 +890,13 @@ export default function PlayPage() {
         overflow: "hidden",
       }}
     >
+      {/* Boss intro modal */}
+      <BossIntroModal
+        boss={showBossIntro ? pendingBoss : null}
+        onFight={() => setShowBossIntro(false)}
+        onRetreat={() => { setShowBossIntro(false); router.push("/journey"); }}
+      />
+
       {/* Aha celebration overlay */}
       <AhaCelebration
         celebration={ahaCelebration}

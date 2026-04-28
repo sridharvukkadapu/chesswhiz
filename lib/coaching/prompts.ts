@@ -54,12 +54,19 @@ export function buildCoachPrompt(req: CoachRequest): CoachPrompt {
   const learnerCtx = buildLearnerContext(req);
   const system = `${SYSTEM_PROMPT}\n\nAge band: ${req.ageBand}\nPlayer name: ${req.playerName}${learnerCtx}`;
 
+  const isBot = req.mover === "bot";
   const triggerDesc: Record<string, string> = {
-    GREAT_MOVE: "Player made an excellent move.",
-    OK_MOVE: "Player made a solid but unremarkable move.",
-    INACCURACY: `Player's move was slightly inaccurate (${req.centipawnDelta ?? 0}cp loss).`,
-    MISTAKE: `Player made a mistake (${req.centipawnDelta ?? 0}cp loss).`,
-    BLUNDER: `Player made a serious blunder (${req.centipawnDelta ?? 0}cp loss).`,
+    GREAT_MOVE: isBot ? "Bot made a strong move — alert the player." : "Player made an excellent move.",
+    OK_MOVE: isBot ? "Bot made a solid move." : "Player made a solid but unremarkable move.",
+    INACCURACY: isBot
+      ? `Bot's last move was slightly inaccurate — the player may have a better response.`
+      : `Player's move was slightly inaccurate (${req.centipawnDelta ?? 0}cp loss).`,
+    MISTAKE: isBot
+      ? `Bot made a mistake — the player may be able to take advantage.`
+      : `Player made a mistake (${req.centipawnDelta ?? 0}cp loss). Coach the player about the piece they left in danger.`,
+    BLUNDER: isBot
+      ? `Bot made a serious blunder — the player has a strong opportunity.`
+      : `Player made a serious blunder (${req.centipawnDelta ?? 0}cp loss). Coach the player about the piece they left in danger.`,
     TACTIC_AVAILABLE: `A tactic is available for the player: ${(req.tacticsAvailableForKid ?? []).join(", ")}.`,
     PATTERN_RECOGNIZED: "A recognizable pattern is present on the board.",
     RECURRING_ERROR: `Player repeated a recurring error: ${(req.learnerSummary?.recurringErrors[0]?.patternId ?? "unknown")}.`,

@@ -874,8 +874,13 @@ export default function PlayPage() {
               }
             }
           } else if (!opportunity && botStatus === "playing" && botTactics.length > 0 && Math.random() < 0.20 && botAnalysis) {
-            // No proactive opportunity — fall back to existing 20% bot tactic narration
-            handlePostMoveCoaching(afterBot.fen(), botSAN, botMove.from, botMove.to, "bot", botAnalysis);
+            // No proactive opportunity — fall back to 20% bot tactic narration.
+            // Only fire for bot-side tactic triggers, never for move-quality triggers
+            // (MISTAKE/BLUNDER on botAnalysis describes the bot's blunder, not the kid's).
+            const botNarratable = ["BOT_TACTIC_INCOMING", "PATTERN_RECOGNIZED"].includes(botAnalysis.trigger);
+            if (botNarratable) {
+              handlePostMoveCoaching(afterBot.fen(), botSAN, botMove.from, botMove.to, "bot", botAnalysis);
+            }
           }
 
           if (botStatus !== "playing") {

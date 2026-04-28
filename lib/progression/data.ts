@@ -115,6 +115,10 @@ export const KINGDOMS: Kingdom[] = [
         "You'll never catch us — we jump over EVERYTHING! Try to block THAT!",
         "Wait... did YOU just fork US?! That's... that's OUR move! No fair! ...Okay, fine. You earned it.",
       ],
+      signatureLesson: "We move together — one knight here, one knight there. Two attacks at once! That's a Fork, little one. Hehe.",
+      openingFEN: "r1bqkb1r/pppp1ppp/2n2n2/4p3/4P3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 4 4",
+      defeatTactic: "fork",
+      voicedIntro: "Hehe! We are the Knight Twins — and we attack from TWO directions at once!",
     },
     strategies: [
       {
@@ -183,6 +187,10 @@ export const KINGDOMS: Kingdom[] = [
         "In my palace, every piece is a prisoner of its own loyalty. The more you protect, the less you can move.",
         "Interesting. You've learned to break my pins. Perhaps you are worthy of leaving this palace... alive.",
       ],
+      signatureLesson: "I stare down the diagonal and FREEZE your piece. It cannot move — or your king is exposed. That is the Pin.",
+      openingFEN: "rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
+      defeatTactic: "pin",
+      voicedIntro: "I am the Shadow Bishop. My gaze freezes everything it touches.",
     },
     strategies: [
       {
@@ -251,6 +259,10 @@ export const KINGDOMS: Kingdom[] = [
         "Never stand behind your king on an open file. I am always watching. Always.",
         "You skewered ME? I... I must admit, I respect that. The student becomes the master.",
       ],
+      signatureLesson: "I charge your most powerful piece — and the one hiding BEHIND it gets skewered! The Skewer: big piece first, then the one behind.",
+      openingFEN: "r1bqk2r/ppp2ppp/2np1n2/4p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 0 6",
+      defeatTactic: "skewer",
+      voicedIntro: "I am the Lancer! I charge through your strongest pieces!",
     },
     strategies: [
       {
@@ -308,6 +320,10 @@ export const KINGDOMS: Kingdom[] = [
         "Two attackers. One move. Your king has nowhere to hide and nothing can save it. Welcome to the depths.",
         "You've learned to see the invisible. Not many survive these caverns with that wisdom. The depths have taught you well.",
       ],
+      signatureLesson: "I hide behind my own pieces. When they step aside — surprise! My power is REVEALED. That is a Discovered Attack.",
+      openingFEN: "r1bqkb1r/ppp2ppp/2np1n2/4p3/3PP3/2NB1N2/PPP2PPP/R1BQK2R w KQkq - 0 6",
+      defeatTactic: "discovered_attack",
+      voicedIntro: "You cannot see me... until it is too late. I am the Hidden Rook!",
     },
     strategies: [
       {
@@ -365,6 +381,10 @@ export const KINGDOMS: Kingdom[] = [
         "Every move I make improves my worst piece. Tell me — what does YOUR move improve?",
         "Tactics win battles. Strategy wins wars. You have climbed the summit. Now you see the whole board. Welcome.",
       ],
+      signatureLesson: "I use every piece together. But today's lesson: the Double Check — two checkers at once. The king MUST run!",
+      openingFEN: "r1bq1rk1/ppp2ppp/2np1n2/2b1p3/4P3/2NP1N2/PPP1BPPP/R1BQ1RK1 w - - 0 8",
+      defeatTactic: "double_check",
+      voicedIntro: "I am the Elder Queen. Every piece has a purpose — and today, yours must too.",
     },
     strategies: [
       {
@@ -444,6 +464,10 @@ export const KINGDOMS: Kingdom[] = [
         "One pawn. One king. That is all I need to defeat you. Do you understand now?",
         "You have reached the throne. The kingdom is yours. But hear me, young champion: the learning... it never ends. Every game teaches something new. Go, and teach others what the Kingdom taught you.",
       ],
+      signatureLesson: "I have survived a thousand battles. My weakness? The back rank. Sneak a rook or queen behind my pawns and I fall.",
+      openingFEN: "6k1/5ppp/8/8/8/8/5PPP/6K1 w - - 0 1",
+      defeatTactic: "back_rank_mate",
+      voicedIntro: "I am King Eternal. None have reached my throne. Will you be the first?",
     },
     strategies: [
       {

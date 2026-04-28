@@ -26,6 +26,10 @@ export interface Boss {
   personality: string;
   signature: string;
   dialogue: string[];
+  signatureLesson: string;
+  openingFEN: string;
+  defeatTactic: TacticType;
+  voicedIntro: string;
 }
 
 export interface Strategy {

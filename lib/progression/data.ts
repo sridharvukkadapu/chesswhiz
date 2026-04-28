@@ -248,7 +248,7 @@ export const KINGDOMS: Kingdom[] = [
     description:
       "A towering crystal spire rising from the mountains where the Rook Queen commands long, straight corridors with absolute authority. She attacks the most valuable piece first — and when it flees in panic, she captures whatever was hiding behind it. Nothing escapes her line of sight.",
     boss: {
-      name: "The Rook Queen",
+      name: "The Lancer",
       emoji: "♜",
       personality:
         "Regal, direct, and devastatingly efficient. Never wastes a move. Speaks with the confidence of someone who controls every open file on the board.",
@@ -309,7 +309,7 @@ export const KINGDOMS: Kingdom[] = [
     description:
       "Deep underground caverns lit by flickering torchlight where the Phantom General commands an invisible army. One piece moves aside to reveal a devastating attack from the piece behind it — you never see it coming until it's too late. In these depths, the most dangerous move is the one you DON'T see.",
     boss: {
-      name: "The Phantom General",
+      name: "Hidden Rook",
       emoji: "👻",
       personality:
         "Mysterious and ethereal. Speaks in whispers. Appears from nowhere. Every move has a hidden purpose — the real threat is always the one you can't see.",
@@ -370,7 +370,7 @@ export const KINGDOMS: Kingdom[] = [
     description:
       "The windswept mountain peak above the clouds where chess becomes more than tricks and traps. The Grand Strategist sees patterns that take 10, 20, 30 moves to unfold. Pawn structures, piece coordination, space control — this is where chess transforms from a game of tactics into an art of long-term planning.",
     boss: {
-      name: "The Grand Strategist",
+      name: "Elder Queen",
       emoji: "🧙",
       personality:
         "Ancient, wise, infinitely patient. Never rushes. Wins without flashy tactics — just relentless, suffocating improvement. Every move makes a position slightly better until you can't breathe.",
@@ -453,7 +453,7 @@ export const KINGDOMS: Kingdom[] = [
     description:
       "The final throne room at the heart of the Chess Kingdom, bathed in golden light. The Immortal King has played a thousand games and never lost an endgame. He sits motionless, watching, waiting. To claim the throne, you must master the art of converting advantages when few pieces remain — the most precise, demanding phase of chess.",
     boss: {
-      name: "The Immortal King",
+      name: "King Eternal",
       emoji: "♔",
       personality:
         "Ancient beyond measure. Speaks rarely, and every word carries weight. Moves with absolute precision. Has never lost an endgame in a thousand years. Respects only those who earn his respect through perfect technique.",

@@ -80,10 +80,11 @@ export default function AhaCelebration({
       const word = TACTIC_WORD[celebration.tactic.type] ?? "BRILLIANT!";
       speak(word);
       sfx.aha();
-      haptics.aha();
     }, 50 + FRAME_1_DURATION + FRAME_2_DURATION);
     const t4 = setTimeout(() => {
       setFrame(4);
+      sfx.xp();
+      haptics.aha();
       if (knightCardRef?.current && crystalRef.current) {
         const cardRect = knightCardRef.current.getBoundingClientRect();
         const crystalRect = crystalRef.current.getBoundingClientRect();
@@ -95,7 +96,6 @@ export default function AhaCelebration({
     }, 50 + FRAME_1_DURATION + FRAME_2_DURATION + FRAME_3_DURATION);
     const t5 = setTimeout(() => {
       setFrame(5);
-      sfx.xp();
     }, 50 + FRAME_1_DURATION + FRAME_2_DURATION + FRAME_3_DURATION + FRAME_4_DURATION);
     const tDismiss = setTimeout(() => {
       onDismiss();

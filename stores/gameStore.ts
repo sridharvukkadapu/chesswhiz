@@ -650,8 +650,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   handleTacticDetected: (tactic) => {
     const { progression, ahaCelebration } = get();
-    if (!progression.activeMission) return;
     if (!tactic.detected) return;
+
+    // Boss defeat check — fires unconditionally whenever the tactic is detected
+    const { currentBossKingdom } = get();
+    if (currentBossKingdom) {
+      const bossKingdom = KINGDOMS.find((k) => k.id === currentBossKingdom);
+      if (bossKingdom?.boss?.defeatTactic === tactic.type) {
+        get().recordBossTacticApplied();
+      }
+    }
+
+    if (!progression.activeMission) return;
     if (ahaCelebration) return; // already celebrating; don't clobber
     if (!missionMatchesTactic(progression.activeMission, tactic.type)) return;
 
@@ -672,15 +682,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // NOTE: we don't complete the mission here. The AhaCelebration UI calls
     // store.dismissAha() after ~5s, which in turn completes the mission.
     set({ ahaCelebration: { tactic, power } });
-
-    // Check if tactic matches current boss defeat condition
-    const { currentBossKingdom } = get();
-    if (currentBossKingdom) {
-      const bossKingdom = KINGDOMS.find((k) => k.id === currentBossKingdom);
-      if (bossKingdom?.boss?.defeatTactic === tactic.type) {
-        get().recordBossTacticApplied();
-      }
-    }
   },
 
   dismissAha: () => {

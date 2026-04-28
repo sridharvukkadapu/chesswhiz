@@ -22,6 +22,7 @@ import { getLegalMoves, applyMove, getGameStatus, moveToSAN, classifyMoveSound }
 import { analyzeMoveQuality } from "@/lib/coaching/analyzer";
 import { shouldCoach } from "@/lib/coaching/triggers";
 import { FALLBACKS } from "@/lib/coaching/prompts";
+import { analyzeOpportunities } from "@/lib/coaching/opportunity";
 import { generateAnnotation } from "@/lib/coaching/annotations";
 import { findBestMove } from "@/lib/chess/ai";
 import { ageToBand } from "@/lib/coaching/schema";
@@ -43,7 +44,7 @@ import { sfx } from "@/lib/audio/sfx";
 import { haptics } from "@/lib/audio/haptics";
 import { Target, RefreshCw, Undo2, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { T, Z } from "@/lib/design/tokens";
-import type { Move } from "@/lib/chess/types";
+import type { Move, TriggerType, PieceType } from "@/lib/chess/types";
 import type { PlayerProgression, RankId } from "@/lib/progression/types";
 
 // ── Floating XP +amount toast ──
@@ -367,10 +368,11 @@ export default function PlayPage() {
     stateHistory, status, playerName, playerAge, difficulty,
     coachMessages, coachLoading, showPromo, botThinking, screen,
     progression, lastXPGain, justRankedUp, ahaCelebration, boardAnnotation, voicePlayback,
-    currentCoachResponse, learnerModel, lastCoachMove, moveCount,
+    currentCoachResponse, learnerModel, lastCoachMove, moveCount, tacticAvailableCount,
   } = store;
 
   const { isFirstSession, firstSessionComplete, markFirstSessionComplete } = store;
+  const incrementTacticAvailableCount = useGameStore((s) => s.incrementTacticAvailableCount);
   const setBossKingdom = useGameStore((s) => s.setBossKingdom);
   const bossTacticAppliedThisGame = useGameStore((s) => s.bossTacticAppliedThisGame);
   const currentBossKingdom = useGameStore((s) => s.currentBossKingdom);
@@ -388,6 +390,8 @@ export default function PlayPage() {
       store.resetGame();
     }
   };
+
+  const TACTIC_AVAILABLE_CAP = 3;
 
   // Cmd/Ctrl+Z undo — global, but ignore typing inside inputs.
   useEffect(() => {
@@ -585,7 +589,8 @@ export default function PlayPage() {
     lastMoveFrom: string,
     lastMoveTo: string,
     mover: "player" | "bot",
-    analysis: ReturnType<typeof analyzeMoveQuality>
+    analysis: ReturnType<typeof analyzeMoveQuality> | { trigger: TriggerType; severity: 0|1|2|3|4; san: string; bestSAN: string; diff: number; piece: PieceType; captured: PieceType | null; isHanging: boolean; eval: number; tactics: never[] },
+    opportunityDetail?: { type: "hanging_piece" | "fork" | "pin" | "mate_in_1" | "bot_threat"; details: string; squares?: string[] }
   ) => {
     if (!analysis) return;
     store.setCoachLoading(true);
@@ -616,6 +621,7 @@ export default function PlayPage() {
           ageBand: ageToBand(playerAge),
           learnerSummary: summary,
           activeMissionConcept: progression.activeMission?.targetTactic,
+          opportunityDetail,
         }),
       });
 
@@ -822,8 +828,50 @@ export default function PlayPage() {
             }
           }
 
-          // 20% chance Coach Pawn narrates the bot's tactic as a teaching moment
-          if (botStatus === "playing" && botTactics.length > 0 && Math.random() < 0.20 && botAnalysis) {
+          // Proactive opportunity scan — fires BEFORE kid moves.
+          const opportunity = botStatus === "playing"
+            ? analyzeOpportunities(afterBot, "w")
+            : null;
+          const proactiveCooldownOk = (moveCount - lastCoachMove) >= 1;
+
+          if (opportunity && proactiveCooldownOk) {
+            if (opportunity.triggerType === "TACTIC_AVAILABLE") {
+              const syntheticAnalysis = {
+                trigger: "TACTIC_AVAILABLE" as const,
+                severity: 0 as const,
+                san: botSAN,
+                bestSAN: botSAN,
+                diff: 0,
+                piece: "n" as const,
+                captured: null,
+                isHanging: false,
+                eval: 0,
+                tactics: [],
+              };
+
+              if (tacticAvailableCount < TACTIC_AVAILABLE_CAP) {
+                incrementTacticAvailableCount();
+                // Pass opportunityDetail so the prompt can reference specific squares
+                handlePostMoveCoaching(
+                  afterBot.fen(), botSAN, botMove.from, botMove.to, "bot",
+                  syntheticAnalysis,
+                  { type: opportunity.type as "hanging_piece" | "fork" | "pin" | "mate_in_1" | "bot_threat", details: opportunity.details, squares: opportunity.squares }
+                );
+              } else {
+                // Budget exhausted — use RECURRING_ERROR to trigger a recap response
+                handlePostMoveCoaching(
+                  afterBot.fen(), botSAN, botMove.from, botMove.to, "bot",
+                  { ...syntheticAnalysis, trigger: "RECURRING_ERROR" as const }
+                );
+              }
+            } else if (opportunity.triggerType === "BOT_TACTIC_INCOMING") {
+              // Warn about bot threat at 20% (same gate as old bot tactic narration)
+              if (botTactics.length > 0 && Math.random() < 0.20 && botAnalysis) {
+                handlePostMoveCoaching(afterBot.fen(), botSAN, botMove.from, botMove.to, "bot", botAnalysis);
+              }
+            }
+          } else if (!opportunity && botStatus === "playing" && botTactics.length > 0 && Math.random() < 0.20 && botAnalysis) {
+            // No proactive opportunity — fall back to existing 20% bot tactic narration
             handlePostMoveCoaching(afterBot.fen(), botSAN, botMove.from, botMove.to, "bot", botAnalysis);
           }
 

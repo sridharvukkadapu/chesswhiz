@@ -110,6 +110,10 @@ export function enforceLengthByTrigger(text: string, trigger: TriggerType): stri
     INACCURACY: 35,
     MISTAKE: 45,
     BLUNDER: 55,
+    TACTIC_AVAILABLE: 40,
+    PATTERN_RECOGNIZED: 35,
+    RECURRING_ERROR: 45,
+    BOT_TACTIC_INCOMING: 40,
   };
   const limit = MAX_WORDS[trigger] ?? 30;
   const words = text.trim().split(/\s+/);

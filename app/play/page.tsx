@@ -23,6 +23,8 @@ import { shouldCoach } from "@/lib/coaching/triggers";
 import { FALLBACKS } from "@/lib/coaching/prompts";
 import { generateAnnotation } from "@/lib/coaching/annotations";
 import { findBestMove } from "@/lib/chess/ai";
+import { ageToBand } from "@/lib/coaching/schema";
+import type { FollowUpChip } from "@/lib/coaching/schema";
 import Board from "@/components/Board";
 import CoachPanel from "@/components/CoachPanel";
 import CoachErrorBoundary from "@/components/CoachErrorBoundary";
@@ -359,6 +361,7 @@ export default function PlayPage() {
     stateHistory, status, playerName, playerAge, difficulty,
     coachMessages, coachLoading, showPromo, botThinking, screen,
     progression, lastXPGain, justRankedUp, ahaCelebration, boardAnnotation, voicePlayback,
+    currentCoachResponse, learnerModel, lastCoachMove, moveCount,
   } = store;
 
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
@@ -456,52 +459,63 @@ export default function PlayPage() {
     }
   }, [coachMessages, speech]);
 
-  const requestCoaching = useCallback(async (analysis: ReturnType<typeof analyzeMoveQuality>) => {
+  const handlePostMoveCoaching = useCallback(async (
+    fen: string,
+    lastMoveSan: string,
+    lastMoveFrom: string,
+    lastMoveTo: string,
+    mover: "player" | "bot",
+    analysis: ReturnType<typeof analyzeMoveQuality>
+  ) => {
     if (!analysis) return;
     store.setCoachLoading(true);
 
     try {
+      const { summarizeForPrompt } = await import("@/lib/learner/model");
+      const summary = summarizeForPrompt(learnerModel);
+
       const res = await fetch("/api/coach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...analysis,
-          moveHistory,
+          fen,
+          lastMove: { from: lastMoveFrom, to: lastMoveTo, san: lastMoveSan },
+          mover,
+          trigger: analysis.trigger,
+          centipawnDelta: analysis.diff,
+          tacticsAvailableForKid: mover === "player"
+            ? (analysis.tactics?.filter((t) => t.detected).map((t) => t.type) ?? [])
+            : [],
+          tacticsAvailableForBot: mover === "bot"
+            ? (analysis.tactics?.filter((t) => t.detected).map((t) => t.type) ?? [])
+            : [],
           playerName,
-          age: playerAge,
-          moveCount: store.moveCount,
+          ageBand: ageToBand(playerAge),
+          learnerSummary: summary,
+          activeMissionConcept: progression.activeMission?.targetTactic,
         }),
       });
 
       if (!res.ok) throw new Error("API error");
 
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullText = "";
-
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value);
-          const lines = chunk.split("\n");
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") break;
-              try {
-                const parsed = JSON.parse(data);
-                if (parsed.text) fullText += parsed.text;
-                if (typeof parsed.replace === "string") fullText = parsed.replace;
-              } catch {}
-            }
+      const data = await res.json();
+      if (data.shouldSpeak !== undefined) {
+        // Visual-first: set annotation BEFORE response
+        if (data.annotation && data.annotation.type !== "none") {
+          const legacyAnnotation = generateAnnotation(analysis, analysis.tactics ?? [], {
+            from: lastMoveFrom,
+            to: lastMoveTo,
+          });
+          if (legacyAnnotation) {
+            store.setBoardAnnotation(legacyAnnotation);
+            if (annotationClearTimerRef.current) clearTimeout(annotationClearTimerRef.current);
+            annotationClearTimerRef.current = setTimeout(
+              () => store.setBoardAnnotation(null),
+              legacyAnnotation.duration ?? 5000,
+            );
           }
         }
-      }
-
-      if (fullText) {
-        const msgType = analysis.severity <= 1 ? "praise" : analysis.severity <= 2 ? "tip" : "correction";
-        store.addCoachMessage({ type: msgType, text: fullText });
+        store.setCoachResponse(data);
       } else {
         throw new Error("Empty response");
       }
@@ -515,7 +529,27 @@ export default function PlayPage() {
     }
 
     store.setCoachLoading(false);
-  }, [chess, moveHistory, playerName, playerAge, store]);
+  }, [learnerModel, playerName, playerAge, progression, store]);
+
+  const handleChipTap = useCallback((chip: FollowUpChip) => {
+    switch (chip.intent) {
+      case "got_it":
+      case "i_see_it":
+        store.setCoachResponse(null);
+        break;
+      case "show_me":
+        // Re-trigger annotation for current position
+        store.setCoachResponse(null);
+        break;
+      case "try_again":
+        store.undo();
+        store.setCoachResponse(null);
+        break;
+      default:
+        // tell_me_more / what_if — no-op for now, coach will elaborate on next move
+        break;
+    }
+  }, [store]);
 
   const executeMove = useCallback((move: Move) => {
     const prevChess = new Chess(chess.fen());
@@ -571,21 +605,18 @@ export default function PlayPage() {
     const analysis = analyzeMoveQuality(prevChess, newChess, move);
     const willCoach = !!analysis && shouldCoach(analysis, store.moveCount, store.lastCoachMove);
     if (willCoach && analysis) {
-      requestCoaching(analysis);
+      handlePostMoveCoaching(newChess.fen(), san, move.from, move.to, "player", analysis);
       if (analysis.severity === 0) {
         store.addXP(5, "Great move!");
       }
-    }
-
-    if (analysis) {
+    } else if (analysis) {
+      // No coaching but may still want annotation for tactics
       const hasTactic = analysis.tactics?.some((t) => t.detected);
-      if (hasTactic || willCoach) {
+      if (hasTactic) {
         const annotation = generateAnnotation(analysis, analysis.tactics ?? [], move);
         if (annotation) {
           pendingAnnotationRef.current = annotation;
-          if (annotationFallbackTimerRef.current) {
-            clearTimeout(annotationFallbackTimerRef.current);
-          }
+          if (annotationFallbackTimerRef.current) clearTimeout(annotationFallbackTimerRef.current);
           annotationFallbackTimerRef.current = setTimeout(() => {
             if (pendingAnnotationRef.current) {
               const a = pendingAnnotationRef.current;
@@ -658,31 +689,8 @@ export default function PlayPage() {
           }
 
           // 20% chance Coach Pawn narrates the bot's tactic as a teaching moment
-          if (botStatus === "playing" && botTactics.length > 0 && Math.random() < 0.20) {
-            const t = botTactics[0];
-            const BOT_TACTIC_LINES: Record<string, string[]> = {
-              fork: [
-                "Watch out! The bot just set up a fork — it's attacking two pieces at once! 🍴",
-                "The bot played a fork! Both your pieces are under attack. Can you save them both?",
-              ],
-              pin: [
-                "The bot pinned one of your pieces! It can't move without leaving something valuable behind. 📌",
-                "That's a pin! The bot is using one piece to lock down two of yours.",
-              ],
-              skewer: [
-                "The bot just played a skewer — your big piece has to move, exposing what's behind it!",
-                "Skewer! Your valuable piece is being forced to move. Watch what's behind it! 🎯",
-              ],
-              threat: [
-                "The bot is threatening to capture something next move — can you defend? 🛡️",
-                "Heads up! The bot has a threat on the board. See if you can spot it.",
-              ],
-            };
-            const lines = BOT_TACTIC_LINES[t.type] ?? BOT_TACTIC_LINES.threat;
-            store.addCoachMessage({
-              type: "tip",
-              text: lines[Math.floor(Math.random() * lines.length)],
-            });
+          if (botStatus === "playing" && botTactics.length > 0 && Math.random() < 0.20 && botAnalysis) {
+            handlePostMoveCoaching(afterBot.fen(), botSAN, botMove.from, botMove.to, "bot", botAnalysis);
           }
 
           if (botStatus !== "playing") {
@@ -709,7 +717,7 @@ export default function PlayPage() {
         store.setBotThinking(false);
       });
     }
-  }, [chess, difficulty, playerName, store, requestCoaching]);
+  }, [chess, difficulty, playerName, store, handlePostMoveCoaching]);
 
   const handleSquareClick = useCallback((r: number, c: number) => {
     if (status !== "playing" || botThinking || chess.turn() !== "w") return;
@@ -1056,8 +1064,10 @@ export default function PlayPage() {
           <CoachErrorBoundary>
             <CoachPanel
               messages={coachMessages}
+              response={currentCoachResponse}
               loading={coachLoading}
               voicePlaying={voicePlayback === "playing"}
+              onChipTap={handleChipTap}
             />
           </CoachErrorBoundary>
 

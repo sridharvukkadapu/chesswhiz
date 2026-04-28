@@ -7,6 +7,11 @@ import type { PlayerProgression, Mission, RankId, TacticDetection, Power } from 
 import { getRankByXP, XP_REWARDS, getStreakMultiplier, POWERS, KINGDOMS } from "@/lib/progression/data";
 import { generateMission, missionMatchesTactic, findStrategyForTactic } from "@/lib/progression/missions";
 import { getGameStatus } from "@/lib/chess/engine";
+import type { LearnerModel, LearnerSignal } from "@/lib/learner/types";
+import type { CoachResponse } from "@/lib/coaching/schema";
+import { loadLearnerModel, saveLearnerModel, derivePlayerId } from "@/lib/learner/persistence";
+import { applySignal, recordCoachMessage, startNewGame, incrementMoveCount, summarizeForPrompt } from "@/lib/learner/model";
+import { createEmptyLearnerModel } from "@/lib/learner/model";
 
 const PROGRESSION_KEY = "chesswhiz.progression";
 const PROGRESSION_SALT = "cw-v1";
@@ -217,6 +222,12 @@ interface GameStore {
   // actually coming out of the speaker, "idle" = nothing to hear.
   voicePlayback: "idle" | "loading" | "playing";
 
+  // Learner model — per-kid persistent memory
+  learnerModel: LearnerModel;
+
+  // Structured coach response (replaces individual addCoachMessage calls for AI coaching)
+  currentCoachResponse: CoachResponse | null;
+
   // Actions
   setSettings: (name: string, age: number, difficulty: Difficulty) => void;
   selectSquare: (square: Square, moves: Move[]) => void;
@@ -248,6 +259,11 @@ interface GameStore {
   handleTacticDetected: (tactic: TacticDetection) => void;
   dismissAha: () => void;
   resumeGame: (saved: SavedGame) => void;
+
+  // Learner model actions
+  ingestLearnerSignal: (signal: LearnerSignal) => void;
+  setCoachResponse: (response: CoachResponse | null) => void;
+  resetForNewGame: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -276,6 +292,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   voiceUsage: DEFAULT_VOICE_USAGE,
   boardAnnotation: null,
   voicePlayback: "idle",
+  learnerModel: createEmptyLearnerModel("p_default"),
+  currentCoachResponse: null,
 
   setSettings: (name, age, difficulty) => {
     // Update streak on session start
@@ -302,11 +320,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     saveProgression(nextProg);
     saveLastPlayer(name, age, difficulty);
 
+    const playerId = derivePlayerId(name, age);
+    const learnerModel = loadLearnerModel(playerId);
+
     set({
       playerName: name,
       playerAge: age,
       difficulty,
       screen: "playing",
+      learnerModel,
       chess: new Chess(),
       moveHistory: [],
       stateHistory: [],
@@ -342,6 +364,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       status,
       moveCount: state.moveCount + 1,
       showPromo: null,
+      learnerModel: incrementMoveCount(state.learnerModel),
     }));
     const s = get();
     saveGame({
@@ -371,29 +394,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setCoachLoading: (val) => set({ coachLoading: val }),
 
   resetGame: () => {
-    clearSavedGame();
-    const { playerName } = get();
-    set({
-      chess: new Chess(),
-      selected: null,
-      legalHighlights: [],
-      lastMove: null,
-      moveHistory: [],
-      stateHistory: [],
-      status: "playing",
-      moveCount: 0,
-      lastCoachMove: -3,
-      botThinking: false,
-      showPromo: null,
-      boardAnnotation: null,
-      coachMessages: [
-        {
-          id: crypto.randomUUID(),
-          type: "intro",
-          text: `New game! Let's go, ${playerName}! Show me what you've learned! ♟`,
-        },
-      ],
-    });
+    get().resetForNewGame();
   },
 
   undo: () => {
@@ -634,6 +635,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   resumeGame: (saved) => {
     const chess = new Chess(saved.fen);
+    const playerId = derivePlayerId(saved.playerName, saved.playerAge);
+    const learnerModel = loadLearnerModel(playerId);
     set({
       chess,
       moveHistory: saved.moveHistory,
@@ -648,6 +651,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       legalHighlights: [],
       stateHistory: [],
       boardAnnotation: null,
+      learnerModel,
+      currentCoachResponse: null,
       coachMessages: [
         {
           id: crypto.randomUUID(),
@@ -658,4 +663,56 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
     clearSavedGame();
   },
+
+  ingestLearnerSignal: (signal) => {
+    const { learnerModel } = get();
+    const updated = applySignal(learnerModel, signal);
+    saveLearnerModel(updated);
+    set({ learnerModel: updated });
+  },
+
+  setCoachResponse: (response) => {
+    const { learnerModel } = get();
+    let updated = learnerModel;
+    if (response?.message) {
+      updated = recordCoachMessage(learnerModel, response.message);
+      saveLearnerModel(updated);
+    }
+    set({ currentCoachResponse: response, learnerModel: updated, lastCoachMove: get().moveCount });
+  },
+
+  resetForNewGame: () => {
+    const { learnerModel, playerName } = get();
+    const updated = startNewGame(learnerModel);
+    saveLearnerModel(updated);
+    clearSavedGame();
+    set({
+      chess: new Chess(),
+      selected: null,
+      legalHighlights: [],
+      lastMove: null,
+      moveHistory: [],
+      stateHistory: [],
+      status: "playing",
+      moveCount: 0,
+      lastCoachMove: -3,
+      botThinking: false,
+      showPromo: null,
+      boardAnnotation: null,
+      learnerModel: updated,
+      currentCoachResponse: null,
+      coachMessages: [
+        {
+          id: crypto.randomUUID(),
+          type: "intro",
+          text: `New game! Let's go, ${playerName}! Show me what you've learned! ♟`,
+        },
+      ],
+    });
+  },
 }));
+
+export function useLearnerSummary() {
+  const learnerModel = useGameStore((s) => s.learnerModel);
+  return summarizeForPrompt(learnerModel);
+}

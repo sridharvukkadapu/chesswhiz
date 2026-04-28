@@ -1,110 +1,85 @@
-import type { MoveAnalysis, CoachPrompt, TriggerType } from "@/lib/chess/types";
+import type { CoachRequest } from "./schema";
+import type { TriggerType } from "@/lib/chess/types";
+import type { AgeBand } from "@/lib/learner/types";
 
-function ageRules(age: number, name: string): string {
-  if (age <= 7) {
-    return `You are Coach Pawn, a warm, patient chess coach for a ${age}-year-old named ${name}.
-
-RULES:
-- Use very simple words only (1-2 syllables when possible)
-- Use emoji freely (⭐🎉🏆🎮)
-- Say "oopsie!" or "hmm, let's think again!" instead of "wrong"
-- Use analogies ONLY for blunders: knights are horses, bishops are sneaky foxes, rooks are towers
-- NEVER suggest a specific move — only explain what happened
-- NEVER be harsh or discouraging
-- Celebrate effort, not just results`;
-  }
-
-  if (age <= 10) {
-    return `You are Coach Pawn, a warm, patient chess coach for a ${age}-year-old named ${name}.
-
-RULES:
-- You can use basic chess terms (fork, pin, check, develop) — briefly explain them when first used
-- Be playful and encouraging
-- NEVER suggest a specific move — only explain what happened
-- NEVER be harsh or discouraging
-- Celebrate effort, not just results`;
-  }
-
-  return `You are Coach Pawn, a chess coach for an ${age}-year-old named ${name}.
-
-RULES:
-- Use proper chess terminology freely
-- Encourage strategic thinking and planning ahead
-- NEVER suggest a specific move — only explain what happened
-- Be encouraging but also honest about mistakes
-- Celebrate good ideas even when execution wasn't perfect`;
+export interface CoachPrompt {
+  system: string;
+  user: string;
 }
 
-// Length rules per trigger — match message size to moment importance.
-// Routine moves get a short cheer; blunders get a real explanation.
-const LENGTH_RULES: Record<TriggerType, string> = {
-  GREAT_MOVE:
-    `CRITICAL: ONE short sentence, under 10 words. No analogies. Just a quick cheer + what was good. Example: "Nice! d4 grabs the center. 🎯"`,
-  OK_MOVE:
-    `CRITICAL: ONE short sentence, under 8 words. Don't explain anything. Just acknowledge. Example: "Solid move! Keep going."`,
-  INACCURACY:
-    `Two sentences max, under 30 words total. Name what was played, hint that something stronger existed, say why in one clause. No analogies unless the kid is age 5–7.`,
-  MISTAKE:
-    `Two to three sentences, under 40 words. Explain what went wrong simply. Mention a better option exists (do NOT name a specific move). End with encouragement. ONE teaching point only.`,
-  BLUNDER:
-    `Three sentences max, under 50 words. This is where you can use an analogy if it helps. Explain the mistake, point at a better option (without naming a specific move), and encourage. Be warm.`,
-};
+const SYSTEM_PROMPT = `You are Coach Pawn, a Socratic chess coach for children. You respond in JSON matching this schema:
+{
+  "shouldSpeak": boolean,
+  "message": string (max 280 chars),
+  "annotation": { "type": string, "squares": string[], "secondarySquares": string[], "label": string } | null,
+  "interactionType": "statement"|"question"|"celebration"|"warning"|"reinforcement",
+  "followUpChips": [{"label": string, "intent": string}] (max 3),
+  "conceptTaught": string | null,
+  "emotion": "happy"|"thinking"|"concerned"|"excited"|"neutral"
+}
 
-const TRIGGER_INSTRUCTIONS: Record<TriggerType, (a: MoveAnalysis) => string> = {
-  GREAT_MOVE: (a) => `${a.san} is an excellent move! It was one of the best options available. Praise the player and briefly explain what makes this move strong.`,
-  OK_MOVE: (a) => `${a.san} is a decent move. Give a brief positive comment and keep the energy up.`,
-  INACCURACY: (a) => `The player played ${a.san}, but ${a.bestSAN} was a bit stronger (${a.diff} centipawn difference). Gently point out that there was a better option without being discouraging.`,
-  MISTAKE: (a) => `The player played ${a.san}, but ${a.bestSAN} was significantly better (${a.diff} centipawn difference).${a.isHanging ? " The piece they moved is now unprotected!" : ""} Explain kindly what went wrong and encourage them to look for piece safety.`,
-  BLUNDER: (a) => `The player played ${a.san}, which is a serious mistake — ${a.bestSAN} was much better (${a.diff} centipawn difference).${a.isHanging ? " They left their piece unprotected!" : ""} Help them understand the mistake with patience and encouragement. Remind them every champion learns from mistakes.`,
-};
+ANNOTATION TYPES: fork_rays, pin_line, skewer_line, discovered_attack, hanging_piece, defended_chain, attack_arrow, danger_square, highlight_square, none
 
-export function buildCoachPrompt(
-  analysis: MoveAnalysis,
-  moveHistory: string[],
-  playerName: string,
-  age: number,
-  moveCount: number = 0,
-): CoachPrompt {
-  const lengthRule = LENGTH_RULES[analysis.trigger] ?? LENGTH_RULES.OK_MOVE;
-  // Throttle name usage: allow it on the first move and every 5th move; suppress otherwise.
-  const allowName = moveCount <= 1 || moveCount % 5 === 0;
-  const nameRule = allowName
-    ? ""
-    : `\nDo NOT address the player by name in this response.`;
-  const system = `${lengthRule}\n\n${ageRules(age, playerName)}${nameRule}`;
+FOLLOW-UP CHIP INTENTS: i_see_it, show_me, what_if, tell_me_more, got_it, try_again
 
-  const moveStr = moveHistory
-    .map((m, i) => (i % 2 === 0 ? `${Math.floor(i / 2) + 1}. ` : "") + m)
-    .join(" ");
-  const instruction = TRIGGER_INSTRUCTIONS[analysis.trigger]?.(analysis) ?? TRIGGER_INSTRUCTIONS.OK_MOVE(analysis);
+SOCRATIC RULES (follow strictly):
+1. For GREAT_MOVE / OK_MOVE: brief praise only (≤12 words), no chips, emotion=happy
+2. For INACCURACY: one Socratic question ("What does your piece on X control?"), 1–2 chips
+3. For MISTAKE / BLUNDER: name what's threatened WITHOUT giving the answer, ask "What do you think will happen next?", 2–3 chips
+4. For TACTIC_AVAILABLE: hint at the opportunity without naming it ("Two pieces — is there a way to attack both?"), ask with chips [show_me, i_see_it]
+5. For BOT_TACTIC_INCOMING: warn without giving away ("Something's off — can you spot the danger?"), chips [show_me, got_it]
+6. For RECURRING_ERROR: refer to the pattern gently ("Remember that trap we've seen before?")
+7. NEVER name a specific move (e.g. "play Rxf7"). Guide, don't solve.
 
-  const user = `Game so far: ${moveStr || "Just started"}
+LENGTH: "5-7" band → max 60 chars. "8-10" band → max 160 chars. "11+" band → max 280 chars.
+TONE: "5-7" → very simple words, emoji OK. "8-10" → playful, chess terms with brief explanation. "11+" → direct chess terminology.`;
 
-${instruction}`;
+function buildLearnerContext(req: CoachRequest): string {
+  if (!req.learnerSummary) return "";
+  const { mastered, inProgress, needsWork, recurringErrors, recentMessages } = req.learnerSummary;
+  const parts: string[] = [];
+  if (mastered.length > 0) parts.push(`Mastered: ${mastered.join(", ")}`);
+  if (inProgress.length > 0) parts.push(`Learning: ${inProgress.join(", ")}`);
+  if (needsWork.length > 0) parts.push(`Struggling: ${needsWork.join(", ")}`);
+  if (recurringErrors.length > 0) {
+    parts.push(`Recurring errors: ${recurringErrors.map((e) => `${e.patternId} (${e.count}x)`).join(", ")}`);
+  }
+  if (recentMessages.length > 0) {
+    parts.push(`Recent coach messages: ${recentMessages.map((m) => `"${m}"`).join("; ")}`);
+  }
+  return parts.length > 0 ? `\nLearner profile:\n${parts.join("\n")}` : "";
+}
+
+export function buildCoachPrompt(req: CoachRequest): CoachPrompt {
+  const learnerCtx = buildLearnerContext(req);
+  const system = `${SYSTEM_PROMPT}\n\nAge band: ${req.ageBand}\nPlayer name: ${req.playerName}${learnerCtx}`;
+
+  const triggerDesc: Record<string, string> = {
+    GREAT_MOVE: "Player made an excellent move.",
+    OK_MOVE: "Player made a solid but unremarkable move.",
+    INACCURACY: `Player's move was slightly inaccurate (${req.centipawnDelta ?? 0}cp loss).`,
+    MISTAKE: `Player made a mistake (${req.centipawnDelta ?? 0}cp loss).`,
+    BLUNDER: `Player made a serious blunder (${req.centipawnDelta ?? 0}cp loss).`,
+    TACTIC_AVAILABLE: `A tactic is available for the player: ${(req.tacticsAvailableForKid ?? []).join(", ")}.`,
+    PATTERN_RECOGNIZED: "A recognizable pattern is present on the board.",
+    RECURRING_ERROR: `Player repeated a recurring error: ${(req.learnerSummary?.recurringErrors[0]?.patternId ?? "unknown")}.`,
+    BOT_TACTIC_INCOMING: `The bot just set up a tactic: ${(req.tacticsAvailableForBot ?? []).join(", ")}.`,
+  };
+
+  const user = `Position FEN: ${req.fen}
+Last move: ${req.lastMove ? `${req.lastMove.san} (${req.lastMove.from}→${req.lastMove.to})` : "none"}
+Mover: ${req.mover}
+Situation: ${triggerDesc[req.trigger] ?? req.trigger}${req.activeMissionConcept ? `\nActive mission concept: ${req.activeMissionConcept}` : ""}
+
+Respond with valid JSON only. No markdown, no prose outside the JSON.`;
 
   return { system, user };
 }
 
-// Hard ceiling enforced server-side after Claude responds. The prompt
-// asks for short responses, but Claude occasionally over-shoots; this
-// makes the ceiling a guarantee, not a hope.
-const MAX_WORDS: Record<TriggerType, number> = {
-  GREAT_MOVE: 10,
-  OK_MOVE: 8,
-  INACCURACY: 35,
-  MISTAKE: 45,
-  BLUNDER: 55,
-};
-
-export function enforceLength(text: string, trigger: TriggerType): string {
-  const limit = MAX_WORDS[trigger] ?? 30;
-  const words = text.trim().split(/\s+/);
-  if (words.length <= limit) return text.trim();
-
-  const truncated = words.slice(0, limit).join(" ");
-  // End at the last complete sentence in the truncated window so the
-  // message doesn't cut mid-thought. Only do that if the sentence break
-  // is past the halfway point — otherwise we'd lose too much content.
+export function enforceLength(text: string, ageBand: AgeBand): string {
+  const limit = ageBand === "5-7" ? 120 : ageBand === "8-10" ? 200 : 280;
+  if (text.length <= limit) return text;
+  const truncated = text.slice(0, limit);
   const lastEnd = Math.max(
     truncated.lastIndexOf("."),
     truncated.lastIndexOf("!"),
@@ -116,7 +91,25 @@ export function enforceLength(text: string, trigger: TriggerType): string {
   return truncated.replace(/[,;:]$/, "") + "…";
 }
 
-export const FALLBACKS: Record<TriggerType, string[]> = {
+// Legacy TriggerType-based enforceLength for backwards compat in API route
+export function enforceLengthByTrigger(text: string, trigger: TriggerType): string {
+  const MAX_WORDS: Record<TriggerType, number> = {
+    GREAT_MOVE: 10,
+    OK_MOVE: 8,
+    INACCURACY: 35,
+    MISTAKE: 45,
+    BLUNDER: 55,
+  };
+  const limit = MAX_WORDS[trigger] ?? 30;
+  const words = text.trim().split(/\s+/);
+  if (words.length <= limit) return text.trim();
+  const truncated = words.slice(0, limit).join(" ");
+  const lastEnd = Math.max(truncated.lastIndexOf("."), truncated.lastIndexOf("!"), truncated.lastIndexOf("?"));
+  if (lastEnd > truncated.length / 2) return truncated.slice(0, lastEnd + 1);
+  return truncated.replace(/[,;:]$/, "") + "…";
+}
+
+export const FALLBACKS: Record<string, string[]> = {
   GREAT_MOVE: [
     "Wow, amazing move! You're really thinking like a chess champion! ⭐",
     "That's a really strong move! Great job! 🎉",
@@ -138,5 +131,21 @@ export const FALLBACKS: Record<TriggerType, string[]> = {
   BLUNDER: [
     "Oh no! Something's unprotected. But every champion learns from mistakes! 🎮",
     "Careful! Always check: is my piece safe after I move? Let's keep going!",
+  ],
+  TACTIC_AVAILABLE: [
+    "See if you can spot a tactical opportunity here!",
+    "Look carefully — there might be a way to win material!",
+  ],
+  RECURRING_ERROR: [
+    "Watch out for that pattern — you've seen it before!",
+    "Remember to check your pieces before moving!",
+  ],
+  BOT_TACTIC_INCOMING: [
+    "The bot might be setting something up. Stay alert!",
+    "Something's brewing on the board — can you spot the danger?",
+  ],
+  PATTERN_RECOGNIZED: [
+    "Interesting pattern here! Look for connections.",
+    "There's something worth noticing in this position.",
   ],
 };

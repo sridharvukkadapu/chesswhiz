@@ -1,14 +1,19 @@
 import { buildCoachPrompt, FALLBACKS } from "../prompts";
-import type { MoveAnalysis, TriggerType } from "@/lib/chess/types";
+import type { CoachRequest } from "../schema";
 
-const analysis: MoveAnalysis = {
-  trigger: "BLUNDER", severity: 4, san: "Bxf7", bestSAN: "Nf3",
-  diff: 520, piece: "b", captured: null, isHanging: true, eval: -300,
+const baseReq: CoachRequest = {
+  fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+  lastMove: { from: "e2", to: "e4", san: "e4" },
+  mover: "player",
+  trigger: "BLUNDER",
+  centipawnDelta: 520,
+  playerName: "Alex",
+  ageBand: "8-10",
 };
 
 describe("buildCoachPrompt", () => {
   it("returns system and user strings", () => {
-    const prompt = buildCoachPrompt(analysis, [], "Alex", 9);
+    const prompt = buildCoachPrompt(baseReq);
     expect(typeof prompt.system).toBe("string");
     expect(typeof prompt.user).toBe("string");
     expect(prompt.system.length).toBeGreaterThan(0);
@@ -16,30 +21,27 @@ describe("buildCoachPrompt", () => {
   });
 
   it("includes player name in system prompt", () => {
-    const prompt = buildCoachPrompt(analysis, [], "Jordan", 9);
+    const prompt = buildCoachPrompt({ ...baseReq, playerName: "Jordan" });
     expect(prompt.system).toContain("Jordan");
   });
 
-  it("includes age-appropriate rules for age 6", () => {
-    const prompt = buildCoachPrompt(analysis, [], "Sam", 6);
-    // Age 6 prompt mentions simple words and analogies — that's the
-    // age-tier signal that distinguishes it from older tiers.
-    expect(prompt.system).toMatch(/simple words|analog/i);
+  it("includes age-appropriate band in system prompt for age 5-7", () => {
+    const prompt = buildCoachPrompt({ ...baseReq, ageBand: "5-7" });
+    expect(prompt.system).toContain("5-7");
   });
 
-  it("includes age-appropriate rules for age 12", () => {
-    const prompt = buildCoachPrompt(analysis, [], "Sam", 12);
-    expect(prompt.system).toContain("terminology");
+  it("includes age-appropriate band in system prompt for age 11+", () => {
+    const prompt = buildCoachPrompt({ ...baseReq, ageBand: "11+" });
+    expect(prompt.system).toContain("11+");
   });
 
-  it("includes played move and best move in user prompt", () => {
-    const prompt = buildCoachPrompt(analysis, ["e4", "e5"], "Alex", 9);
-    expect(prompt.user).toContain("Bxf7");
-    expect(prompt.user).toContain("Nf3");
+  it("includes trigger info in user prompt", () => {
+    const prompt = buildCoachPrompt(baseReq);
+    expect(prompt.user).toContain("BLUNDER");
   });
 
   it("FALLBACKS has entries for all trigger types", () => {
-    const triggers: TriggerType[] = ["GREAT_MOVE", "OK_MOVE", "INACCURACY", "MISTAKE", "BLUNDER"];
+    const triggers = ["GREAT_MOVE", "OK_MOVE", "INACCURACY", "MISTAKE", "BLUNDER"];
     triggers.forEach((t) => {
       expect(FALLBACKS[t]).toBeDefined();
       expect(FALLBACKS[t].length).toBeGreaterThan(0);

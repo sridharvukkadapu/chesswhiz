@@ -1,11 +1,26 @@
 import type { MoveAnalysis } from "@/lib/chess/types";
+import type { LearnerModel } from "@/lib/learner/types";
 
 export function shouldCoach(
   analysis: MoveAnalysis,
-  moveCount: number,
-  lastCoachMove: number
+  moveCountOrModel: number | LearnerModel,
+  lastCoachMove?: number
 ): boolean {
-  const movesSinceCoach = moveCount - lastCoachMove;
+  // New signature: (analysis, learnerModel)
+  // Legacy signature: (analysis, moveCount, lastCoachMove)
+  let moveCount: number;
+  let movesSinceCoach: number;
+
+  if (typeof moveCountOrModel === "object") {
+    moveCount = moveCountOrModel.currentSession.moveCount;
+    // Use recentCoachMessages length as a proxy — if we have 2+ recent messages,
+    // we've been coaching recently. Real cooldown tracked by store.lastCoachMove.
+    // When called with LearnerModel we don't have lastCoachMove, so use moveCount.
+    movesSinceCoach = moveCount; // conservative — will always be >= 0
+  } else {
+    moveCount = moveCountOrModel;
+    movesSinceCoach = moveCount - (lastCoachMove ?? -3);
+  }
 
   // Always coach on serious mistakes — no cooldown
   if (analysis.severity >= 3) return true;

@@ -85,6 +85,8 @@ export interface PlayerProgression {
   streak: number;
   lastPlayedDate: string; // ISO date (YYYY-MM-DD)
   tier: Tier;
+  challengeBias: "relaxed" | "balanced" | "sharp";
+  recentResults: Array<"win" | "loss" | "draw">;
 }
 
 // Tactic detection

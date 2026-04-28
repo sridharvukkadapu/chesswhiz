@@ -163,6 +163,8 @@ const DEFAULT_PROGRESSION: PlayerProgression = {
   streak: 0,
   lastPlayedDate: "",
   tier: "free",
+  challengeBias: "balanced",
+  recentResults: [],
 };
 
 function loadProgression(): PlayerProgression {

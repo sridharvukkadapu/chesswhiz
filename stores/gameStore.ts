@@ -10,6 +10,7 @@ import { getGameStatus } from "@/lib/chess/engine";
 import type { LearnerModel, LearnerSignal } from "@/lib/learner/types";
 import type { CoachResponse } from "@/lib/coaching/schema";
 import { loadLearnerModel, saveLearnerModel, derivePlayerId } from "@/lib/learner/persistence";
+import { computeDifficulty, recordResult } from "@/lib/progression/adaptive-difficulty";
 import { applySignal, recordCoachMessage, startNewGame, incrementMoveCount, summarizeForPrompt } from "@/lib/learner/model";
 import { createEmptyLearnerModel } from "@/lib/learner/model";
 
@@ -472,6 +473,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   grantGameEndXP: (status) => {
     const { difficulty } = get();
+
+    // Record result for adaptive difficulty
+    const result: "win" | "loss" | "draw" =
+      status === "white_wins" ? "win" :
+      status === "black_wins" ? "loss" : "draw";
+    const updatedProg = recordResult(get().progression, result);
+    saveProgression(updatedProg);
+    set({ progression: updatedProg });
+
     if (status === "white_wins") {
       get().addXP(XP_REWARDS.winGame[difficulty], `Won a ${["Easy","Medium","Hard"][difficulty-1]} game`);
     } else if (status === "stalemate" || status === "draw") {
@@ -723,6 +733,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const updated = startNewGame(learnerModel);
     saveLearnerModel(updated);
     clearSavedGame();
+    const newDifficulty = computeDifficulty(get().progression);
     set({
       chess: new Chess(),
       selected: null,
@@ -738,6 +749,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       boardAnnotation: null,
       learnerModel: updated,
       currentCoachResponse: null,
+      difficulty: newDifficulty,
       coachMessages: [
         {
           id: crypto.randomUUID(),

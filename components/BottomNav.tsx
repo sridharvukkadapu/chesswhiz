@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Gamepad2, Map, IdCard, type LucideIcon } from "lucide-react";
+import { Gamepad2, Map, IdCard, Puzzle, type LucideIcon } from "lucide-react";
 import { T, Z } from "@/lib/design/tokens";
 import { useGameStore } from "@/stores/gameStore";
 
@@ -15,6 +15,7 @@ interface Tab {
 
 const TABS: Tab[] = [
   { href: "/play", label: "Play", Icon: Gamepad2 },
+  { href: "/puzzle", label: "Puzzle", Icon: Puzzle },
   { href: "/kingdom", label: "Kingdom", Icon: Map },
   { href: "/card", label: "Card", Icon: IdCard },
 ];
@@ -75,7 +76,7 @@ export default function BottomNav() {
           maxWidth: 720,
           margin: "0 auto",
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(4, 1fr)",
           height: 64,
         }}
       >

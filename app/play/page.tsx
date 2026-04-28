@@ -450,7 +450,14 @@ export default function PlayPage() {
         tacticsSpotted: learnerModel.stats.tacticsSpotted,
         model: learnerModel,
       }),
-    }).catch(() => {});
+    })
+      .then((r) => r.json())
+      .then((data: { narrative?: string }) => {
+        if (data.narrative) {
+          localStorage.setItem("chesswhiz.lastNarrative", data.narrative);
+        }
+      })
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 

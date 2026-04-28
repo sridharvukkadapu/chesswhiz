@@ -34,6 +34,7 @@ import Board from "@/components/Board";
 import CoachPanel from "@/components/CoachPanel";
 import CoachErrorBoundary from "@/components/CoachErrorBoundary";
 import MoveHistory from "@/components/MoveHistory";
+import ImStuckOverlay from "@/components/ImStuckOverlay";
 import PlayerBar from "@/components/PlayerBar";
 import GameStatusBar from "@/components/GameStatus";
 import { Piece } from "@/components/ChessPieces";
@@ -375,6 +376,7 @@ export default function PlayPage() {
   const currentBossKingdom = useGameStore((s) => s.currentBossKingdom);
   const [showFirstGameCelebration, setShowFirstGameCelebration] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [showStuck, setShowStuck] = useState(false);
   const [replaySteps, setReplaySteps] = useState<ReplayStep[]>([]);
   const knightCardRef = useRef<HTMLDivElement>(null);
   const [showBossIntro, setShowBossIntro] = useState(false);
@@ -1323,9 +1325,67 @@ export default function PlayPage() {
               <Undo2 aria-hidden size={14} strokeWidth={2.5} />
               Undo
             </button>
+            {status === "playing" && (
+              <button type="button"
+                onClick={() => setShowStuck(true)}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 6,
+                  background: "#FFFCF5",
+                  border: `1.5px solid ${T.border}`,
+                  borderRadius: 12,
+                  minHeight: 52,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: T.inkLow,
+                  cursor: "pointer",
+                  fontFamily: T.fontUI,
+                  transition: "all 200ms cubic-bezier(0.34,1.56,0.64,1)",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = T.butter;
+                  (e.currentTarget as HTMLElement).style.color = T.butterDeep;
+                }}
+                onFocus={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = T.butter;
+                  (e.currentTarget as HTMLElement).style.color = T.butterDeep;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = T.border;
+                  (e.currentTarget as HTMLElement).style.color = T.inkLow;
+                }}
+                onBlur={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = T.border;
+                  (e.currentTarget as HTMLElement).style.color = T.inkLow;
+                }}
+              >
+                I&apos;m Stuck
+              </button>
+            )}
           </div>
         </div>
       </main>
+
+      <ImStuckOverlay
+        open={showStuck}
+        onClose={() => setShowStuck(false)}
+        playerName={playerName}
+        onShowHint={() => {
+          store.addCoachMessage({ type: "tip", text: "Look carefully at all your pieces — is any of them able to attack something valuable?" });
+          setShowStuck(false);
+        }}
+        onLearnTrick={() => {
+          store.addCoachMessage({ type: "tip", text: "Remember: always check if your pieces are safe before moving! Look for forks, pins, and hanging pieces." });
+          setShowStuck(false);
+        }}
+        onStartOver={() => {
+          setShowStuck(false);
+          requestReset();
+        }}
+      />
 
       <BottomNav />
 

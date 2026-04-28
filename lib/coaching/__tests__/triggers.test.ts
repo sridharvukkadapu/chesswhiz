@@ -43,9 +43,37 @@ describe("shouldCoach", () => {
 
   it("does not coach OK_MOVE mid-game past cooldown (rare random)", () => {
     const analysis = makeAnalysis({ trigger: "OK_MOVE", severity: 1 });
-    // moveCount=10, lastCoachMove=5 — past cooldown, but OK_MOVE has no explicit random gate
-    // shouldCoach returns false for severity=1 unless opening
-    expect(shouldCoach(analysis, 10, 5)).toBe(false);
+    // moveCount=10, lastCoachMove=5 — past cooldown, but OK_MOVE has a random gate (35% probability)
+    // Force random to fail (probability is < 0.35, so use 0.5) to test the failure path
+    const origRandom = Math.random;
+    Math.random = () => 0.5;
+    const result = shouldCoach(analysis, 10, 5);
+    Math.random = origRandom;
+    expect(result).toBe(false);
+  });
+});
+
+describe("shouldCoach — TACTIC_AVAILABLE restraint", () => {
+  it("fires TACTIC_AVAILABLE after 1 move cooldown", () => {
+    const analysis = makeAnalysis({ trigger: "TACTIC_AVAILABLE" as never, severity: 0 });
+    // moveCount=5, lastCoachMove=4 → movesSinceCoach=1 → should allow
+    expect(shouldCoach(analysis, 5, 4)).toBe(true);
+  });
+
+  it("suppresses TACTIC_AVAILABLE within 1-move cooldown", () => {
+    const analysis = makeAnalysis({ trigger: "TACTIC_AVAILABLE" as never, severity: 0 });
+    // moveCount=5, lastCoachMove=5 → movesSinceCoach=0 → should suppress
+    expect(shouldCoach(analysis, 5, 5)).toBe(false);
+  });
+
+  it("still uses 2-move cooldown for non-TACTIC triggers", () => {
+    const analysis = makeAnalysis({ trigger: "GREAT_MOVE", severity: 0 });
+    // moveCount=5, lastCoachMove=4 → movesSinceCoach=1 → should suppress (< 2)
+    const origRandom = Math.random;
+    Math.random = () => 0; // force probability to fail
+    const result = shouldCoach(analysis, 5, 4);
+    Math.random = origRandom;
+    expect(result).toBe(false);
   });
 });
 

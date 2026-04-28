@@ -640,7 +640,7 @@ export default function PlayPage() {
 
         // Replay trigger for significant tactical events
         const REPLAY_TRIGGERS = ["BLUNDER", "BOT_TACTIC_INCOMING", "TACTIC_AVAILABLE"];
-        if (REPLAY_TRIGGERS.includes(analysis.trigger) && data.shouldSpeak) {
+        if (REPLAY_TRIGGERS.includes(analysis.trigger)) {
           const steps: ReplayStep[] = (data as { replay?: ReplayStep[] }).replay?.length
             ? (data as { replay?: ReplayStep[] }).replay!
             : buildReplaySequence(moveHistory, moveHistory.length - 1);

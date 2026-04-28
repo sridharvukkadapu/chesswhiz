@@ -76,9 +76,6 @@ export default function MoveReplayOverlay({ steps, onDismiss, title }: MoveRepla
     setCurrentStep(0);
     setDone(false);
 
-    const introText = title ?? "Wait — let me show you what just happened.";
-    speak(introText);
-
     steps.forEach((step, i) => {
       const t = setTimeout(() => {
         setCurrentStep(i);

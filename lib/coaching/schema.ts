@@ -69,7 +69,7 @@ export const CoachResponseSchema = z.object({
   followUpChips: z.array(FollowUpChipSchema).max(3).optional(),
   conceptTaught: z.string().optional(),
   emotion: z.enum(["happy", "thinking", "concerned", "excited", "neutral"]).optional(),
-  replay: z.array(ReplayStepSchema).max(4).optional(),
+  replay: z.array(ReplayStepSchema).max(3).optional(),
 });
 export type CoachResponse = z.infer<typeof CoachResponseSchema>;
 

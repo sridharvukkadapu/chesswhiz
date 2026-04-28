@@ -27,6 +27,9 @@ import { findBestMove } from "@/lib/chess/ai";
 import { ageToBand } from "@/lib/coaching/schema";
 import { getDeviceId } from "@/lib/identity/device";
 import type { FollowUpChip } from "@/lib/coaching/schema";
+import type { ReplayStep } from "@/lib/coaching/schema";
+import MoveReplayOverlay from "@/components/MoveReplayOverlay";
+import { buildReplaySequence } from "@/lib/coaching/replay";
 import Board from "@/components/Board";
 import CoachPanel from "@/components/CoachPanel";
 import CoachErrorBoundary from "@/components/CoachErrorBoundary";
@@ -372,6 +375,7 @@ export default function PlayPage() {
   const currentBossKingdom = useGameStore((s) => s.currentBossKingdom);
   const [showFirstGameCelebration, setShowFirstGameCelebration] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const [replaySteps, setReplaySteps] = useState<ReplayStep[]>([]);
   const knightCardRef = useRef<HTMLDivElement>(null);
   const [showBossIntro, setShowBossIntro] = useState(false);
   const [pendingBoss, setPendingBoss] = useState<import("@/lib/progression/types").Boss | null>(null);
@@ -633,6 +637,17 @@ export default function PlayPage() {
           }
         }
         store.setCoachResponse(data);
+
+        // Replay trigger for significant tactical events
+        const REPLAY_TRIGGERS = ["BLUNDER", "BOT_TACTIC_INCOMING", "TACTIC_AVAILABLE"];
+        if (REPLAY_TRIGGERS.includes(analysis.trigger) && data.shouldSpeak) {
+          const steps: ReplayStep[] = (data as { replay?: ReplayStep[] }).replay?.length
+            ? (data as { replay?: ReplayStep[] }).replay!
+            : buildReplaySequence(moveHistory, moveHistory.length - 1);
+          if (steps.length > 0) {
+            setTimeout(() => setReplaySteps(steps), 800);
+          }
+        }
       } else {
         throw new Error("Empty response");
       }
@@ -895,6 +910,11 @@ export default function PlayPage() {
         boss={showBossIntro ? pendingBoss : null}
         onFight={() => setShowBossIntro(false)}
         onRetreat={() => { setShowBossIntro(false); router.push("/journey"); }}
+      />
+
+      <MoveReplayOverlay
+        steps={replaySteps}
+        onDismiss={() => setReplaySteps([])}
       />
 
       {/* Aha celebration overlay */}

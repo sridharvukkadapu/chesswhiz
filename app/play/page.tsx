@@ -463,10 +463,13 @@ export default function PlayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
-  // First-game Pawn Village celebration
+  // First-game Pawn Village celebration — fires at most once per game end
+  const celebrationFiredRef = useRef(false);
   useEffect(() => {
-    if (status === "playing") return;
+    if (status === "playing") { celebrationFiredRef.current = false; return; }
+    if (celebrationFiredRef.current) return;
     if (isFirstSession && !firstSessionComplete) {
+      celebrationFiredRef.current = true;
       setShowFirstGameCelebration(true);
       markFirstSessionComplete();
     }

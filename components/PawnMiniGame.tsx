@@ -95,53 +95,49 @@ export default function PawnMiniGame({ onComplete, playerName }: PawnMiniGamePro
     : NARRATION[narrationIdx];
 
   const handleSquareClick = useCallback((sq: PawnSquare) => {
-    if (state.turn !== "white" || state.done) return;
+    setState((prev) => {
+      if (prev.turn !== "white" || prev.done) return prev;
 
-    if (state.selected) {
-      const legal = getLegalWhiteMoves(state.selected, state);
-      if (legal.includes(sq)) {
-        let newWhite = state.whitePawns.map((p) => (p === state.selected ? sq : p));
-        let newBlack = state.blackPawns.filter((p) => p !== sq);
+      if (prev.selected) {
+        const legal = getLegalWhiteMoves(prev.selected, prev);
+        if (legal.includes(sq)) {
+          let newWhite = prev.whitePawns.map((p) => (p === prev.selected ? sq : p));
+          let newBlack = prev.blackPawns.filter((p) => p !== sq);
 
-        const whiteWon = newWhite.some((p) => rankIdx(p) === 8);
-        if (whiteWon) {
-          setState({ ...state, whitePawns: newWhite, blackPawns: newBlack, done: true, winner: "white", selected: null });
-          return;
-        }
-
-        const newStateAfterWhite: GameState = { ...state, whitePawns: newWhite, blackPawns: newBlack, turn: "black", selected: null, moveCount: state.moveCount + 1 };
-        const botMove = getBotMove(newStateAfterWhite);
-        if (botMove) {
-          newWhite = newWhite.filter((p) => p !== botMove.to);
-          newBlack = newBlack.map((p) => (p === botMove.from ? botMove.to : p));
-          const blackWon = newBlack.some((p) => rankIdx(p) === 1);
-          if (blackWon) {
-            setState({ ...newStateAfterWhite, whitePawns: newWhite, blackPawns: newBlack, done: true, winner: "black" });
-            return;
+          const whiteWon = newWhite.some((p) => rankIdx(p) === 8);
+          if (whiteWon) {
+            return { ...prev, whitePawns: newWhite, blackPawns: newBlack, done: true, winner: "white", selected: null };
           }
-        }
 
-        if (newBlack.length === 0) {
-          setState({ ...newStateAfterWhite, whitePawns: newWhite, blackPawns: newBlack, done: true, winner: "white" });
-          return;
-        }
-        if (newWhite.length === 0) {
-          setState({ ...newStateAfterWhite, whitePawns: newWhite, blackPawns: newBlack, done: true, winner: "black" });
-          return;
-        }
+          const afterWhite: GameState = { ...prev, whitePawns: newWhite, blackPawns: newBlack, turn: "black", selected: null, moveCount: prev.moveCount + 1 };
+          const botMove = getBotMove(afterWhite);
+          if (botMove) {
+            newWhite = newWhite.filter((p) => p !== botMove.to);
+            newBlack = newBlack.map((p) => (p === botMove.from ? botMove.to : p));
+            const blackWon = newBlack.some((p) => rankIdx(p) === 1);
+            if (blackWon) {
+              return { ...afterWhite, whitePawns: newWhite, blackPawns: newBlack, done: true, winner: "black" };
+            }
+          }
 
-        setState({ ...newStateAfterWhite, whitePawns: newWhite, blackPawns: newBlack, turn: "white", moveCount: state.moveCount + 1 });
-      } else {
-        if (state.whitePawns.includes(sq)) {
-          setState({ ...state, selected: sq });
+          if (newBlack.length === 0) {
+            return { ...afterWhite, whitePawns: newWhite, blackPawns: newBlack, done: true, winner: "white" };
+          }
+          if (newWhite.length === 0) {
+            return { ...afterWhite, whitePawns: newWhite, blackPawns: newBlack, done: true, winner: "black" };
+          }
+
+          return { ...afterWhite, whitePawns: newWhite, blackPawns: newBlack, turn: "white" };
         } else {
-          setState({ ...state, selected: null });
+          if (prev.whitePawns.includes(sq)) return { ...prev, selected: sq };
+          return { ...prev, selected: null };
         }
+      } else {
+        if (prev.whitePawns.includes(sq)) return { ...prev, selected: sq };
+        return prev;
       }
-    } else {
-      if (state.whitePawns.includes(sq)) setState({ ...state, selected: sq });
-    }
-  }, [state]);
+    });
+  }, []);
 
   const squareSize = 54;
   const ranks = [8, 7, 6, 5, 4, 3, 2, 1];

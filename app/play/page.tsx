@@ -401,6 +401,59 @@ export default function PlayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Game-start: fetch personalized welcome-back callback from /api/coach/session
+  useEffect(() => {
+    if (screen !== "playing") return;
+    const deviceId = typeof window !== "undefined"
+      ? localStorage.getItem("chesswhiz.deviceId") ?? ""
+      : "";
+    if (!deviceId) return;
+    fetch("/api/coach/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        deviceId,
+        playerName,
+        ageBand: ageToBand(playerAge),
+        phase: "game_start",
+      }),
+    })
+      .then((r) => r.json())
+      .then((data: { message?: string }) => {
+        if (data.message) {
+          // Replace the first coach message (intro) with the personalized callback
+          store.addCoachMessage({ type: "intro", text: data.message });
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
+
+  // Game-end: send result to /api/coach/session for memory storage
+  useEffect(() => {
+    if (status === "playing") return;
+    const deviceId = typeof window !== "undefined"
+      ? localStorage.getItem("chesswhiz.deviceId") ?? ""
+      : "";
+    if (!deviceId) return;
+    const gameResult = status === "white_wins" ? "win" : status === "black_wins" ? "loss" : "draw";
+    fetch("/api/coach/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        deviceId,
+        playerName,
+        ageBand: ageToBand(playerAge),
+        phase: "game_end",
+        gameResult,
+        moveCount,
+        tacticsSpotted: learnerModel.stats.tacticsSpotted,
+        model: learnerModel,
+      }),
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
+
   // Voice-synced annotation reveal
   const pendingAnnotationRef = useRef<typeof boardAnnotation>(null);
   const annotationFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -476,7 +529,10 @@ export default function PlayPage() {
 
       const res = await fetch("/api/coach", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-device-id": typeof window !== "undefined" ? localStorage.getItem("chesswhiz.deviceId") ?? "" : "",
+        },
         body: JSON.stringify({
           fen,
           lastMove: { from: lastMoveFrom, to: lastMoveTo, san: lastMoveSan },

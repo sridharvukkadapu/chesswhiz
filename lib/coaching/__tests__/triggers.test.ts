@@ -66,14 +66,18 @@ describe("shouldCoach — TACTIC_AVAILABLE restraint", () => {
     expect(shouldCoach(analysis, 5, 5)).toBe(false);
   });
 
-  it("still uses 2-move cooldown for non-TACTIC triggers", () => {
-    const analysis = makeAnalysis({ trigger: "GREAT_MOVE", severity: 0 });
-    // moveCount=5, lastCoachMove=4 → movesSinceCoach=1 → should suppress (< 2)
+  it("GREAT_MOVE is still blocked at movesSinceCoach=1 while TACTIC_AVAILABLE is not", () => {
+    // GREAT_MOVE at movesSinceCoach=1 hits the standard 2-move gate → false
+    const greatMove = makeAnalysis({ trigger: "GREAT_MOVE", severity: 0 });
     const origRandom = Math.random;
     Math.random = () => 0; // force probability to fail
-    const result = shouldCoach(analysis, 5, 4);
+    const greatMoveResult = shouldCoach(greatMove, 5, 4);
     Math.random = origRandom;
-    expect(result).toBe(false);
+    expect(greatMoveResult).toBe(false);
+
+    // TACTIC_AVAILABLE at movesSinceCoach=1 takes the 1-move path → true
+    const tacticAvail = makeAnalysis({ trigger: "TACTIC_AVAILABLE" as never, severity: 0 });
+    expect(shouldCoach(tacticAvail, 5, 4)).toBe(true);
   });
 });
 

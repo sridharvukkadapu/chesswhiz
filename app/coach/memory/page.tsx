@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useGameStore } from "@/stores/gameStore";
 import { modelToDisplayItems, getMemoryStats, type MemoryDisplayItem } from "@/lib/coaching/memory-display";
 import CoachPawn, { SpeechBubble } from "@/components/CoachPawn";
 import { T } from "@/lib/design/tokens";
-import type { ConceptId, ErrorPatternId } from "@/lib/learner/types";
 
 const TYPE_COLORS: Record<MemoryDisplayItem["type"], string> = {
   mastered: T.sage,
@@ -29,6 +28,8 @@ export default function MemoryPage() {
   const forgetErrorPattern = useGameStore((s) => s.forgetErrorPattern);
   const [forgetting, setForgetting] = useState<string | null>(null);
   const [justForgotten, setJustForgotten] = useState<string[]>([]);
+  const forgetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (forgetTimerRef.current) clearTimeout(forgetTimerRef.current); }, []);
 
   const items = modelToDisplayItems(learnerModel).filter((item) => !justForgotten.includes(item.id));
   const stats = getMemoryStats(learnerModel);
@@ -37,9 +38,9 @@ export default function MemoryPage() {
 
   function handleForget(item: MemoryDisplayItem) {
     setForgetting(item.id);
-    setTimeout(() => {
-      if (item.conceptId) forgetConcept(item.conceptId as ConceptId);
-      if (item.errorPatternId) forgetErrorPattern(item.errorPatternId as ErrorPatternId);
+    forgetTimerRef.current = setTimeout(() => {
+      if (item.conceptId) forgetConcept(item.conceptId);
+      if (item.errorPatternId) forgetErrorPattern(item.errorPatternId);
       setJustForgotten((prev) => [...prev, item.id]);
       setForgetting(null);
     }, 400);

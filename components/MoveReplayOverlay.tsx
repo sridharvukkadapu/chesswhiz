@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import type { ReplayStep } from "@/lib/coaching/schema";
 import { T, Z } from "@/lib/design/tokens";
@@ -15,15 +15,13 @@ interface MoveReplayOverlayProps {
 
 const STEP_DURATION_MS = 2200;
 
+const PIECE_GLYPHS: Record<string, string> = {
+  wk: "♔", wq: "♕", wr: "♖", wb: "♗", wn: "♘", wp: "♙",
+  bk: "♚", bq: "♛", br: "♜", bb: "♝", bn: "♞", bp: "♟",
+};
+
 function StaticBoard({ fen }: { fen: string }) {
-  const chess = new Chess(fen);
-  const board = chess.board();
-
-  const PIECE_GLYPHS: Record<string, string> = {
-    wk: "♔", wq: "♕", wr: "♖", wb: "♗", wn: "♘", wp: "♙",
-    bk: "♚", bq: "♛", br: "♜", bb: "♝", bn: "♞", bp: "♟",
-  };
-
+  const board = useMemo(() => new Chess(fen).board(), [fen]);
   const squareSize = 44;
 
   return (
@@ -69,6 +67,8 @@ export default function MoveReplayOverlay({ steps, onDismiss, title }: MoveRepla
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const onDismissRef = useRef(onDismiss);
   useEffect(() => { onDismissRef.current = onDismiss; }, [onDismiss]);
+  const speakRef = useRef(speak);
+  useEffect(() => { speakRef.current = speak; }, [speak]);
 
   useEffect(() => {
     if (steps.length === 0) return;
@@ -79,7 +79,7 @@ export default function MoveReplayOverlay({ steps, onDismiss, title }: MoveRepla
     steps.forEach((step, i) => {
       const t = setTimeout(() => {
         setCurrentStep(i);
-        speak(step.narration);
+        speakRef.current(step.narration);
         if (i === steps.length - 1) {
           const tDone = setTimeout(() => setDone(true), STEP_DURATION_MS);
           timersRef.current.push(tDone);
@@ -92,7 +92,7 @@ export default function MoveReplayOverlay({ steps, onDismiss, title }: MoveRepla
       timersRef.current.forEach(clearTimeout);
       timersRef.current = [];
     };
-  }, [steps, title, speak]);
+  }, [steps, title]);
 
   if (steps.length === 0) return null;
 
@@ -126,7 +126,8 @@ export default function MoveReplayOverlay({ steps, onDismiss, title }: MoveRepla
         />
       </div>
 
-      <div style={{ animation: "replayBoardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) 400ms both" }}>
+      {/* key re-mounts on each step so the entry animation re-triggers */}
+      <div key={currentStep} style={{ animation: "replayBoardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both" }}>
         <StaticBoard fen={step.fen} />
       </div>
 

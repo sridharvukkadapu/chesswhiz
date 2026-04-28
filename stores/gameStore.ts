@@ -7,7 +7,7 @@ import type { PlayerProgression, Mission, RankId, TacticDetection, Power } from 
 import { getRankByXP, XP_REWARDS, getStreakMultiplier, POWERS, KINGDOMS } from "@/lib/progression/data";
 import { generateMission, missionMatchesTactic, findStrategyForTactic } from "@/lib/progression/missions";
 import { getGameStatus } from "@/lib/chess/engine";
-import type { LearnerModel, LearnerSignal } from "@/lib/learner/types";
+import type { LearnerModel, LearnerSignal, ConceptId, ErrorPatternId } from "@/lib/learner/types";
 import type { CoachResponse } from "@/lib/coaching/schema";
 import { loadLearnerModel, saveLearnerModel, derivePlayerId } from "@/lib/learner/persistence";
 import { computeDifficulty, recordResult } from "@/lib/progression/adaptive-difficulty";
@@ -291,6 +291,8 @@ interface GameStore {
   ingestLearnerSignal: (signal: LearnerSignal) => void;
   setCoachResponse: (response: CoachResponse | null) => void;
   resetForNewGame: () => void;
+  forgetConcept: (conceptId: ConceptId) => void;
+  forgetErrorPattern: (patternId: ErrorPatternId) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -785,6 +787,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
         },
       ],
     });
+  },
+  forgetConcept: (conceptId) => {
+    const { learnerModel } = get();
+    const updated: LearnerModel = {
+      ...learnerModel,
+      conceptsIntroduced: learnerModel.conceptsIntroduced.filter((c) => c.conceptId !== conceptId),
+    };
+    saveLearnerModel(updated);
+    set({ learnerModel: updated });
+  },
+
+  forgetErrorPattern: (patternId) => {
+    const { learnerModel } = get();
+    const updated: LearnerModel = {
+      ...learnerModel,
+      recurringErrors: learnerModel.recurringErrors.filter((e) => e.patternId !== patternId),
+    };
+    saveLearnerModel(updated);
+    set({ learnerModel: updated });
   },
 }));
 

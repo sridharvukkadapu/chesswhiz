@@ -102,7 +102,21 @@ export async function POST(req: NextRequest) {
     trigger: coachReq.trigger,
     engine: routed.engine,
     latencyMs: routed.latencyMs,
+    // response content
+    message: routed.response.message,
     shouldSpeak: routed.response.shouldSpeak,
+    interactionType: routed.response.interactionType,
+    emotion: routed.response.emotion ?? null,
+    conceptTaught: routed.response.conceptTaught ?? null,
+    annotation: routed.response.annotation?.type ?? null,
+    hasReplay: (routed.response.replay?.length ?? 0) > 0,
+    chipCount: routed.response.followUpChips?.length ?? 0,
+    // request context
+    playerName: coachReq.playerName,
+    ageBand: coachReq.ageBand,
+    lastMove: coachReq.lastMove?.san ?? null,
+    opportunityType: coachReq.opportunityDetail?.type ?? null,
+    // quality metrics
     parseFailures: parseFailureCount,
     callCount,
     failRate: callCount > 0 ? `${(parseFailureCount / callCount * 100).toFixed(1)}%` : "0%",

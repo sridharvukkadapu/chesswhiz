@@ -368,6 +368,7 @@ export default function PlayPage() {
   const { isFirstSession, firstSessionComplete, markFirstSessionComplete } = store;
   const [showFirstGameCelebration, setShowFirstGameCelebration] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const knightCardRef = useRef<HTMLDivElement>(null);
   const requestReset = () => {
     if (moveHistory.length > 0 && status === "playing") {
       setResetConfirmOpen(true);
@@ -856,6 +857,7 @@ export default function PlayPage() {
         celebration={ahaCelebration}
         onDismiss={() => store.dismissAha()}
         playerName={playerName}
+        knightCardRef={knightCardRef}
       />
 
       {/* Toasts */}
@@ -1129,6 +1131,7 @@ export default function PlayPage() {
 
         {/* RIGHT — coach + moves + actions */}
         <div
+          ref={knightCardRef}
           style={{
             display: "flex",
             flexDirection: "column",

@@ -365,6 +365,8 @@ export default function PlayPage() {
     currentCoachResponse, learnerModel, lastCoachMove, moveCount,
   } = store;
 
+  const { isFirstSession, firstSessionComplete, markFirstSessionComplete } = store;
+  const [showFirstGameCelebration, setShowFirstGameCelebration] = useState(false);
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const requestReset = () => {
     if (moveHistory.length > 0 && status === "playing") {
@@ -458,6 +460,16 @@ export default function PlayPage() {
         }
       })
       .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
+
+  // First-game Pawn Village celebration
+  useEffect(() => {
+    if (status === "playing") return;
+    if (isFirstSession && !firstSessionComplete) {
+      setShowFirstGameCelebration(true);
+      markFirstSessionComplete();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
@@ -1245,6 +1257,39 @@ export default function PlayPage() {
       </main>
 
       <BottomNav />
+
+      {showFirstGameCelebration && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "radial-gradient(ellipse at 50% 40%, #FFF8E3 0%, #F5ECDC 60%, #FBF6EC 100%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 20,
+            padding: 24,
+            animation: "ahaIn 0.5s ease-out",
+          }}
+          onClick={() => setShowFirstGameCelebration(false)}
+        >
+          <div style={{ fontSize: 64, animation: "ahaCrystalIn 1s cubic-bezier(0.34,1.56,0.64,1) both" }}>🏘️</div>
+          <div style={{ fontFamily: T.fontDisplay, fontStyle: "italic", fontSize: "clamp(36px,7vw,72px)", color: T.ink, textAlign: "center", lineHeight: 1.1 }}>
+            Welcome to<br />Pawn Village!
+          </div>
+          <div style={{ fontFamily: T.fontHand, fontSize: "clamp(18px,2.5vw,28px)", color: T.coral, textAlign: "center" }}>
+            {playerName}, you&apos;re officially on your quest! 🎉
+          </div>
+          <div style={{ marginTop: 12, fontFamily: T.fontUI, fontSize: 14, color: T.inkLow }}>
+            Tap to continue
+          </div>
+          <style>{`@keyframes ahaIn { from { opacity: 0; } to { opacity: 1; } } @keyframes ahaCrystalIn { from { opacity: 0; transform: scale(0); } to { opacity: 1; transform: scale(1); } }`}</style>
+        </div>
+      )}
 
       {resetConfirmOpen && (
         <div

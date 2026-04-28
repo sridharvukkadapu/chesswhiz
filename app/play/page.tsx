@@ -261,6 +261,8 @@ function MissionBanner({ mission }: { mission: import("@/lib/progression/types")
   );
 }
 
+const TACTIC_AVAILABLE_CAP = 3;
+
 // ── Captured pieces (below opponent's PlayerBar / above yours) ──
 function CapturedStrip({ chess, perspective }: { chess: Chess; perspective: "w" | "b" }) {
   const start: Record<string, number> = { p: 8, n: 2, b: 2, r: 2, q: 1 };
@@ -390,8 +392,6 @@ export default function PlayPage() {
       store.resetGame();
     }
   };
-
-  const TACTIC_AVAILABLE_CAP = 3;
 
   // Cmd/Ctrl+Z undo — global, but ignore typing inside inputs.
   useEffect(() => {
@@ -866,8 +866,11 @@ export default function PlayPage() {
               }
             } else if (opportunity.triggerType === "BOT_TACTIC_INCOMING") {
               // Warn about bot threat at 20% (same gate as old bot tactic narration)
-              if (botTactics.length > 0 && Math.random() < 0.20 && botAnalysis) {
-                handlePostMoveCoaching(afterBot.fen(), botSAN, botMove.from, botMove.to, "bot", botAnalysis);
+              if (Math.random() < 0.20 && botAnalysis) {
+                handlePostMoveCoaching(
+                  afterBot.fen(), botSAN, botMove.from, botMove.to, "bot", botAnalysis,
+                  { type: opportunity.type as "bot_threat", details: opportunity.details, squares: opportunity.squares }
+                );
               }
             }
           } else if (!opportunity && botStatus === "playing" && botTactics.length > 0 && Math.random() < 0.20 && botAnalysis) {

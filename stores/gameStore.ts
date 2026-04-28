@@ -281,6 +281,12 @@ interface GameStore {
   markFirstSessionComplete: () => void;
   setChallengeLevel: (bias: "relaxed" | "balanced" | "sharp") => void;
 
+  // Boss mechanics
+  bossTacticAppliedThisGame: boolean;
+  currentBossKingdom: string | null;
+  recordBossTacticApplied: () => void;
+  setBossKingdom: (kingdom: string | null) => void;
+
   // Learner model actions
   ingestLearnerSignal: (signal: LearnerSignal) => void;
   setCoachResponse: (response: CoachResponse | null) => void;
@@ -317,6 +323,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   currentCoachResponse: null,
   isFirstSession: false,
   firstSessionComplete: false,
+  bossTacticAppliedThisGame: false,
+  currentBossKingdom: null,
 
   setSettings: (name, age, difficulty) => {
     // Update streak on session start
@@ -664,6 +672,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // NOTE: we don't complete the mission here. The AhaCelebration UI calls
     // store.dismissAha() after ~5s, which in turn completes the mission.
     set({ ahaCelebration: { tactic, power } });
+
+    // Check if tactic matches current boss defeat condition
+    const { currentBossKingdom } = get();
+    if (currentBossKingdom) {
+      const bossKingdom = KINGDOMS.find((k) => k.id === currentBossKingdom);
+      if (bossKingdom?.boss?.defeatTactic === tactic.type) {
+        get().recordBossTacticApplied();
+      }
+    }
   },
 
   dismissAha: () => {
@@ -716,6 +733,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     saveProgression(next);
     set({ progression: next });
   },
+
+  recordBossTacticApplied: () => { set({ bossTacticAppliedThisGame: true }); },
+  setBossKingdom: (kingdom) => { set({ currentBossKingdom: kingdom, bossTacticAppliedThisGame: false }); },
 
   ingestLearnerSignal: (signal) => {
     const { learnerModel } = get();

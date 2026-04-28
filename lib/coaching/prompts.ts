@@ -39,9 +39,9 @@ RULES:
 // Routine moves get a short cheer; blunders get a real explanation.
 const LENGTH_RULES: Record<TriggerType, string> = {
   GREAT_MOVE:
-    `CRITICAL: ONE short sentence, under 12 words. No analogies. Just a quick cheer + what was good. Example: "Nice! d4 grabs the center. 🎯"`,
+    `CRITICAL: ONE short sentence, under 10 words. No analogies. Just a quick cheer + what was good. Example: "Nice! d4 grabs the center. 🎯"`,
   OK_MOVE:
-    `CRITICAL: ONE short sentence, under 10 words. Don't explain anything. Just acknowledge. Example: "Solid move! Keep going."`,
+    `CRITICAL: ONE short sentence, under 8 words. Don't explain anything. Just acknowledge. Example: "Solid move! Keep going."`,
   INACCURACY:
     `Two sentences max, under 30 words total. Name what was played, hint that something stronger existed, say why in one clause. No analogies unless the kid is age 5–7.`,
   MISTAKE:
@@ -62,10 +62,16 @@ export function buildCoachPrompt(
   analysis: MoveAnalysis,
   moveHistory: string[],
   playerName: string,
-  age: number
+  age: number,
+  moveCount: number = 0,
 ): CoachPrompt {
   const lengthRule = LENGTH_RULES[analysis.trigger] ?? LENGTH_RULES.OK_MOVE;
-  const system = `${lengthRule}\n\n${ageRules(age, playerName)}`;
+  // Throttle name usage: allow it on the first move and every 5th move; suppress otherwise.
+  const allowName = moveCount <= 1 || moveCount % 5 === 0;
+  const nameRule = allowName
+    ? ""
+    : `\nDo NOT address the player by name in this response.`;
+  const system = `${lengthRule}\n\n${ageRules(age, playerName)}${nameRule}`;
 
   const moveStr = moveHistory
     .map((m, i) => (i % 2 === 0 ? `${Math.floor(i / 2) + 1}. ` : "") + m)
@@ -83,8 +89,8 @@ ${instruction}`;
 // asks for short responses, but Claude occasionally over-shoots; this
 // makes the ceiling a guarantee, not a hope.
 const MAX_WORDS: Record<TriggerType, number> = {
-  GREAT_MOVE: 15,
-  OK_MOVE: 12,
+  GREAT_MOVE: 10,
+  OK_MOVE: 8,
   INACCURACY: 35,
   MISTAKE: 45,
   BLUNDER: 55,

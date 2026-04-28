@@ -6,6 +6,30 @@ import type { MoveAnalysis } from "@/lib/chess/types";
 
 const client = new Anthropic();
 
+// In-memory rate limiter: 60 requests per IP per hour.
+// Resets on the hour boundary, not rolling — simple and cheap.
+const rateLimitMap = new Map<string, { count: number; hour: number }>();
+const RATE_LIMIT = 60;
+
+function getClientIP(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    req.headers.get("x-real-ip") ??
+    "unknown"
+  );
+}
+
+function isRateLimited(ip: string): boolean {
+  const hour = Math.floor(Date.now() / 3_600_000);
+  const entry = rateLimitMap.get(ip);
+  if (!entry || entry.hour !== hour) {
+    rateLimitMap.set(ip, { count: 1, hour });
+    return false;
+  }
+  entry.count += 1;
+  return entry.count > RATE_LIMIT;
+}
+
 const RequestSchema = z.object({
   trigger: z.enum(["GREAT_MOVE", "OK_MOVE", "INACCURACY", "MISTAKE", "BLUNDER"]),
   severity: z.number().min(0).max(4),
@@ -19,9 +43,18 @@ const RequestSchema = z.object({
   moveHistory: z.array(z.string()),
   playerName: z.string(),
   age: z.number(),
+  moveCount: z.number().optional(),
 });
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIP(req);
+  if (isRateLimited(ip)) {
+    return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+      status: 429,
+      headers: { "Content-Type": "application/json", "Retry-After": "3600" },
+    });
+  }
+
   const body = await req.json().catch(() => null);
   const parsed = RequestSchema.safeParse(body);
 
@@ -32,9 +65,9 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const { moveHistory, playerName, age, ...analysisFields } = parsed.data;
+  const { moveHistory, playerName, age, moveCount, ...analysisFields } = parsed.data;
   const analysis = analysisFields as MoveAnalysis;
-  const { system, user } = buildCoachPrompt(analysis, moveHistory, playerName, age);
+  const { system, user } = buildCoachPrompt(analysis, moveHistory, playerName, age, moveCount);
 
   const encoder = new TextEncoder();
 

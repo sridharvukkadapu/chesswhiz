@@ -25,11 +25,12 @@ import { generateAnnotation } from "@/lib/coaching/annotations";
 import { findBestMove } from "@/lib/chess/ai";
 import Board from "@/components/Board";
 import CoachPanel from "@/components/CoachPanel";
+import CoachErrorBoundary from "@/components/CoachErrorBoundary";
 import MoveHistory from "@/components/MoveHistory";
 import PlayerBar from "@/components/PlayerBar";
 import GameStatusBar from "@/components/GameStatus";
 import { Piece } from "@/components/ChessPieces";
-import { GoldFoilText, StarField, MoteField, useTime } from "@/lib/design/atmosphere";
+import { GoldFoilText, StarField, MoteField, useTime, useAtmosphereScale } from "@/lib/design/atmosphere";
 import { sfx } from "@/lib/audio/sfx";
 import { haptics } from "@/lib/audio/haptics";
 import { Target, RefreshCw, Undo2, RotateCcw, Volume2, VolumeX } from "lucide-react";
@@ -390,6 +391,7 @@ export default function PlayPage() {
 
   // Hydrate progression from localStorage on mount
   const [hydrated, setHydrated] = useState(false);
+  const atmosphereScale = useAtmosphereScale();
   useEffect(() => {
     store.hydrateProgression();
     setHydrated(true);
@@ -467,6 +469,7 @@ export default function PlayPage() {
           moveHistory,
           playerName,
           age: playerAge,
+          moveCount: store.moveCount,
         }),
       });
 
@@ -540,12 +543,19 @@ export default function PlayPage() {
     // win/lose/draw are handled in the game-end branch below
 
     if (newStatus !== "playing") {
+      const drawText = newStatus === "stalemate"
+        ? `Stalemate! The game ends in a draw — you ran out of moves without being in check. Sneaky! 🤝`
+        : newChess.isThreefoldRepetition()
+        ? `Draw by repetition! The same position appeared three times. A clever defense tactic! 🔄`
+        : newChess.isInsufficientMaterial()
+        ? `Draw! Neither side has enough pieces to checkmate. That's called insufficient material. 🤝`
+        : `It's a draw! That takes skill to achieve — nice defense! 🤝`;
       const text =
         newStatus === "white_wins"
           ? `CHECKMATE! You did it, ${playerName}! 🏆 What an incredible game!`
           : newStatus === "black_wins"
           ? `The bot got you this time! But every loss is a lesson. You'll get it next time, ${playerName}! 💪`
-          : `It's a draw! That takes skill to achieve — nice defense! 🤝`;
+          : drawText;
       store.addCoachMessage({
         type: newStatus === "white_wins" ? "celebration" : newStatus === "black_wins" ? "correction" : "tip",
         text,
@@ -647,11 +657,46 @@ export default function PlayPage() {
             }
           }
 
+          // 20% chance Coach Pawn narrates the bot's tactic as a teaching moment
+          if (botStatus === "playing" && botTactics.length > 0 && Math.random() < 0.20) {
+            const t = botTactics[0];
+            const BOT_TACTIC_LINES: Record<string, string[]> = {
+              fork: [
+                "Watch out! The bot just set up a fork — it's attacking two pieces at once! 🍴",
+                "The bot played a fork! Both your pieces are under attack. Can you save them both?",
+              ],
+              pin: [
+                "The bot pinned one of your pieces! It can't move without leaving something valuable behind. 📌",
+                "That's a pin! The bot is using one piece to lock down two of yours.",
+              ],
+              skewer: [
+                "The bot just played a skewer — your big piece has to move, exposing what's behind it!",
+                "Skewer! Your valuable piece is being forced to move. Watch what's behind it! 🎯",
+              ],
+              threat: [
+                "The bot is threatening to capture something next move — can you defend? 🛡️",
+                "Heads up! The bot has a threat on the board. See if you can spot it.",
+              ],
+            };
+            const lines = BOT_TACTIC_LINES[t.type] ?? BOT_TACTIC_LINES.threat;
+            store.addCoachMessage({
+              type: "tip",
+              text: lines[Math.floor(Math.random() * lines.length)],
+            });
+          }
+
           if (botStatus !== "playing") {
+            const botDrawText = botStatus === "stalemate"
+              ? `Stalemate! The game ends in a draw — you had no legal moves left. A clever escape! 🤝`
+              : afterBot.isThreefoldRepetition()
+              ? `Draw by repetition! The same position came up three times. Smart defense! 🔄`
+              : afterBot.isInsufficientMaterial()
+              ? `Draw! Not enough pieces on the board to force checkmate. That's insufficient material. 🤝`
+              : "Draw! Solid game from both sides. 🤝";
             const text =
               botStatus === "black_wins"
                 ? `Checkmate by the bot! Don't worry, ${playerName} — even grandmasters lose sometimes. Ready to try again?`
-                : "Draw! Solid game from both sides. 🤝";
+                : botDrawText;
             store.addCoachMessage({
               type: botStatus === "black_wins" ? "correction" : "tip",
               text,
@@ -732,8 +777,8 @@ export default function PlayPage() {
       {justRankedUp && <RankUpToast rankId={justRankedUp} onDone={() => store.clearRankUp()} />}
 
       {/* Cosmic atmosphere */}
-      <StarField count={70} seed={5} opacity={0.5} />
-      <MoteField count={14} seed={6} color={T.coral} />
+      <StarField count={Math.round(70 * atmosphereScale)} seed={5} opacity={0.5} />
+      <MoteField count={Math.round(14 * atmosphereScale)} seed={6} color={T.coral} />
 
       {/* Header */}
       <header
@@ -1008,11 +1053,13 @@ export default function PlayPage() {
         >
           {progression.activeMission && <MissionBanner mission={progression.activeMission} />}
 
-          <CoachPanel
-            messages={coachMessages}
-            loading={coachLoading}
-            voicePlaying={voicePlayback === "playing"}
-          />
+          <CoachErrorBoundary>
+            <CoachPanel
+              messages={coachMessages}
+              loading={coachLoading}
+              voicePlaying={voicePlayback === "playing"}
+            />
+          </CoachErrorBoundary>
 
           <MoveHistory moves={moveHistory} />
 

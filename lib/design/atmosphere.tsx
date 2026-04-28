@@ -382,3 +382,19 @@ export function usePrefersReducedMotion(): boolean {
   }, []);
   return reduced;
 }
+
+// ─── useAtmosphereScale ───────────────────────────────────────────
+// Returns a 0–1 scale factor for particle counts. Low-end devices
+// (< 4 CPU cores or mobile with narrow viewport) get 0.3 so the
+// page doesn't chug. High-end devices get 1.0.
+export function useAtmosphereScale(): number {
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const cores = (navigator as Navigator & { hardwareConcurrency?: number }).hardwareConcurrency ?? 4;
+    const isNarrow = window.innerWidth < 600;
+    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+    setScale(cores < 4 || (isMobile && isNarrow) ? 0.3 : 1);
+  }, []);
+  return scale;
+}

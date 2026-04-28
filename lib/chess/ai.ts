@@ -5,6 +5,45 @@ import type { Move, Difficulty } from "./types";
 import type { TacticType } from "@/lib/progression/types";
 import { tacticOpportunityBonus } from "@/lib/progression/bot-tuning";
 
+// Opening book — keyed by FEN position hash (first 2 space-separated FEN fields).
+// Responses are weighted SAN moves; pick randomly among them to vary play.
+// Covers first 6 half-moves for common openings. Prevents 1.a4-style nonsense.
+function fenKey(chess: Chess): string {
+  return chess.fen().split(" ").slice(0, 4).join(" ");
+}
+
+const BOOK: Record<string, string[]> = {
+  // After 1.e4 (black to move)
+  "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq -": ["e5", "e5", "e5", "c5", "e6"],
+  // After 1.d4 (black to move)
+  "rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq -": ["d5", "d5", "Nf6", "Nf6"],
+  // After 1.e4 e5 2.Nf3 (black to move)
+  "rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -": ["Nc6", "Nc6", "Nf6", "d6"],
+  // After 1.e4 c5 2.Nf3 (black to move)
+  "rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq -": ["d6", "Nc6", "e6"],
+  // After 1.d4 d5 (white to move)
+  "rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": ["c4", "Nf3", "c4"],
+  // After 1.d4 Nf6 (white to move)
+  "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq -": ["c4", "Nf3"],
+  // After 1.e4 e5 2.Nf3 Nc6 (white to move)
+  "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq -": ["Bc4", "Bb5", "d4"],
+};
+
+function lookupBook(chess: Chess): Move | null {
+  const key = fenKey(chess);
+  const options = BOOK[key];
+  if (!options || options.length === 0) return null;
+  const san = options[Math.floor(Math.random() * options.length)];
+  try {
+    const clone = new Chess(chess.fen());
+    const result = clone.move(san);
+    if (!result) return null;
+    return { from: result.from, to: result.to, promotion: result.promotion as Move["promotion"] };
+  } catch {
+    return null;
+  }
+}
+
 function minimax(chess: Chess, depth: number, alpha: number, beta: number, maximizing: boolean): number {
   const moves = getLegalMoves(chess);
   if (depth === 0 || moves.length === 0) {
@@ -46,6 +85,12 @@ export async function findBestMove(
 ): Promise<Move | null> {
   const moves = getLegalMoves(chess);
   if (moves.length === 0) return null;
+
+  // Opening book: use for medium/hard on first 6 half-moves
+  if (difficulty >= 2 && chess.history().length < 6) {
+    const bookMove = lookupBook(chess);
+    if (bookMove) return bookMove;
+  }
 
   if (difficulty === 1) {
     // Easy: mostly random, occasionally captures

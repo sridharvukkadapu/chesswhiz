@@ -6,9 +6,87 @@ import type { Move, LastMove, GameStatus, CoachMessage, Difficulty, Square, Boar
 import type { PlayerProgression, Mission, RankId, TacticDetection, Power } from "@/lib/progression/types";
 import { getRankByXP, XP_REWARDS, getStreakMultiplier, POWERS, KINGDOMS } from "@/lib/progression/data";
 import { generateMission, missionMatchesTactic, findStrategyForTactic } from "@/lib/progression/missions";
+import { getGameStatus } from "@/lib/chess/engine";
 
 const PROGRESSION_KEY = "chesswhiz.progression";
+const PROGRESSION_SALT = "cw-v1";
+
+function progressionChecksum(prog: PlayerProgression): number {
+  const key = `${PROGRESSION_SALT}|${prog.tier}|${prog.xp}|${prog.earnedPowers.sort().join(",")}`;
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) {
+    h = ((h << 5) + h) ^ key.charCodeAt(i);
+    h >>>= 0;
+  }
+  return h;
+}
 const VOICE_USAGE_KEY = "chesswhiz.voiceUsage";
+const GAME_SAVE_KEY = "chesswhiz.savedGame";
+const LAST_PLAYER_KEY = "chesswhiz.lastPlayer";
+
+export interface LastPlayer { name: string; age: number; difficulty: number; }
+
+export function loadLastPlayer(): LastPlayer | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(LAST_PLAYER_KEY);
+    return raw ? (JSON.parse(raw) as LastPlayer) : null;
+  } catch { return null; }
+}
+
+function saveLastPlayer(name: string, age: number, difficulty: number): void {
+  if (typeof window === "undefined") return;
+  try { localStorage.setItem(LAST_PLAYER_KEY, JSON.stringify({ name, age, difficulty })); } catch {}
+}
+
+export interface SavedGame {
+  fen: string;
+  moveHistory: string[];
+  playerName: string;
+  playerAge: number;
+  difficulty: number;
+  moveCount: number;
+  savedAt: number; // epoch ms
+}
+
+export function loadSavedGame(): SavedGame | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(GAME_SAVE_KEY);
+    if (!raw) return null;
+    const g = JSON.parse(raw) as SavedGame;
+    // Discard saves older than 24h — stale games aren't useful
+    if (Date.now() - g.savedAt > 86_400_000) {
+      localStorage.removeItem(GAME_SAVE_KEY);
+      return null;
+    }
+    return g;
+  } catch { return null; }
+}
+
+function saveGame(state: {
+  chess: Chess; moveHistory: string[]; playerName: string;
+  playerAge: number; difficulty: number; moveCount: number;
+}): void {
+  if (typeof window === "undefined") return;
+  try {
+    const save: SavedGame = {
+      fen: state.chess.fen(),
+      moveHistory: state.moveHistory,
+      playerName: state.playerName,
+      playerAge: state.playerAge,
+      difficulty: state.difficulty,
+      moveCount: state.moveCount,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem(GAME_SAVE_KEY, JSON.stringify(save));
+  } catch {}
+}
+
+export function clearSavedGame(): void {
+  if (typeof window === "undefined") return;
+  try { localStorage.removeItem(GAME_SAVE_KEY); } catch {}
+}
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10);
@@ -75,8 +153,13 @@ function loadProgression(): PlayerProgression {
   try {
     const raw = localStorage.getItem(PROGRESSION_KEY);
     if (!raw) return DEFAULT_PROGRESSION;
-    const parsed = JSON.parse(raw) as Partial<PlayerProgression>;
-    return { ...DEFAULT_PROGRESSION, ...parsed };
+    const { _cs, ...rest } = JSON.parse(raw) as Partial<PlayerProgression> & { _cs?: number };
+    const prog: PlayerProgression = { ...DEFAULT_PROGRESSION, ...rest };
+    if (_cs !== undefined && progressionChecksum(prog) !== _cs) {
+      // Checksum mismatch — revert paid tier to free silently
+      prog.tier = "free";
+    }
+    return prog;
   } catch {
     return DEFAULT_PROGRESSION;
   }
@@ -85,7 +168,8 @@ function loadProgression(): PlayerProgression {
 function saveProgression(prog: PlayerProgression): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(PROGRESSION_KEY, JSON.stringify(prog));
+    const payload = { ...prog, _cs: progressionChecksum(prog) };
+    localStorage.setItem(PROGRESSION_KEY, JSON.stringify(payload));
   } catch {}
 }
 
@@ -163,6 +247,7 @@ interface GameStore {
   ensureMission: () => void;
   handleTacticDetected: (tactic: TacticDetection) => void;
   dismissAha: () => void;
+  resumeGame: (saved: SavedGame) => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -215,6 +300,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       lastPlayedDate: today,
     };
     saveProgression(nextProg);
+    saveLastPlayer(name, age, difficulty);
 
     set({
       playerName: name,
@@ -245,7 +331,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   clearSelection: () =>
     set({ selected: null, legalHighlights: [] }),
 
-  makeMove: (san, newChess, prevChess, lastMove, status) =>
+  makeMove: (san, newChess, prevChess, lastMove, status) => {
     set((state) => ({
       chess: newChess,
       moveHistory: [...state.moveHistory, san],
@@ -256,7 +342,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       status,
       moveCount: state.moveCount + 1,
       showPromo: null,
-    })),
+    }));
+    const s = get();
+    saveGame({
+      chess: s.chess,
+      moveHistory: s.moveHistory,
+      playerName: s.playerName,
+      playerAge: s.playerAge,
+      difficulty: s.difficulty,
+      moveCount: s.moveCount,
+    });
+  },
 
   showPromoModal: (move) => set({ showPromo: move }),
   hidePromoModal: () => set({ showPromo: null }),
@@ -275,6 +371,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setCoachLoading: (val) => set({ coachLoading: val }),
 
   resetGame: () => {
+    clearSavedGame();
     const { playerName } = get();
     set({
       chess: new Chess(),
@@ -533,5 +630,32 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!ahaCelebration) return;
     set({ ahaCelebration: null });
     get().completeMission();
+  },
+
+  resumeGame: (saved) => {
+    const chess = new Chess(saved.fen);
+    set({
+      chess,
+      moveHistory: saved.moveHistory,
+      playerName: saved.playerName,
+      playerAge: saved.playerAge,
+      difficulty: saved.difficulty as Difficulty,
+      moveCount: saved.moveCount,
+      screen: "playing",
+      status: getGameStatus(chess),
+      lastMove: null,
+      selected: null,
+      legalHighlights: [],
+      stateHistory: [],
+      boardAnnotation: null,
+      coachMessages: [
+        {
+          id: crypto.randomUUID(),
+          type: "intro",
+          text: `Welcome back, ${saved.playerName}! Let's pick up where we left off! ♟`,
+        },
+      ],
+    });
+    clearSavedGame();
   },
 }));

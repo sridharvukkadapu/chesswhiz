@@ -7,27 +7,23 @@ export function shouldCoach(
 ): boolean {
   const movesSinceCoach = moveCount - lastCoachMove;
 
-  // Always coach on serious mistakes
+  // Always coach on serious mistakes — no cooldown
   if (analysis.severity >= 3) return true;
 
-  // Cooldown: skip coaching if fewer than 3 moves since last coaching (for non-critical moves)
-  if (movesSinceCoach < 3) return false;
+  // Cooldown: at least 2 player moves between coaching messages
+  if (movesSinceCoach < 2) return false;
 
-  // Opening (moves 1–6): much quieter cadence. Praise for great opening
-  // moves only ~15% of the time — opening pushes are repetitive and
-  // don't need commentary on every move.
-  if (moveCount <= 6 && analysis.severity === 0) {
-    return Math.random() < 0.15;
+  // Opening (moves 1–6): quieter — only great moves and mistakes
+  if (moveCount <= 6) {
+    if (analysis.severity === 0) return Math.random() < 0.40; // great move praise
+    if (analysis.severity === 1) return Math.random() < 0.25; // light acknowledgment
+    if (analysis.severity === 2) return Math.random() < 0.60; // inaccuracy worth noting
+    return true; // mistake/blunder always
   }
 
-  // Praise great moves sometimes
-  if (analysis.severity === 0 && Math.random() < 0.35) return true;
-
-  // Note inaccuracies occasionally
-  if (analysis.severity === 2 && Math.random() < 0.25) return true;
-
-  // Very first move: one quick welcome acknowledgment is fine.
-  if (moveCount <= 2 && analysis.severity === 1) return true;
-
-  return false;
+  // Mid/late game: comment often enough to feel like a real coach
+  if (analysis.severity === 0) return Math.random() < 0.45;  // great move
+  if (analysis.severity === 1) return Math.random() < 0.35;  // solid move, keep going
+  if (analysis.severity === 2) return Math.random() < 0.70;  // inaccuracy
+  return true; // mistake/blunder always
 }

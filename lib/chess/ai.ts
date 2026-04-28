@@ -73,11 +73,58 @@ function minimax(chess: Chess, depth: number, alpha: number, beta: number, maxim
   }
 }
 
-// Yields to the browser event loop between root-level move evaluations,
-// keeping the UI responsive while the bot calculates.
+// Worker pool: one persistent worker reused across moves.
+let _worker: Worker | null = null;
+let _workerReady = false;
+
+function getWorker(): Worker | null {
+  if (typeof window === "undefined") return null;
+  if (_worker) return _worker;
+  try {
+    _worker = new Worker(new URL("./engine.worker.ts", import.meta.url), { type: "module" });
+    _workerReady = true;
+  } catch {
+    _worker = null;
+  }
+  return _worker;
+}
+
+function findBestMoveViaWorker(
+  chess: Chess,
+  difficulty: Difficulty,
+  tacticPreference?: TacticType,
+): Promise<Move | null> {
+  return new Promise((resolve) => {
+    const worker = getWorker();
+    if (!worker) {
+      resolve(null);
+      return;
+    }
+    const onMsg = (e: MessageEvent<import("./engine.worker").FindMoveResponse>) => {
+      worker.removeEventListener("message", onMsg);
+      worker.removeEventListener("error", onErr);
+      resolve(e.data.move);
+    };
+    const onErr = () => {
+      worker.removeEventListener("message", onMsg);
+      worker.removeEventListener("error", onErr);
+      _worker = null;
+      _workerReady = false;
+      resolve(null);
+    };
+    worker.addEventListener("message", onMsg);
+    worker.addEventListener("error", onErr);
+    worker.postMessage({
+      fen: chess.fen(),
+      difficulty,
+      tacticPreference,
+      historyLength: chess.history().length,
+    } satisfies import("./engine.worker").FindMoveRequest);
+  });
+}
+
 // When `tacticPreference` is provided, the bot gets a soft (20-50cp) bonus
 // for moves that leave positions where the player could execute that tactic.
-// This creates teaching moments without making the bot play badly.
 export async function findBestMove(
   chess: Chess,
   difficulty: Difficulty,
@@ -85,6 +132,14 @@ export async function findBestMove(
 ): Promise<Move | null> {
   const moves = getLegalMoves(chess);
   if (moves.length === 0) return null;
+
+  // Delegate to Web Worker for medium/hard; it handles book + minimax.
+  // Easy stays on main thread (it's instant — just random selection).
+  if (difficulty >= 2 && _workerReady !== false && typeof window !== "undefined") {
+    const workerMove = await findBestMoveViaWorker(chess, difficulty, tacticPreference);
+    if (workerMove !== null) return workerMove;
+    // Worker failed — fall through to main-thread path
+  }
 
   // Opening book: use for medium/hard on first 6 half-moves
   if (difficulty >= 2 && chess.history().length < 6) {

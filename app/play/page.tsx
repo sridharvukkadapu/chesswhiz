@@ -646,16 +646,7 @@ export default function PlayPage() {
         }
         store.setCoachResponse(data);
 
-        // Replay trigger for significant tactical events
-        const REPLAY_TRIGGERS = ["BLUNDER", "BOT_TACTIC_INCOMING", "TACTIC_AVAILABLE"];
-        if (REPLAY_TRIGGERS.includes(analysis.trigger)) {
-          const steps: ReplayStep[] = (data as { replay?: ReplayStep[] }).replay?.length
-            ? (data as { replay?: ReplayStep[] }).replay!
-            : buildReplaySequence(moveHistory, moveHistory.length - 1);
-          if (steps.length > 0) {
-            setTimeout(() => setReplaySteps(steps), 800);
-          }
-        }
+        // Replay overlay disabled — generic narration hurt more than it helped
       } else {
         throw new Error("Empty response");
       }

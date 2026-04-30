@@ -10,6 +10,11 @@ const client = new Anthropic();
 const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 const SONNET_MODEL = "claude-sonnet-4-6";
 
+// Tracks LLM output quality — counts only calls that received a response.
+// Resets on cold start; instance-local metric, not fleet-wide.
+let parseFailureCount = 0;
+let callCount = 0;
+
 // In-memory rate limiter: 60 requests per IP per hour.
 const rateLimitMap = new Map<string, { count: number; hour: number }>();
 const RATE_LIMIT = 60;
@@ -44,15 +49,27 @@ async function callLLM(req: CoachRequest, model: "haiku" | "sonnet"): Promise<Co
       system,
       messages: [{ role: "user", content: user }],
     });
+    callCount++; // count only calls that received a response
 
     const text = response.content[0]?.type === "text" ? response.content[0].text : "";
-    // Strip markdown code fences if present
     const json = text.replace(/^```json?\s*/i, "").replace(/```\s*$/, "").trim();
-    const parsed = JSON.parse(json);
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(json);
+    } catch {
+      parseFailureCount++;
+      console.error(`[coach] PARSE_FAILURE engine=${model} trigger=${req.trigger} calls=${callCount} failures=${parseFailureCount} failRate=${(parseFailureCount/callCount*100).toFixed(1)}% raw=${text.slice(0, 200)}`);
+      return safeFallback(req.trigger, req.playerName);
+    }
+
     const validated = CoachResponseSchema.safeParse(parsed);
-    if (validated.success) return validated.data;
-    console.warn("[coach] schema validation failed:", validated.error.issues);
-    return safeFallback(req.trigger, req.playerName);
+    if (!validated.success) {
+      parseFailureCount++;
+      console.error(`[coach] SCHEMA_FAILURE engine=${model} trigger=${req.trigger} calls=${callCount} failures=${parseFailureCount} failRate=${(parseFailureCount/callCount*100).toFixed(1)}% issues=${JSON.stringify(validated.error.issues)}`);
+      return safeFallback(req.trigger, req.playerName);
+    }
+    return validated.data;
   } catch (err) {
     console.error("[coach] LLM error:", err);
     return safeFallback(req.trigger, req.playerName);
@@ -85,7 +102,24 @@ export async function POST(req: NextRequest) {
     trigger: coachReq.trigger,
     engine: routed.engine,
     latencyMs: routed.latencyMs,
+    // response content
+    message: routed.response.message,
     shouldSpeak: routed.response.shouldSpeak,
+    interactionType: routed.response.interactionType,
+    emotion: routed.response.emotion ?? null,
+    conceptTaught: routed.response.conceptTaught ?? null,
+    annotation: routed.response.annotation?.type ?? null,
+    hasReplay: (routed.response.replay?.length ?? 0) > 0,
+    chipCount: routed.response.followUpChips?.length ?? 0,
+    // request context
+    playerName: coachReq.playerName,
+    ageBand: coachReq.ageBand,
+    lastMove: coachReq.lastMove?.san ?? null,
+    opportunityType: coachReq.opportunityDetail?.type ?? null,
+    // quality metrics
+    parseFailures: parseFailureCount,
+    callCount,
+    failRate: callCount > 0 ? `${(parseFailureCount / callCount * 100).toFixed(1)}%` : "0%",
   });
 
   return NextResponse.json({

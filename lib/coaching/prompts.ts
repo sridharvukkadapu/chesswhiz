@@ -54,24 +54,42 @@ export function buildCoachPrompt(req: CoachRequest): CoachPrompt {
   const learnerCtx = buildLearnerContext(req);
   const system = `${SYSTEM_PROMPT}\n\nAge band: ${req.ageBand}\nPlayer name: ${req.playerName}${learnerCtx}`;
 
+  const isBot = req.mover === "bot";
   const triggerDesc: Record<string, string> = {
-    GREAT_MOVE: "Player made an excellent move.",
-    OK_MOVE: "Player made a solid but unremarkable move.",
-    INACCURACY: `Player's move was slightly inaccurate (${req.centipawnDelta ?? 0}cp loss).`,
-    MISTAKE: `Player made a mistake (${req.centipawnDelta ?? 0}cp loss).`,
-    BLUNDER: `Player made a serious blunder (${req.centipawnDelta ?? 0}cp loss).`,
+    GREAT_MOVE: isBot ? "Bot made a strong move — alert the player." : "Player made an excellent move.",
+    OK_MOVE: isBot ? "Bot made a solid move." : "Player made a solid but unremarkable move.",
+    INACCURACY: isBot
+      ? `Bot's last move was slightly inaccurate — the player may have a better response.`
+      : `Player's move was slightly inaccurate (${req.centipawnDelta ?? 0}cp loss).`,
+    MISTAKE: isBot
+      ? `Bot made a mistake — the player may be able to take advantage.`
+      : `Player made a mistake (${req.centipawnDelta ?? 0}cp loss). Coach the player about the piece they left in danger.`,
+    BLUNDER: isBot
+      ? `Bot made a serious blunder — the player has a strong opportunity.`
+      : `Player made a serious blunder (${req.centipawnDelta ?? 0}cp loss). Coach the player about the piece they left in danger.`,
     TACTIC_AVAILABLE: `A tactic is available for the player: ${(req.tacticsAvailableForKid ?? []).join(", ")}.`,
     PATTERN_RECOGNIZED: "A recognizable pattern is present on the board.",
     RECURRING_ERROR: `Player repeated a recurring error: ${(req.learnerSummary?.recurringErrors[0]?.patternId ?? "unknown")}.`,
     BOT_TACTIC_INCOMING: `The bot just set up a tactic: ${(req.tacticsAvailableForBot ?? []).join(", ")}.`,
   };
 
-  const user = `Position FEN: ${req.fen}
-Last move: ${req.lastMove ? `${req.lastMove.san} (${req.lastMove.from}→${req.lastMove.to})` : "none"}
-Mover: ${req.mover}
-Situation: ${triggerDesc[req.trigger] ?? req.trigger}${req.activeMissionConcept ? `\nActive mission concept: ${req.activeMissionConcept}` : ""}
-
-Respond with valid JSON only. No markdown, no prose outside the JSON.`;
+  const userLines: string[] = [
+    `Position FEN: ${req.fen}`,
+    `Last move: ${req.lastMove ? `${req.lastMove.san} (${req.lastMove.from}→${req.lastMove.to})` : "none"}`,
+    `Mover: ${req.mover}`,
+    `Situation: ${triggerDesc[req.trigger] ?? req.trigger}`,
+  ];
+  if (req.activeMissionConcept) {
+    userLines.push(`Active mission concept: ${req.activeMissionConcept}`);
+  }
+  if (req.opportunityDetail) {
+    userLines.push(`Opportunity detected: ${req.opportunityDetail.type} — ${req.opportunityDetail.details}`);
+    if (req.opportunityDetail.squares?.length) {
+      userLines.push(`Key squares: ${req.opportunityDetail.squares.join(", ")}`);
+    }
+  }
+  userLines.push("", "Respond with valid JSON only. No markdown, no prose outside the JSON.");
+  const user = userLines.join("\n");
 
   return { system, user };
 }
@@ -99,6 +117,10 @@ export function enforceLengthByTrigger(text: string, trigger: TriggerType): stri
     INACCURACY: 35,
     MISTAKE: 45,
     BLUNDER: 55,
+    TACTIC_AVAILABLE: 40,
+    PATTERN_RECOGNIZED: 35,
+    RECURRING_ERROR: 45,
+    BOT_TACTIC_INCOMING: 40,
   };
   const limit = MAX_WORDS[trigger] ?? 30;
   const words = text.trim().split(/\s+/);

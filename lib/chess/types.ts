@@ -1,7 +1,16 @@
 export type Color = "w" | "b";
 export type PieceType = "p" | "n" | "b" | "r" | "q" | "k";
 export type GameStatus = "playing" | "white_wins" | "black_wins" | "stalemate" | "draw";
-export type TriggerType = "GREAT_MOVE" | "OK_MOVE" | "INACCURACY" | "MISTAKE" | "BLUNDER";
+export type TriggerType =
+  | "GREAT_MOVE"
+  | "OK_MOVE"
+  | "INACCURACY"
+  | "MISTAKE"
+  | "BLUNDER"
+  | "TACTIC_AVAILABLE"
+  | "PATTERN_RECOGNIZED"
+  | "RECURRING_ERROR"
+  | "BOT_TACTIC_INCOMING";
 export type Difficulty = 1 | 2 | 3;
 
 export interface Piece {

@@ -101,6 +101,11 @@ export const CoachRequestSchema = z.object({
     recentMessages: z.array(z.string()),
   }).optional(),
   activeMissionConcept: z.string().optional(),
+  opportunityDetail: z.object({
+    type: z.enum(["hanging_piece", "fork", "pin", "mate_in_1", "bot_threat"]),
+    details: z.string(),
+    squares: z.array(z.string()).optional(),
+  }).optional(),
 });
 
 export type CoachRequest = z.infer<typeof CoachRequestSchema>;

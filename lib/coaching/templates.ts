@@ -142,7 +142,13 @@ const TEMPLATES: Record<TemplateKey, TemplatePartial[]> = {
 };
 
 // These triggers always need LLM — no template can substitute
-const LLM_REQUIRED = new Set(["TACTIC_AVAILABLE", "BOT_TACTIC_INCOMING"]);
+const LLM_REQUIRED = new Set([
+  "TACTIC_AVAILABLE",
+  "BOT_TACTIC_INCOMING",
+  "BLUNDER",
+  "INACCURACY",
+  "RECURRING_ERROR",
+]);
 
 export function requiresLLM(trigger: string): boolean {
   return LLM_REQUIRED.has(trigger);
@@ -153,6 +159,10 @@ export function findTemplate(
   ageBand: AgeBand,
   context?: { recurringErrorPattern?: string; tacticPattern?: string }
 ): TemplatePartial | null {
+  // Defence-in-depth: callers outside the router (tests, future callers) must not
+  // receive a template for LLM-required triggers even if templates exist for them.
+  if (requiresLLM(trigger)) return null;
+
   // Try most-specific key first
   if (context?.recurringErrorPattern) {
     const key = `${trigger}|${context.recurringErrorPattern}|${ageBand}`;

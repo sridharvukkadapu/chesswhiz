@@ -136,9 +136,9 @@ If failed at pawn: *"Pawns have the most rules of any piece — let's go through
 
 **Interaction — Check detection (2 questions):**
 - A position is shown on the board.
-- Two large buttons overlaid at the bottom: **✓ Yes, check!** (green) and **✗ No check** (red).
+- Two large answer tiles styled as board squares occupy the bottom two ranks of the board (where the kid's pieces would normally sit): **✓ Yes, check!** (green-tinted) and **✗ No check** (red-tinted).
 - Coach Pawn: *"Is the king in check?"*
-- No board tapping needed — the board is the visual context, the buttons are the answer mechanism.
+- These are buttons, but they live inside the board grid visually — they feel like board interaction, not a quiz popup. This preserves the "everything happens on the board" feel while avoiding the ambiguous "tap king if yes / tap anywhere else if no" interaction.
 
 **Interaction — Checkmate-in-1 (2 questions):**
 - Full board interaction. Coach Pawn: *"One move wins the game — find it!"*
@@ -209,9 +209,20 @@ tacticsMissed: Array<{ id: string; missType: 'execution' | 'blind' }>
 ## TrialResult Type
 
 ```typescript
+interface TrialAnswer {
+  roundId: 1 | 2 | 3 | 4 | 5;
+  correct: boolean;
+  confident: boolean | null;       // null = skipped the toggle
+  responseTimeMs: number;          // silent fluency signal, not used for placement
+  pieceType?: PieceType;           // Round 2
+  tacticId?: string;               // Round 4
+  missType?: 'execution' | 'blind'; // Round 4, wrong answers only
+}
+
 interface TrialResult {
-  learningStage: LearningStage;           // 1–6
+  learningStage: LearningStage;           // 1–5 (never 6 — see placement rules)
   kingdomId: KingdomId;                   // narrative entry point
+  advancedPlayer: boolean;               // true if Round 5 perfect — accelerates Stage 5 pacing
   strengthsAndGaps: {
     boardKnowledge: 'strong' | 'weak' | 'untested';
     colorAwareness: 'strong' | 'weak' | 'untested';
@@ -233,8 +244,9 @@ interface TrialResult {
 Lives in `lib/trial/placement.ts`. Takes an array of `TrialAnswer` objects (one per question answered), returns `TrialResult`.
 
 **Key inputs:**
-- Per-question: `roundId`, `correct: boolean`, `confident: boolean | null`, `pieceType?`, `tacticId?`, `missType?`
+- Per-question: `roundId`, `correct: boolean`, `confident: boolean | null`, `pieceType?`, `tacticId?`, `missType?`, `responseTimeMs: number`
 - Confidence weighting: a correct answer with `confident: false` counts as 0.5
+- `responseTimeMs` is recorded silently but does NOT affect placement — it informs coaching pacing only
 
 **Placement rules (in order — first match wins):**
 
@@ -252,10 +264,12 @@ Lives in `lib/trial/placement.ts`. Takes an array of `TrialAnswer` objects (one 
 | Round 4 — misses at discovered | 4 | `discovery_depths` |
 | Round 4 passes (3/4+), Round 5 fails | 4 | `discovery_depths` (finish tactics first) |
 | Round 4 passes, Round 5 passes (2/3+) | 5 | `strategy_summit` |
-| Round 5 perfect (3/3) with high confidence | 6 | `endgame_throne` |
+| Round 5 perfect (3/3) with high confidence | 5 | `strategy_summit` + `advancedPlayer: true` |
+
+**Stage 6 is never assigned by The Trial.** Stage 6 (Endgame Throne) requires demonstrated mastery in actual games, not 3 assessment questions. The Trial can identify "this kid knows strategy" — it cannot verify endgame technique. A perfect Round 5 sets `advancedPlayer: true` on the result, which Coach Pawn uses to accelerate Stage 5 pacing. Stage 6 is only reached by playing through Stage 5.
 
 **Test coverage required (15+ cases):**
-- Perfect score → Stage 5/6
+- Perfect score → Stage 5 (Stage 6 never assigned by The Trial)
 - Zero score → Stage 1
 - Passes R1–R3, fails R4 at fork → Stage 4 / Fork Forest
 - Passes R1–R3, fails R4 at skewer → Stage 4 / Skewer Spire
@@ -337,6 +351,8 @@ The `trial` step renders `<TheTrial>`. When it calls `onComplete(result)`, `Onbo
 - `tacticsMissed` → mark as `score: 0.1` (new concept, needs introduction)
 - `missType: 'execution'` → special coaching note: kid sees the pattern, needs execution practice
 - `missType: 'blind'` → standard intro coaching: kid hasn't learned this pattern yet
+- `advancedPlayer: true` → Coach Pawn skips slow introductions in Stage 5, assumes faster concept uptake
+- `responseTimeMs` per answer → informs coaching pacing: low median response time = faster-moving explanations; high median = more board-familiarity reinforcement before advancing
 
 This means Coach Pawn's first message in the first game is personalized, not generic.
 

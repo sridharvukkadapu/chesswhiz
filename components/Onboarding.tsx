@@ -395,7 +395,7 @@ function CTAButton({
   );
 }
 
-// ── Choice button (age band / experience) ──
+// ── Choice button (age band) ──
 function ChoiceButton({
   children,
   active,

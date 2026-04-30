@@ -13,6 +13,8 @@ import { loadLearnerModel, saveLearnerModel, derivePlayerId } from "@/lib/learne
 import { computeDifficulty, recordResult } from "@/lib/progression/adaptive-difficulty";
 import { applySignal, recordCoachMessage, startNewGame, incrementMoveCount, summarizeForPrompt } from "@/lib/learner/model";
 import { createEmptyLearnerModel } from "@/lib/learner/model";
+import type { TrialResult } from "@/lib/trial/types";
+import { seedLearnerModelFromTrial } from "@/lib/trial/seeding";
 
 let _syncTimer: ReturnType<typeof setTimeout> | null = null;
 function debouncedSync(model: LearnerModel, playerName: string, playerAge: number) {
@@ -250,7 +252,7 @@ interface GameStore {
   firstSessionComplete: boolean;
 
   // Actions
-  setSettings: (name: string, age: number, difficulty: Difficulty) => void;
+  setSettings: (name: string, age: number, difficulty: Difficulty, trialResult?: TrialResult) => void;
   selectSquare: (square: Square, moves: Move[]) => void;
   clearSelection: () => void;
   makeMove: (san: string, newChess: Chess, prevChess: Chess, lastMove: LastMove, status: GameStatus) => void;
@@ -332,7 +334,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   bossTacticAppliedThisGame: false,
   currentBossKingdom: null,
 
-  setSettings: (name, age, difficulty) => {
+  setSettings: (name, age, difficulty, trialResult) => {
     // Update streak on session start
     const prog = get().progression;
     const today = todayISO();
@@ -353,12 +355,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...prog,
       streak: nextStreak,
       lastPlayedDate: today,
+      learningStage: trialResult?.learningStage ?? prog.learningStage ?? 1,
+      currentKingdom: trialResult?.kingdomId ?? prog.currentKingdom,
     };
     saveProgression(nextProg);
     saveLastPlayer(name, age, difficulty);
 
     const playerId = derivePlayerId(name, age);
-    const learnerModel = loadLearnerModel(playerId);
+    const baseLearnerModel = loadLearnerModel(playerId);
+    const seededModel = trialResult
+      ? seedLearnerModelFromTrial(baseLearnerModel, trialResult)
+      : baseLearnerModel;
 
     const firstSessionDone = typeof window !== "undefined"
       ? localStorage.getItem("chesswhiz.firstSessionDone") === "1"
@@ -369,7 +376,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       playerAge: age,
       difficulty,
       screen: "playing",
-      learnerModel,
+      learnerModel: seededModel,
       isFirstSession: !firstSessionDone,
       chess: new Chess(),
       moveHistory: [],

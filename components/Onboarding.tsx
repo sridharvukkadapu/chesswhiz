@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import type { Difficulty } from "@/lib/chess/types";
 import { T } from "@/lib/design/tokens";
@@ -13,28 +12,19 @@ import {
   getNextStep,
   getAgeValue,
   type OnboardingState,
-  type ExperienceLevel,
 } from "@/lib/onboarding/steps";
-
-const PawnMiniGame = dynamic(() => import("@/components/PawnMiniGame"), {
-  ssr: false,
-  loading: () => (
-    <div style={{ padding: 48, textAlign: "center", fontFamily: T.fontUI, color: T.inkLow }}>
-      Loading mini-game…
-    </div>
-  ),
-});
+import TheTrial from "@/components/TheTrial";
+import type { TrialResult } from "@/lib/trial/types";
 
 interface OnboardingProps {
-  onStart: (name: string, age: number, difficulty: Difficulty) => void;
+  onStart: (name: string, age: number, difficulty: Difficulty, trialResult?: TrialResult) => void;
   firstSessionComplete?: boolean;
 }
 
 const COACH_MESSAGES: Record<string, string> = {
   name: "Hi! I'm Coach Pawn — what should I call you?",
   age: "Great to meet you! How old are you?",
-  experience: "Awesome! Have you played chess before?",
-  pawn_mini_game: "Let's learn how pawns move — try it out!",
+  trial: "Let's find out what you already know!",
   ready: "You're all set! Let the adventure begin!",
 };
 
@@ -44,21 +34,22 @@ export default function Onboarding({ onStart, firstSessionComplete }: Onboarding
     step: "name",
     name: null,
     ageBand: null,
-    experience: null,
   });
   const [nameInput, setNameInput] = useState("");
+  const [trialResult, setTrialResultRef] = useState<TrialResult | null>(null);
 
   const firstName = (wizardState.name ?? nameInput).trim().split(/\s+/)[0] || "friend";
   const coachMsg = wizardState.step === "ready"
     ? `Welcome to Pawn Village, ${firstName}! Your quest begins now!`
     : COACH_MESSAGES[wizardState.step] ?? COACH_MESSAGES.name;
   const coachExpression =
-    wizardState.step === "ready" || wizardState.step === "pawn_mini_game" ? "cheer" : "talking";
+    wizardState.step === "ready" ? "cheer" : "talking";
 
-  function advance(patch: Partial<OnboardingState>) {
+  function advance(patch: Partial<OnboardingState>, result?: TrialResult) {
     const next: OnboardingState = { ...wizardState, ...patch };
     next.step = getNextStep(next);
     setWizardState(next);
+    if (result) setTrialResultRef(result);
   }
 
   // Step: name
@@ -134,54 +125,17 @@ export default function Onboarding({ onStart, firstSessionComplete }: Onboarding
     );
   }
 
-  // Step: experience
-  if (wizardState.step === "experience") {
-    const options: Array<{ label: string; value: ExperienceLevel }> = [
-      { label: "Never played", value: "never" },
-      { label: "A little bit", value: "a_little" },
-      { label: "Yes I know!", value: "yes" },
-    ];
+  // Step: trial
+  if (wizardState.step === "trial") {
     return (
-      <Shell coachMsg={coachMsg} coachExpression={coachExpression}>
-        <StepCard>
-          <StepHeading>Have you played chess before?</StepHeading>
-          <StepSub>No worries either way — I&apos;ll teach you everything!</StepSub>
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 8 }}>
-            {options.map((opt) => (
-              <ChoiceButton
-                key={opt.value}
-                active={false}
-                onClick={() => advance({ experience: opt.value })}
-                wide
-              >
-                {opt.label}
-              </ChoiceButton>
-            ))}
-          </div>
-        </StepCard>
-      </Shell>
-    );
-  }
-
-  // Step: pawn_mini_game
-  if (wizardState.step === "pawn_mini_game") {
-    return (
-      <Shell coachMsg={coachMsg} coachExpression={coachExpression} minimal>
-        <div
-          style={{
-            width: "min(520px, 100%)",
-            background: T.bgCard,
-            borderRadius: 28,
-            border: `1.5px solid ${T.borderCard}`,
-            boxShadow: T.shadowDeep,
-            overflow: "hidden",
+      <Shell coachMsg="Let's find out what you already know!" coachExpression="talking">
+        <TheTrial
+          playerName={wizardState.name ?? "friend"}
+          ageBand={wizardState.ageBand ?? "8-10"}
+          onComplete={(result: TrialResult) => {
+            advance({}, result);
           }}
-        >
-          <PawnMiniGame
-            playerName={wizardState.name ?? "friend"}
-            onComplete={() => advance({})}
-          />
-        </div>
+        />
       </Shell>
     );
   }
@@ -189,7 +143,7 @@ export default function Onboarding({ onStart, firstSessionComplete }: Onboarding
   // Step: ready
   const difficulty: Difficulty = firstSessionComplete
     ? computeDifficulty(progression)
-    : (wizardState.experience === "yes" ? 2 : 1);
+    : 1;
   const age = wizardState.ageBand ? getAgeValue(wizardState.ageBand) : 9;
 
   return (
@@ -245,7 +199,7 @@ export default function Onboarding({ onStart, firstSessionComplete }: Onboarding
           </div>
         </div>
 
-        <CTAButton onClick={() => onStart(wizardState.name ?? firstName, age, difficulty)}>
+        <CTAButton onClick={() => onStart(wizardState.name ?? firstName, age, difficulty, trialResult ?? undefined)}>
           Enter Pawn Village, {firstName} →
         </CTAButton>
       </StepCard>

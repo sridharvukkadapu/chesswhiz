@@ -6,6 +6,7 @@ import Onboarding from "@/components/Onboarding";
 import { useGameStore, loadSavedGame, loadLastPlayer } from "@/stores/gameStore";
 import type { Difficulty } from "@/lib/chess/types";
 import type { SavedGame, LastPlayer } from "@/stores/gameStore";
+import type { TrialResult } from "@/lib/trial/types";
 import { T } from "@/lib/design/tokens";
 
 function ReturnCard({
@@ -134,8 +135,8 @@ export default function Home() {
     setChecked(true);
   }, []);
 
-  const handleStart = (name: string, age: number, difficulty: Difficulty) => {
-    setSettings(name, age, difficulty);
+  const handleStart = (name: string, age: number, difficulty: Difficulty, trialResult?: TrialResult) => {
+    setSettings(name, age, difficulty, trialResult);
     router.push("/play");
   };
 

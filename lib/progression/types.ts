@@ -91,6 +91,7 @@ export interface PlayerProgression {
   tier: Tier;
   challengeBias: "relaxed" | "balanced" | "sharp";
   recentResults: Array<"win" | "loss" | "draw">;
+  learningStage: import("@/lib/trial/types").LearningStage; // pedagogical stage 1–5
 }
 
 // Tactic detection

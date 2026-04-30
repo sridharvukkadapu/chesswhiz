@@ -166,6 +166,7 @@ const DEFAULT_PROGRESSION: PlayerProgression = {
   tier: "free",
   challengeBias: "balanced",
   recentResults: [],
+  learningStage: 1,
 };
 
 function loadProgression(): PlayerProgression {

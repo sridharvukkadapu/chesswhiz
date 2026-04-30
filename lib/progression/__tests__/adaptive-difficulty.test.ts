@@ -16,6 +16,7 @@ function makeProgression(overrides: Partial<PlayerProgression> = {}): PlayerProg
     tier: "free",
     challengeBias: "balanced",
     recentResults: [],
+    learningStage: 1,
     ...overrides,
   };
 }

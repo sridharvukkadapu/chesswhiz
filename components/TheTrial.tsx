@@ -71,6 +71,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   const [selectedArrow, setSelectedArrow] = useState<string | null>(null);
 
   const questionStartTime = useRef(Date.now());
+  const confidenceClickedRef = useRef(false);
 
   function resetQuestionState() {
     setSelectedSquares([]);
@@ -81,10 +82,11 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   }
 
   function showConfidenceToggle(answer: Omit<TrialAnswer, "confident">) {
+    confidenceClickedRef.current = false;
     setPendingAnswer(answer);
     setConfidenceState("showing");
     setTimeout(() => {
-      if (confidenceState !== "done") {
+      if (!confidenceClickedRef.current) {
         commitAnswer({ ...answer, confident: null });
       }
     }, 3000);
@@ -92,6 +94,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
 
   function handleConfidence(confident: boolean) {
     if (!pendingAnswer || confidenceState !== "showing") return;
+    confidenceClickedRef.current = true;
     setConfidenceState("done");
     commitAnswer({ ...pendingAnswer, confident });
   }
@@ -188,7 +191,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     if (isColorQuestion) {
       const fileIdx = sq.charCodeAt(0) - 97;
       const rank = parseInt(sq[1], 10);
-      const isLight = (fileIdx + rank) % 2 !== 0;
+      const isLight = (fileIdx + rank) % 2 === 0;
       const correct = isLight === (ROUND1_COLOR_QUESTION.color === "light");
       setFlashSquare({ sq, type: correct ? "correct" : "wrong" });
       recordAnswer(correct, { questionIndex: 5 });

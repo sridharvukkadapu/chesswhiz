@@ -1,24 +1,36 @@
-import { getNextStep, type OnboardingState } from "../steps";
+// lib/onboarding/__tests__/steps.test.ts
+import { getNextStep, getAgeValue } from "../steps";
+import type { OnboardingState } from "../steps";
 
 describe("getNextStep", () => {
-  it("name → age after name is entered", () => {
-    const state: OnboardingState = { step: "name", name: "Aarav", ageBand: null, experience: null };
+  it("name → age", () => {
+    const state: OnboardingState = { step: "name", name: "Aarav", ageBand: null };
     expect(getNextStep(state)).toBe("age");
   });
-  it("age → experience for 5-7 band", () => {
-    const state: OnboardingState = { step: "age", name: "Aarav", ageBand: "5-7", experience: null };
-    expect(getNextStep(state)).toBe("experience");
+
+  it("age → trial (always, regardless of age band)", () => {
+    const state: OnboardingState = { step: "age", name: "Aarav", ageBand: "5-7" };
+    expect(getNextStep(state)).toBe("trial");
   });
-  it("age → ready (skip experience) for 11+ band", () => {
-    const state: OnboardingState = { step: "age", name: "Aarav", ageBand: "11+", experience: null };
+
+  it("age 8-10 → trial", () => {
+    const state: OnboardingState = { step: "age", name: "Aarav", ageBand: "8-10" };
+    expect(getNextStep(state)).toBe("trial");
+  });
+
+  it("trial → ready", () => {
+    const state: OnboardingState = { step: "trial", name: "Aarav", ageBand: "5-7" };
     expect(getNextStep(state)).toBe("ready");
   });
-  it("experience:never → pawn_mini_game", () => {
-    const state: OnboardingState = { step: "experience", name: "Aarav", ageBand: "5-7", experience: "never" };
-    expect(getNextStep(state)).toBe("pawn_mini_game");
-  });
-  it("experience:yes → ready", () => {
-    const state: OnboardingState = { step: "experience", name: "Aarav", ageBand: "5-7", experience: "yes" };
+
+  it("ready → ready (terminal)", () => {
+    const state: OnboardingState = { step: "ready", name: "Aarav", ageBand: "5-7" };
     expect(getNextStep(state)).toBe("ready");
   });
+});
+
+describe("getAgeValue", () => {
+  it("5-7 → 6", () => expect(getAgeValue("5-7")).toBe(6));
+  it("8-10 → 9", () => expect(getAgeValue("8-10")).toBe(9));
+  it("11+ → 12", () => expect(getAgeValue("11+")).toBe(12));
 });

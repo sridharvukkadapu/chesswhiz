@@ -622,6 +622,7 @@ export default function PlayPage() {
           learnerSummary: summary,
           activeMissionConcept: progression.activeMission?.targetTactic,
           opportunityDetail,
+          learningStage: progression.learningStage,
         }),
       });
 

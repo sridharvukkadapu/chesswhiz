@@ -34,6 +34,38 @@ export interface TheTrialProps {
 type ConfidenceState = "showing" | "done";
 type FeedbackFlash = { sq: string; type: "correct" | "wrong" } | null;
 
+// Produces the spoken/displayed prompt for a specific question.
+// Returns null when the round-level intro is enough (Round 4/5).
+function getPromptVoice(roundId: TrialRoundId, qIndex: number): string | null {
+  if (roundId === 1) {
+    if (qIndex < 5) {
+      const target = ROUND1_QUESTIONS[qIndex]?.target;
+      if (!target) return null;
+      const file = target[0].toUpperCase();
+      const rank = target[1];
+      return `Tap the square ${file} ${rank}.`;
+    }
+    if (qIndex === 5) {
+      const sq = ROUND1_COLOR_QUESTION.square;
+      return `Is ${sq[0].toUpperCase()} ${sq[1]} a light or dark square? Tap it!`;
+    }
+  }
+  if (roundId === 2) {
+    const pq = ROUND2_PIECE_QUESTIONS[ROUND2_PIECE_ORDER[qIndex]];
+    if (!pq) return null;
+    return `Tap every square the ${pq.pieceKind} can move to.`;
+  }
+  if (roundId === 3) {
+    const q = ROUND3_QUESTIONS[qIndex];
+    if (!q) return null;
+    if (q.type === "check-detection") return "Is the king in check? Tap Yes or No.";
+    return "Find the move that delivers checkmate.";
+  }
+  if (roundId === 4) return "Find the best move in this position.";
+  if (roundId === 5) return "Pick the move that fits the best plan.";
+  return null;
+}
+
 function getCoachMessage(
   roundId: TrialRoundId,
   playerName: string,
@@ -59,9 +91,11 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   const [currentRound, setCurrentRound] = useState<TrialRoundId>(1);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [allAnswers, setAllAnswers] = useState<TrialAnswer[]>([]);
-  const [coachMessage, setCoachMessage] = useState(
-    getCoachMessage(1, playerName, "intro")
-  );
+  const [coachMessage, setCoachMessage] = useState(() => {
+    const intro = getCoachMessage(1, playerName, "intro");
+    const firstPrompt = getPromptVoice(1, 0);
+    return firstPrompt ? `${intro} ${firstPrompt}` : intro;
+  });
   const [coachExpression, setCoachExpression] = useState<CoachExpression>("talking");
   const [confidenceState, setConfidenceState] = useState<ConfidenceState | null>(null);
   const [pendingAnswer, setPendingAnswer] = useState<Omit<TrialAnswer, "confident"> | null>(null);
@@ -165,8 +199,15 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     }
 
     if (!roundComplete) {
-      setQuestionIndex((i) => i + 1);
+      const nextIdx = questionIndex + 1;
+      setQuestionIndex(nextIdx);
       resetQuestionState();
+      // Speak the next question's prompt so the kid hears what to do.
+      const nextPromptVoice = getPromptVoice(currentRound, nextIdx);
+      if (nextPromptVoice) {
+        setCoachMessage(nextPromptVoice);
+        setCoachExpression("talking");
+      }
       return;
     }
 
@@ -183,7 +224,9 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     setCurrentRound(nextRound);
     setQuestionIndex(0);
     resetQuestionState();
-    setCoachMessage(getCoachMessage(nextRound, playerName, "intro"));
+    const intro = getCoachMessage(nextRound, playerName, "intro");
+    const firstPrompt = getPromptVoice(nextRound, 0);
+    setCoachMessage(firstPrompt ? `${intro} ${firstPrompt}` : intro);
     setCoachExpression("talking");
   }
 
@@ -374,6 +417,34 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   const totalRounds = 5;
   const boardProps = getCurrentBoardProps();
 
+  // Per-question prompt shown prominently above the board. This is the
+  // actual question (e.g. "Find: e4") — separate from coachMessage which
+  // is general encouragement.
+  function getQuestionPrompt(): { label: string; value: string } | null {
+    if (currentRound === 1) {
+      if (questionIndex < 5) {
+        const target = ROUND1_QUESTIONS[questionIndex]?.target;
+        return target ? { label: "Find the square", value: target } : null;
+      }
+      if (questionIndex === 5) {
+        return { label: "What color is", value: ROUND1_COLOR_QUESTION.square };
+      }
+    }
+    if (currentRound === 2) {
+      const pq = ROUND2_PIECE_QUESTIONS[ROUND2_PIECE_ORDER[questionIndex]];
+      return { label: "Where can the", value: `${pq.pieceKind} go?` };
+    }
+    if (currentRound === 3) {
+      const q = ROUND3_QUESTIONS[questionIndex];
+      if (q.type === "check-detection") return { label: "Question", value: "Is the king in check?" };
+      return { label: "Question", value: "Find checkmate in 1" };
+    }
+    if (currentRound === 4) return { label: "Question", value: "Find the best move" };
+    if (currentRound === 5) return { label: "Question", value: "Pick the best plan" };
+    return null;
+  }
+  const prompt = getQuestionPrompt();
+
   return (
     <div style={{
       display: "flex",
@@ -440,6 +511,51 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
         )}
       </div>
       <SpeechBubble text={coachMessage} />
+
+      {/* Prominent question prompt — what the kid actually has to do */}
+      {prompt && (
+        <div
+          aria-live="polite"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 4,
+            padding: "10px 22px",
+            background: "rgba(255,107,90,0.08)",
+            border: `1.5px solid rgba(255,107,90,0.28)`,
+            borderRadius: 14,
+            minWidth: 220,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 800,
+              color: T.coral,
+              letterSpacing: "0.16em",
+              textTransform: "uppercase",
+              fontFamily: T.fontUI,
+            }}
+          >
+            {prompt.label}
+          </div>
+          <div
+            style={{
+              fontFamily: T.fontDisplay,
+              fontSize: 30,
+              fontWeight: 700,
+              color: T.ink,
+              letterSpacing: "-0.01em",
+              lineHeight: 1.1,
+              fontVariantNumeric: "tabular-nums",
+              textTransform: prompt.value.length <= 4 ? "uppercase" : "none",
+            }}
+          >
+            {prompt.value}
+          </div>
+        </div>
+      )}
 
       {/* Board */}
       <TrialBoard {...boardProps} />

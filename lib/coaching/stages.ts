@@ -48,7 +48,7 @@ export const TACTIC_DESCRIPTIONS: Record<string, Record<LearningStage, string>> 
   hanging_piece: {
     1: "that piece isn't safe",
     2: "that piece isn't safe — it can be captured for free",
-    3: "that piece is hanging — no one is protecting it",
+    3: "that piece can be captured for free — nothing is defending it",
     4: "hanging piece — undefended and free to capture",
     5: "hanging piece",
   },

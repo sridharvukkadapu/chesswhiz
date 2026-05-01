@@ -106,6 +106,7 @@ export const CoachRequestSchema = z.object({
     details: z.string(),
     squares: z.array(z.string()).optional(),
   }).optional(),
+  learningStage: z.number().int().min(1).max(5).optional(),
 });
 
 export type CoachRequest = z.infer<typeof CoachRequestSchema>;

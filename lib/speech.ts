@@ -194,5 +194,14 @@ export function useSpeech() {
     setVoicePlayback("idle");
   }, [enabled, recordVoiceUsage, setVoicePlayback]);
 
-  return { enabled, supported, toggle, speak, stop };
+  // One-way enable — safe to call even if already enabled; does NOT toggle off.
+  const enable = useCallback(() => {
+    setEnabled((prev) => {
+      if (prev) return prev;
+      try { localStorage.setItem(STORAGE_KEY, "1"); } catch {}
+      return true;
+    });
+  }, []);
+
+  return { enabled, supported, enable, toggle, speak, stop };
 }

@@ -75,26 +75,27 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   const confidenceClickedRef = useRef(false);
 
   const speech = useSpeech();
-  const pendingSpeakRef = useRef<string | null>(null);
+  // Tracks the latest coachMessage so the enabled-watcher can speak it
+  // when voice turns on (initial auto-enable or manual re-enable).
+  const latestMessageRef = useRef(coachMessage);
   const hasSpokeRef = useRef(false);
+  useEffect(() => { latestMessageRef.current = coachMessage; }, [coachMessage]);
 
-  // On mount: enable voice (async state update) and queue the first message.
+  // On mount: unconditionally enable voice using the one-way enable() — safe
+  // even if voice was already on from a previous session.
   useEffect(() => {
-    pendingSpeakRef.current = coachMessage;
-    if (!speech.enabled) speech.toggle();
+    speech.enable();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Once enabled flips true, drain any queued message.
+  // When enabled flips true (initial auto-enable OR user toggling back on),
+  // speak the current coach message so voice always resumes audibly.
   useEffect(() => {
     if (!speech.enabled) return;
-    if (pendingSpeakRef.current !== null) {
-      speech.speak(pendingSpeakRef.current);
-      pendingSpeakRef.current = null;
-      hasSpokeRef.current = true;
-    }
+    speech.speak(latestMessageRef.current);
+    hasSpokeRef.current = true;
   }, [speech.enabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Speak subsequent messages as coachMessage changes (after initial spoke).
+  // Speak subsequent messages as coachMessage changes (voice already on).
   useEffect(() => {
     if (!hasSpokeRef.current) return;
     speech.speak(coachMessage);

@@ -83,8 +83,12 @@ export default function TrialBoard({
   showCheckButtons,
   onCheckAnswer,
 }: TrialBoardProps) {
-  const chess = new Chess(fen);
-  const board = chess.board();
+  let board: ReturnType<Chess["board"]>;
+  try {
+    board = new Chess(fen).board();
+  } catch {
+    board = Array.from({ length: 8 }, () => Array(8).fill(null)) as ReturnType<Chess["board"]>;
+  }
 
   const [flashState, setFlashState] = useState<{ sq: string; type: "correct" | "wrong" } | null>(null);
 

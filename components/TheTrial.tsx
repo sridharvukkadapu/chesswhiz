@@ -75,7 +75,22 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   const confidenceClickedRef = useRef(false);
 
   const speech = useSpeech();
-  useEffect(() => { speech.speak(coachMessage); }, [coachMessage]); // eslint-disable-line react-hooks/exhaustive-deps
+  const initialSpokeRef = useRef(false);
+  // Auto-enable voice and speak the first message on mount.
+  useEffect(() => {
+    if (initialSpokeRef.current) return;
+    initialSpokeRef.current = true;
+    if (!speech.enabled) speech.toggle();
+    // Delay slightly so the toggle state update settles before speaking.
+    const t = setTimeout(() => speech.speak(coachMessage), 300);
+    return () => clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Speak subsequent messages as coachMessage changes.
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    if (!mountedRef.current) { mountedRef.current = true; return; }
+    speech.speak(coachMessage);
+  }, [coachMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function resetQuestionState() {
     setSelectedSquares([]);

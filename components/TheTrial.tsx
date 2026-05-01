@@ -75,20 +75,28 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   const confidenceClickedRef = useRef(false);
 
   const speech = useSpeech();
-  const initialSpokeRef = useRef(false);
-  // Auto-enable voice and speak the first message on mount.
+  const pendingSpeakRef = useRef<string | null>(null);
+  const hasSpokeRef = useRef(false);
+
+  // On mount: enable voice (async state update) and queue the first message.
   useEffect(() => {
-    if (initialSpokeRef.current) return;
-    initialSpokeRef.current = true;
+    pendingSpeakRef.current = coachMessage;
     if (!speech.enabled) speech.toggle();
-    // Delay slightly so the toggle state update settles before speaking.
-    const t = setTimeout(() => speech.speak(coachMessage), 300);
-    return () => clearTimeout(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // Speak subsequent messages as coachMessage changes.
-  const mountedRef = useRef(false);
+
+  // Once enabled flips true, drain any queued message.
   useEffect(() => {
-    if (!mountedRef.current) { mountedRef.current = true; return; }
+    if (!speech.enabled) return;
+    if (pendingSpeakRef.current !== null) {
+      speech.speak(pendingSpeakRef.current);
+      pendingSpeakRef.current = null;
+      hasSpokeRef.current = true;
+    }
+  }, [speech.enabled]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Speak subsequent messages as coachMessage changes (after initial spoke).
+  useEffect(() => {
+    if (!hasSpokeRef.current) return;
     speech.speak(coachMessage);
   }, [coachMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 

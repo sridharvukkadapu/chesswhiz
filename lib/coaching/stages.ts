@@ -13,10 +13,17 @@ export function getAllowedConcepts(stage: LearningStage): string[] {
   for (let s = 1; s <= stage; s++) {
     result.push(...STAGE_CONCEPT_ADDITIONS[s as LearningStage]);
   }
-  return result;
+  return Array.from(new Set(result));
 }
 
-export const TACTIC_DESCRIPTIONS: Record<string, Record<LearningStage, string>> = {
+export const TACTIC_IDS = [
+  "fork", "pin", "skewer", "discovered_attack",
+  "hanging_piece", "mate_in_1", "bot_threat",
+] as const;
+
+export type TacticId = typeof TACTIC_IDS[number];
+
+export const TACTIC_DESCRIPTIONS: Record<TacticId, Record<LearningStage, string>> = {
   fork: {
     1: "you can attack two pieces at the same time",
     2: "you can attack two pieces at the same time",
@@ -64,10 +71,10 @@ export const TACTIC_DESCRIPTIONS: Record<string, Record<LearningStage, string>> 
     2: "the bot is setting up a trap",
     3: "the bot is threatening something — can you spot it?",
     4: "the bot has a tactic coming",
-    5: "the bot has a tactic coming",
+    5: "bot threat",
   },
 };
 
 export function describeTactic(tacticId: string, stage: LearningStage): string {
-  return TACTIC_DESCRIPTIONS[tacticId]?.[stage] ?? tacticId;
+  return (TACTIC_DESCRIPTIONS as Record<string, Record<LearningStage, string>>)[tacticId]?.[stage] ?? tacticId;
 }

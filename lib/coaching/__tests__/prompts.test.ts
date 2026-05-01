@@ -48,3 +48,65 @@ describe("buildCoachPrompt", () => {
     });
   });
 });
+
+describe("buildCoachPrompt — concept gating", () => {
+  const gatingBase: CoachRequest = {
+    fen: "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1",
+    lastMove: { from: "e2", to: "e4", san: "e4" },
+    mover: "player",
+    trigger: "TACTIC_AVAILABLE",
+    playerName: "Alex",
+    ageBand: "8-10",
+  };
+
+  it("stage 2 with fork opportunityDetail — user prompt does not contain 'fork'", () => {
+    const prompt = buildCoachPrompt({
+      ...gatingBase,
+      learningStage: 2,
+      opportunityDetail: { type: "fork", details: "knight forks king and rook", squares: ["c3"] },
+    });
+    expect(prompt.user).not.toMatch(/\bfork\b/i);
+  });
+
+  it("stage 4 with fork opportunityDetail — user prompt contains 'fork'", () => {
+    const prompt = buildCoachPrompt({
+      ...gatingBase,
+      learningStage: 4,
+      opportunityDetail: { type: "fork", details: "knight can fork king and rook", squares: ["c3"] },
+    });
+    expect(prompt.user).toContain("fork");
+  });
+
+  it("stage 3 — system prompt contains 'Concept ceiling — Stage 3'", () => {
+    const prompt = buildCoachPrompt({ ...gatingBase, learningStage: 3 });
+    expect(prompt.system).toContain("Concept ceiling — Stage 3");
+  });
+
+  it("stage 3 — system prompt lists 'check' in the allowed list", () => {
+    const prompt = buildCoachPrompt({ ...gatingBase, learningStage: 3 });
+    expect(prompt.system).toContain("check");
+  });
+
+  it("stage 3 — system prompt does not list 'fork' in the allowed list (only in DO NOT section)", () => {
+    const prompt = buildCoachPrompt({ ...gatingBase, learningStage: 3 });
+    const lines = prompt.system.split("\n");
+    const allowedLine = lines.find((l) => l.startsWith("Concept ceiling"));
+    expect(allowedLine).toBeDefined();
+    const mayReferencePart = allowedLine!.split("Do NOT")[0];
+    expect(mayReferencePart).not.toMatch(/\bfork\b/i);
+  });
+
+  it("no learningStage field — system prompt defaults to Stage 3", () => {
+    const prompt = buildCoachPrompt({ ...gatingBase });
+    expect(prompt.system).toContain("Stage 3");
+  });
+
+  it("stage 2 — TACTIC_AVAILABLE trigger desc does not contain 'fork' when fork is in tacticsAvailableForKid", () => {
+    const prompt = buildCoachPrompt({
+      ...gatingBase,
+      learningStage: 2,
+      tacticsAvailableForKid: ["fork"],
+    });
+    expect(prompt.user).not.toMatch(/\bfork\b/i);
+  });
+});

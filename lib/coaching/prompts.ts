@@ -1,6 +1,8 @@
 import type { CoachRequest } from "./schema";
 import type { TriggerType } from "@/lib/chess/types";
 import type { AgeBand } from "@/lib/learner/types";
+import type { LearningStage } from "@/lib/trial/types";
+import { getAllowedConcepts, describeTactic, STAGE_CONCEPT_ADDITIONS } from "./stages";
 
 export interface CoachPrompt {
   system: string;
@@ -34,6 +36,36 @@ SOCRATIC RULES (follow strictly):
 LENGTH: "5-7" band → max 60 chars. "8-10" band → max 160 chars. "11+" band → max 280 chars.
 TONE: "5-7" → very simple words, emoji OK. "8-10" → playful, chess terms with brief explanation. "11+" → direct chess terminology.`;
 
+function buildConceptCeiling(stage: LearningStage): string {
+  const allowed = getAllowedConcepts(stage);
+  const allConcepts: string[] = [];
+  for (let s = 1; s <= 5; s++) {
+    allConcepts.push(...STAGE_CONCEPT_ADDITIONS[s as LearningStage]);
+  }
+  const disallowed = allConcepts.filter((c) => !allowed.includes(c));
+  const allowedStr = allowed.join(", ");
+  if (disallowed.length === 0) {
+    return `Concept ceiling — Stage ${stage}: You may reference: ${allowedStr}.`;
+  }
+  const disallowedStr = disallowed.join(", ");
+  return `Concept ceiling — Stage ${stage}: You may reference: ${allowedStr}. Do NOT reference: ${disallowedStr}, or any concept above Stage ${stage}.`;
+}
+
+function stripDisallowedConcepts(text: string, stage: LearningStage): string {
+  const allConcepts: string[] = [];
+  for (let s = 1; s <= 5; s++) {
+    allConcepts.push(...STAGE_CONCEPT_ADDITIONS[s as LearningStage]);
+  }
+  const allowed = getAllowedConcepts(stage);
+  const disallowed = allConcepts.filter((c) => !allowed.includes(c));
+  let result = text;
+  for (const concept of disallowed) {
+    const escaped = concept.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    result = result.replace(new RegExp(`\\b${escaped}\\b`, "gi"), "");
+  }
+  return result.replace(/\s{2,}/g, " ").trim();
+}
+
 function buildLearnerContext(req: CoachRequest): string {
   if (!req.learnerSummary) return "";
   const { mastered, inProgress, needsWork, recurringErrors, recentMessages } = req.learnerSummary;
@@ -51,10 +83,17 @@ function buildLearnerContext(req: CoachRequest): string {
 }
 
 export function buildCoachPrompt(req: CoachRequest): CoachPrompt {
+  const stage: LearningStage = (req.learningStage as LearningStage | undefined) ?? 3;
   const learnerCtx = buildLearnerContext(req);
-  const system = `${SYSTEM_PROMPT}\n\nAge band: ${req.ageBand}\nPlayer name: ${req.playerName}${learnerCtx}`;
+  const system = `${SYSTEM_PROMPT}\n\nAge band: ${req.ageBand}\nPlayer name: ${req.playerName}${learnerCtx}\n\n${buildConceptCeiling(stage)}`;
 
   const isBot = req.mover === "bot";
+  const kidTactics = (req.tacticsAvailableForKid ?? [])
+    .map((t) => describeTactic(t, stage))
+    .join(", ");
+  const botTactics = (req.tacticsAvailableForBot ?? [])
+    .map((t) => describeTactic(t, stage))
+    .join(", ");
   const triggerDesc: Record<string, string> = {
     GREAT_MOVE: isBot ? "Bot made a strong move — alert the player." : "Player made an excellent move.",
     OK_MOVE: isBot ? "Bot made a solid move." : "Player made a solid but unremarkable move.",
@@ -67,10 +106,10 @@ export function buildCoachPrompt(req: CoachRequest): CoachPrompt {
     BLUNDER: isBot
       ? `Bot made a serious blunder — the player has a strong opportunity.`
       : `Player made a serious blunder (${req.centipawnDelta ?? 0}cp loss). Coach the player about the piece they left in danger.`,
-    TACTIC_AVAILABLE: `A tactic is available for the player: ${(req.tacticsAvailableForKid ?? []).join(", ")}.`,
+    TACTIC_AVAILABLE: `A tactic is available for the player: ${kidTactics || "tactical opportunity"}.`,
     PATTERN_RECOGNIZED: "A recognizable pattern is present on the board.",
     RECURRING_ERROR: `Player repeated a recurring error: ${(req.learnerSummary?.recurringErrors[0]?.patternId ?? "unknown")}.`,
-    BOT_TACTIC_INCOMING: `The bot just set up a tactic: ${(req.tacticsAvailableForBot ?? []).join(", ")}.`,
+    BOT_TACTIC_INCOMING: `The bot just set up a tactic: ${botTactics || "tactical threat"}.`,
   };
 
   const userLines: string[] = [
@@ -83,7 +122,9 @@ export function buildCoachPrompt(req: CoachRequest): CoachPrompt {
     userLines.push(`Active mission concept: ${req.activeMissionConcept}`);
   }
   if (req.opportunityDetail) {
-    userLines.push(`Opportunity detected: ${req.opportunityDetail.type} — ${req.opportunityDetail.details}`);
+    const typeDesc = describeTactic(req.opportunityDetail.type, stage);
+    const details = stripDisallowedConcepts(req.opportunityDetail.details, stage);
+    userLines.push(`Opportunity detected: ${typeDesc} — ${details}`);
     if (req.opportunityDetail.squares?.length) {
       userLines.push(`Key squares: ${req.opportunityDetail.squares.join(", ")}`);
     }

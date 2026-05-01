@@ -1,7 +1,8 @@
 // components/TheTrial.tsx
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useSpeech } from "@/lib/speech";
 import dynamic from "next/dynamic";
 import { Chess } from "chess.js";
 import CoachPawn, { SpeechBubble } from "@/components/CoachPawn";
@@ -72,6 +73,9 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
 
   const questionStartTime = useRef(Date.now());
   const confidenceClickedRef = useRef(false);
+
+  const speech = useSpeech();
+  useEffect(() => { speech.speak(coachMessage); }, [coachMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function resetQuestionState() {
     setSelectedSquares([]);
@@ -375,8 +379,24 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
         ))}
       </div>
 
-      {/* Coach Pawn */}
-      <CoachPawn expression={coachExpression} size={56} />
+      {/* Coach Pawn + voice toggle */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <CoachPawn expression={coachExpression} size={56} />
+        {speech.supported && (
+          <button
+            type="button"
+            onClick={speech.toggle}
+            title={speech.enabled ? "Turn off voice" : "Turn on voice"}
+            style={{
+              background: "none", border: "none", cursor: "pointer",
+              fontSize: 20, opacity: speech.enabled ? 1 : 0.4,
+              padding: 4,
+            }}
+          >
+            🔊
+          </button>
+        )}
+      </div>
       <SpeechBubble text={coachMessage} />
 
       {/* Board */}

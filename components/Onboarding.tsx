@@ -171,10 +171,10 @@ export default function Onboarding({ onStart, firstSessionComplete }: Onboarding
             <div style={{ minWidth: 0, flex: 1 }}>
               <div
                 style={{
-                  fontSize: 10,
+                  fontSize: 12,
                   fontWeight: 800,
                   color: T.coral,
-                  letterSpacing: "0.2em",
+                  letterSpacing: "0.18em",
                   textTransform: "uppercase",
                   fontFamily: T.fontUI,
                 }}
@@ -373,8 +373,10 @@ function CTAButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
+      className={disabled ? undefined : "btn-press"}
       style={{
         width: "100%",
+        minHeight: 52,
         padding: "16px 24px",
         textAlign: "center",
         background: disabled ? "rgba(31,42,68,0.06)" : T.coral,
@@ -412,9 +414,11 @@ function ChoiceButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
+      className="btn-press"
       style={{
         flex: wide ? undefined : 1,
         width: wide ? "100%" : undefined,
+        minHeight: 52,
         padding: "14px 12px",
         textAlign: "center",
         background: active ? "rgba(255,107,90,0.10)" : "rgba(31,42,68,0.03)",

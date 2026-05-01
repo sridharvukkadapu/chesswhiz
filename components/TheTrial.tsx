@@ -410,14 +410,32 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
           <button
             type="button"
             onClick={speech.toggle}
-            title={speech.enabled ? "Turn off voice" : "Turn on voice"}
+            aria-label={speech.enabled ? "Turn off voice" : "Turn on voice"}
+            aria-pressed={speech.enabled}
             style={{
+              display: "flex", alignItems: "center", justifyContent: "center",
+              minWidth: 44, minHeight: 44,
               background: "none", border: "none", cursor: "pointer",
-              fontSize: 20, opacity: speech.enabled ? 1 : 0.4,
-              padding: 4,
+              borderRadius: 8, padding: 10,
+              opacity: speech.enabled ? 1 : 0.4,
+              transition: "opacity 150ms ease",
             }}
           >
-            🔊
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              {speech.enabled ? (
+                <>
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </>
+              ) : (
+                <>
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </>
+              )}
+            </svg>
           </button>
         )}
       </div>
@@ -432,34 +450,42 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
           <button
             type="button"
             onClick={() => handleConfidence(true)}
+            className="btn-press"
             style={{
-              padding: "8px 20px",
+              flex: 1,
+              minHeight: 44,
+              padding: "10px 20px",
               border: `1.5px solid ${T.border}`,
               borderRadius: 100,
               background: "transparent",
               fontFamily: T.fontUI,
               fontSize: 15,
+              fontWeight: 600,
               cursor: "pointer",
               color: T.ink,
             }}
           >
-            😊 Sure
+            Sure
           </button>
           <button
             type="button"
             onClick={() => handleConfidence(false)}
+            className="btn-press"
             style={{
-              padding: "8px 20px",
+              flex: 1,
+              minHeight: 44,
+              padding: "10px 20px",
               border: `1.5px solid ${T.border}`,
               borderRadius: 100,
               background: "transparent",
               fontFamily: T.fontUI,
               fontSize: 15,
+              fontWeight: 600,
               cursor: "pointer",
               color: T.ink,
             }}
           >
-            🤔 Guessing
+            Guessing
           </button>
         </div>
       )}

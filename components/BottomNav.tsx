@@ -154,7 +154,7 @@ export default function BottomNav() {
                       color: "#FFFCF5",
                       borderRadius: 8,
                       fontFamily: T.fontUI,
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: 800,
                       display: "flex",
                       alignItems: "center",
@@ -170,9 +170,9 @@ export default function BottomNav() {
               </div>
               <span
                 style={{
-                  fontSize: 10,
+                  fontSize: 11,
                   fontWeight: 800,
-                  letterSpacing: "0.18em",
+                  letterSpacing: "0.16em",
                   textTransform: "uppercase",
                 }}
               >

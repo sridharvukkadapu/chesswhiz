@@ -248,9 +248,11 @@ export default function TrialBoard({
         <button
           type="button"
           onClick={onSubmit}
+          className="btn-press"
           style={{
             marginTop: 10,
             width: "100%",
+            minHeight: 48,
             padding: "12px 0",
             background: T.coral,
             color: "#FFFCF5",
@@ -262,7 +264,7 @@ export default function TrialBoard({
             cursor: "pointer",
           }}
         >
-          That's all of them!
+          That&apos;s all of them!
         </button>
       )}
 
@@ -276,8 +278,10 @@ export default function TrialBoard({
           <button
             type="button"
             onClick={() => onCheckAnswer(true)}
+            className="btn-press"
             style={{
               flex: 1,
+              minHeight: 48,
               padding: "12px 0",
               background: "#D1FAE5",
               border: "2px solid #34D399",
@@ -289,13 +293,15 @@ export default function TrialBoard({
               cursor: "pointer",
             }}
           >
-            ✓ Yes, check!
+            Yes, check!
           </button>
           <button
             type="button"
             onClick={() => onCheckAnswer(false)}
+            className="btn-press"
             style={{
               flex: 1,
+              minHeight: 48,
               padding: "12px 0",
               background: "#FEE2E2",
               border: "2px solid #F87171",
@@ -307,7 +313,7 @@ export default function TrialBoard({
               cursor: "pointer",
             }}
           >
-            ✗ No check
+            No check
           </button>
         </div>
       )}

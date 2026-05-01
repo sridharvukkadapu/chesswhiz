@@ -73,8 +73,10 @@ function ReturnCard({
 
         <button
           onClick={onPrimary}
+          className="btn-press"
           style={{
             width: "100%",
+            minHeight: 52,
             padding: "14px 0",
             borderRadius: 14,
             background: T.coral,
@@ -86,18 +88,17 @@ function ReturnCard({
             cursor: "pointer",
             marginBottom: 10,
             boxShadow: `0 4px 16px rgba(255,107,90,0.35)`,
-            transition: "opacity 0.15s",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.88")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
           {primaryLabel}
         </button>
 
         <button
           onClick={onSecondary}
+          className="btn-press"
           style={{
             width: "100%",
+            minHeight: 48,
             padding: "12px 0",
             borderRadius: 14,
             background: "transparent",
@@ -107,10 +108,7 @@ function ReturnCard({
             fontSize: 14,
             border: `1.5px solid rgba(31,42,68,0.14)`,
             cursor: "pointer",
-            transition: "opacity 0.15s",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.70")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
         >
           Not you? Start fresh
         </button>

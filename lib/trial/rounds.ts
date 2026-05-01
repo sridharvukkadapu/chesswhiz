@@ -102,13 +102,13 @@ export const ROUND3_QUESTIONS: Round3Question[] = [
   // Check detection: white king on e1, black rook on e8 (open file → check)
   {
     type: "check-detection",
-    fen: "4r3/8/8/8/8/8/8/4K3 w - - 0 1",
+    fen: "4r2k/8/8/8/8/8/8/4K3 w - - 0 1",
     isInCheck: true,
   },
   // Check detection: white king on e1, black rook on a8 (no check)
   {
     type: "check-detection",
-    fen: "r7/8/8/8/8/8/8/4K3 w - - 0 1",
+    fen: "r6k/8/8/8/8/8/8/4K3 w - - 0 1",
     isInCheck: false,
   },
   // Checkmate-in-1: Q+K box mate (queen delivers mate)

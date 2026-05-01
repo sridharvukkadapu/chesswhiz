@@ -4,6 +4,10 @@ import type { AgeBand } from "@/lib/learner/types";
 import type { LearningStage } from "@/lib/trial/types";
 import { getAllowedConcepts, describeTactic, STAGE_CONCEPT_ADDITIONS } from "./stages";
 
+const ALL_CONCEPTS: string[] = ([1, 2, 3, 4, 5] as LearningStage[]).flatMap(
+  (s) => STAGE_CONCEPT_ADDITIONS[s],
+);
+
 export interface CoachPrompt {
   system: string;
   user: string;
@@ -38,11 +42,7 @@ TONE: "5-7" → very simple words, emoji OK. "8-10" → playful, chess terms wit
 
 function buildConceptCeiling(stage: LearningStage): string {
   const allowed = getAllowedConcepts(stage);
-  const allConcepts: string[] = [];
-  for (let s = 1; s <= 5; s++) {
-    allConcepts.push(...STAGE_CONCEPT_ADDITIONS[s as LearningStage]);
-  }
-  const disallowed = allConcepts.filter((c) => !allowed.includes(c));
+  const disallowed = ALL_CONCEPTS.filter((c) => !allowed.includes(c));
   const allowedStr = allowed.join(", ");
   if (disallowed.length === 0) {
     return `Concept ceiling — Stage ${stage}: You may reference: ${allowedStr}.`;
@@ -52,12 +52,8 @@ function buildConceptCeiling(stage: LearningStage): string {
 }
 
 function stripDisallowedConcepts(text: string, stage: LearningStage): string {
-  const allConcepts: string[] = [];
-  for (let s = 1; s <= 5; s++) {
-    allConcepts.push(...STAGE_CONCEPT_ADDITIONS[s as LearningStage]);
-  }
   const allowed = getAllowedConcepts(stage);
-  const disallowed = allConcepts.filter((c) => !allowed.includes(c));
+  const disallowed = ALL_CONCEPTS.filter((c) => !allowed.includes(c));
   let result = text;
   for (const concept of disallowed) {
     const escaped = concept.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -83,7 +79,8 @@ function buildLearnerContext(req: CoachRequest): string {
 }
 
 export function buildCoachPrompt(req: CoachRequest): CoachPrompt {
-  const stage: LearningStage = (req.learningStage as LearningStage | undefined) ?? 3;
+  const rawStage = req.learningStage ?? 3;
+  const stage: LearningStage = (Math.max(1, Math.min(5, rawStage))) as LearningStage;
   const learnerCtx = buildLearnerContext(req);
   const system = `${SYSTEM_PROMPT}\n\nAge band: ${req.ageBand}\nPlayer name: ${req.playerName}${learnerCtx}\n\n${buildConceptCeiling(stage)}`;
 

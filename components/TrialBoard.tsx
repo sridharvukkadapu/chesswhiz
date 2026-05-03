@@ -32,7 +32,6 @@ export interface TrialBoardProps {
    *  fill the square — for Round 1 where the answer must stay hidden). */
   highlightGutterFor?: string;
   // tap-piece mode
-  targetPieceKind?: string;          // e.g. "knight" — pieces of this kind pulse
   onPieceKindTap?: (sq: string, kind: string) => void;
   onSquareTap?: (sq: string) => void; // mode: tap-square
   // multi-select
@@ -73,7 +72,6 @@ export default function TrialBoard({
   fen = "8/8/8/8/8/8/8/8 w - - 0 1",
   highlightSquares = [],
   highlightGutterFor,
-  targetPieceKind,
   onPieceKindTap,
   onSquareTap,
   selectedSquares = [],
@@ -269,7 +267,6 @@ export default function TrialBoard({
               const color = cell.color === "w" ? "white" : "black";
               const x = c * sqSize;
               const y = r * sqSize;
-              const isTargetPiece = mode === "tap-piece" && targetPieceKind === pieceType && color === "white";
               const flash = flashState?.sq === sq ? flashState.type : null;
               const isClickable = mode === "move" || (mode === "tap-piece" && !!cell);
               return (
@@ -278,8 +275,6 @@ export default function TrialBoard({
                   transform={`translate(${x},${y})`}
                   style={{
                     cursor: isClickable ? "pointer" : "default",
-                    // Subtle scale-up on target pieces so kids notice them
-                    filter: isTargetPiece && !flash ? "drop-shadow(0 0 6px rgba(255,107,90,0.9))" : "none",
                   }}
                   onClick={() => handleSquareClick(sq, pieceType)}
                 >

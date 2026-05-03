@@ -227,10 +227,9 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     let roundPassed = false;
 
     if (currentRound === 1) {
-      // 2 piece-recognition questions; pass if at least 1 correct
       roundComplete = roundAnswers.length >= ROUND1_QUESTIONS.length;
       if (roundComplete) {
-        roundPassed = roundAnswers.filter((a) => a.correct).length >= 1;
+        roundPassed = roundAnswers.filter((a) => a.correct).length >= 2;
       }
     } else if (currentRound === 2) {
       // 2 questions: rook + knight; any fail stops the round (fail → Stage 2)
@@ -268,7 +267,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
       const bridgeMsg = getBridgeMessage(result.learningStage, playerName);
       setCoachMessage(bridgeMsg);
       setCoachExpression("cheer");
-      setTimeout(() => onComplete(result), 2000);
+      setTimeout(() => onComplete(result), 4000);
       return;
     }
 
@@ -416,7 +415,6 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
       return {
         mode: "tap-piece" as const,
         fen: ROUND1_START_FEN,
-        targetPieceKind: q?.pieceKind,
         onPieceKindTap: handleR1PieceTap,
         highlightSquares: revealSquares,
         flashSquare,

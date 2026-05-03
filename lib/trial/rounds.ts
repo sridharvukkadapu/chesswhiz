@@ -29,6 +29,18 @@ export const ROUND1_QUESTIONS: PieceRecognitionQuestion[] = [
     voice: "Now tap the white queen!",
     displayLabel: "Tap the White Queen",
   },
+  {
+    pieceKind: "bishop",
+    correctSquares: ["c1", "f1"],
+    voice: "Can you find a white bishop?",
+    displayLabel: "Tap a White Bishop",
+  },
+  {
+    pieceKind: "rook",
+    correctSquares: ["a1", "h1"],
+    voice: "Now tap one of the white rooks!",
+    displayLabel: "Tap a White Rook",
+  },
 ];
 
 // ── Round 2: Piece Movement ───────────────────────────────────
@@ -172,9 +184,8 @@ export function getNextRound(
   const roundAnswers = answers.filter((a) => a.roundId === currentRound);
 
   if (currentRound === 1) {
-    // Must recognise at least 1 of 2 pieces to continue (very low bar — almost everyone passes)
     const correct = roundAnswers.filter((a) => a.correct).length;
-    if (correct === 0) return null; // total blank → Stage 1
+    if (correct < 2) return null;
     return 2;
   }
 

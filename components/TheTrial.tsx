@@ -121,6 +121,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   const [confidenceState, setConfidenceState] = useState<ConfidenceState | null>(null);
   const [pendingAnswer, setPendingAnswer] = useState<Omit<TrialAnswer, "confident"> | null>(null);
   const [flashSquare, setFlashSquare] = useState<FeedbackFlash>(null);
+  const [revealSquares, setRevealSquares] = useState<string[]>([]);
   const [selectedSquares, setSelectedSquares] = useState<string[]>([]);
   const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
   const [legalMoveSquares, setLegalMoveSquares] = useState<string[]>([]);
@@ -171,6 +172,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     setSelectedPiece(null);
     setLegalMoveSquares([]);
     setSelectedArrow(null);
+    setRevealSquares([]);
     questionStartTime.current = Date.now();
   }
 
@@ -287,6 +289,26 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     return `Wow, ${name} — you already know tactics! Welcome to the Strategy Summit! 🏔️`;
   }
 
+  function getCorrectAnswerSquares(): string[] {
+    if (currentRound === 1) {
+      return ROUND1_QUESTIONS[questionIndex]?.correctSquares ?? [];
+    }
+    if (currentRound === 2) {
+      return ROUND2_PIECE_QUESTIONS[ROUND2_PIECE_ORDER[questionIndex]]?.expectedSquares ?? [];
+    }
+    if (currentRound === 3) {
+      const q = ROUND3_QUESTIONS[questionIndex];
+      if (!q) return [];
+      if (q.type === "checkmate-in-1") return [q.correctMove.from, q.correctMove.to];
+      return []; // check-detection: no square to reveal, coach message is enough
+    }
+    if (currentRound === 4) {
+      const q = ROUND4_TACTIC_QUESTIONS[questionIndex];
+      return q ? [q.correctMove.from, q.correctMove.to] : [];
+    }
+    return [];
+  }
+
   function recordAnswer(correct: boolean, extra?: Partial<TrialAnswer>) {
     const responseTimeMs = Date.now() - questionStartTime.current;
     if (correct) {
@@ -295,6 +317,12 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     } else {
       setCoachMessage(getCoachMessage(currentRound, playerName, "wrong"));
       setCoachExpression("sad");
+      // Show the correct answer squares for 1.5s so kids can see what they missed
+      const squares = getCorrectAnswerSquares();
+      if (squares.length > 0) {
+        setRevealSquares(squares);
+        setTimeout(() => setRevealSquares([]), 1500);
+      }
     }
     const answer: Omit<TrialAnswer, "confident"> = {
       roundId: currentRound,
@@ -390,6 +418,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
         fen: ROUND1_START_FEN,
         targetPieceKind: q?.pieceKind,
         onPieceKindTap: handleR1PieceTap,
+        highlightSquares: revealSquares,
         flashSquare,
       };
     }
@@ -412,6 +441,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
             prev.includes(sq) ? prev.filter((s) => s !== sq) : [...prev, sq]
           ),
         onSubmit: handleR2Submit,
+        highlightSquares: revealSquares,
         flashSquare,
       };
     }
@@ -426,6 +456,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
         legalMoveSquares,
         onPieceTap: handlePieceTap,
         onMoveTap: handleMoveTap,
+        highlightSquares: revealSquares,
         flashSquare,
       };
     }
@@ -438,6 +469,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
         legalMoveSquares,
         onPieceTap: handlePieceTap,
         onMoveTap: handleMoveTap,
+        highlightSquares: revealSquares,
         flashSquare,
       };
     }

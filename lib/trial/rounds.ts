@@ -127,14 +127,15 @@ export const ROUND4_TACTIC_QUESTIONS: TacticQuestion[] = [
     hint: "Move the knight to attack both the king and the rook",
   },
   {
-    // Pin: Bishop pins the knight to the king
+    // Rook pin: Ra4 pins the knight on d4 to the black king on h4.
+    // The rook cannot capture the knight directly from a1, so Ra4 is unambiguously the pin.
     tacticId: "pin",
-    fen: "8/8/5k2/8/3n4/8/1B6/4K3 w - - 0 1",
-    correctMove: { from: "b2", to: "d4" },
-    correctPiece: "b2",
-    voice: "The bishop can pin a piece to the king! Find it!",
+    fen: "8/8/8/8/3n3k/8/8/R3K3 w - - 0 1",
+    correctMove: { from: "a1", to: "a4" },
+    correctPiece: "a1",
+    voice: "Move the rook to trap a piece that can't move — because the king is behind it!",
     displayLabel: "Find the Pin!",
-    hint: "Attack a piece that can't move because it shields the king",
+    hint: "Move the rook onto the same rank as the knight and the king",
   },
 ];
 

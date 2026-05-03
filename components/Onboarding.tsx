@@ -128,7 +128,7 @@ export default function Onboarding({ onStart, firstSessionComplete }: Onboarding
   // Step: trial
   if (wizardState.step === "trial") {
     return (
-      <Shell coachMsg="Let's find out what you already know!" coachExpression="talking">
+      <Shell coachMsg="Time for a quick quiz!" coachExpression="talking">
         <TheTrial
           playerName={wizardState.name ?? "friend"}
           ageBand={wizardState.ageBand ?? "8-10"}

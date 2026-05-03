@@ -109,14 +109,13 @@ function getCoachMessage(
 }
 
 export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: TheTrialProps) {
+  const [trialPhase, setTrialPhase] = useState<"warmup" | "playing">("warmup");
   const [currentRound, setCurrentRound] = useState<TrialRoundId>(1);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [allAnswers, setAllAnswers] = useState<TrialAnswer[]>([]);
-  const [coachMessage, setCoachMessage] = useState(() => {
-    const intro = getCoachMessage(1, playerName, "intro");
-    const first = getQuestion(1, 0);
-    return first ? `${intro} ${first.voice}` : intro;
-  });
+  const [coachMessage, setCoachMessage] = useState(
+    `Hey ${playerName}! Let's play a quick game to see what you know about chess.`
+  );
   const [coachExpression, setCoachExpression] = useState<CoachExpression>("talking");
   const [confidenceState, setConfidenceState] = useState<ConfidenceState | null>(null);
   const [pendingAnswer, setPendingAnswer] = useState<Omit<TrialAnswer, "confident"> | null>(null);
@@ -176,10 +175,21 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     questionStartTime.current = Date.now();
   }
 
+  function startTrial() {
+    setTrialPhase("playing");
+    const intro = getCoachMessage(1, playerName, "intro");
+    const first = getQuestion(1, 0);
+    setCoachMessage(first ? `${intro} ${first.voice}` : intro);
+    setCoachExpression("talking");
+    questionStartTime.current = Date.now();
+  }
+
   function showConfidenceToggle(answer: Omit<TrialAnswer, "confident">) {
     confidenceClickedRef.current = false;
     setPendingAnswer(answer);
     setConfidenceState("showing");
+    setCoachMessage("Were you sure, or just guessing?");
+    setCoachExpression("talking");
     if (confidenceTimerRef.current) clearTimeout(confidenceTimerRef.current);
     confidenceTimerRef.current = setTimeout(() => {
       confidenceTimerRef.current = null;
@@ -490,6 +500,78 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   }
 
   const totalRounds = 5;
+
+  if (trialPhase === "warmup") {
+    return (
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 16,
+        padding: "24px 16px",
+        fontFamily: T.fontUI,
+      }}>
+        <CoachPawn expression={coachExpression} size={56} />
+        <SpeechBubble text={coachMessage} />
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+            padding: "20px 28px",
+            background: "rgba(255,107,90,0.06)",
+            border: `1.5px solid rgba(255,107,90,0.22)`,
+            borderRadius: 18,
+            maxWidth: 320,
+            textAlign: "center",
+          }}
+        >
+          <div style={{
+            fontFamily: T.fontDisplay,
+            fontSize: 24,
+            fontWeight: 700,
+            color: T.ink,
+            lineHeight: 1.2,
+          }}>
+            Can you find the pieces?
+          </div>
+          <div style={{
+            fontFamily: T.fontHand,
+            fontSize: 16,
+            color: T.inkLow,
+          }}>
+            I&apos;ll show you a chess board and ask you to tap different pieces. No wrong answers — just do your best!
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={startTrial}
+          className="btn-press"
+          style={{
+            minWidth: 200,
+            minHeight: 52,
+            padding: "16px 32px",
+            background: T.coral,
+            borderRadius: 100,
+            border: "none",
+            fontFamily: T.fontUI,
+            fontSize: 18,
+            fontWeight: 800,
+            color: "#FFFCF5",
+            letterSpacing: "0.04em",
+            boxShadow: T.glowCoral,
+            cursor: "pointer",
+          }}
+        >
+          I&apos;m ready!
+        </button>
+      </div>
+    );
+  }
+
   const boardProps = getCurrentBoardProps();
 
   // Per-question prompt shown prominently above the board. This is the
@@ -614,7 +696,15 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
 
       {/* Confidence toggle */}
       {confidenceState === "showing" && (
-        <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, marginTop: 4 }}>
+        <div style={{
+          fontFamily: T.fontHand,
+          fontSize: 15,
+          color: T.inkLow,
+        }}>
+          Were you sure, or just guessing?
+        </div>
+        <div style={{ display: "flex", gap: 10, width: "100%" }}>
           <button
             type="button"
             onClick={() => handleConfidenceClick(true)}
@@ -655,6 +745,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
           >
             Guessing
           </button>
+        </div>
         </div>
       )}
     </div>

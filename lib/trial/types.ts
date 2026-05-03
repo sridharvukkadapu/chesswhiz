@@ -30,7 +30,6 @@ export interface TrialResult {
 
 export interface StrengthsAndGaps {
   boardKnowledge: SkillLevel;
-  colorAwareness: SkillLevel;
   pieceMovement: Record<PieceKind, SkillLevel>;
   checkUnderstanding: SkillLevel;
   tacticsKnown: string[];

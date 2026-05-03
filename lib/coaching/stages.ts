@@ -1,8 +1,11 @@
 import type { LearningStage } from "@/lib/trial/types";
 
 export const STAGE_CONCEPT_ADDITIONS: Record<LearningStage, string[]> = {
-  1: ["square", "rank", "file", "diagonal", "board"],
-  2: ["piece movement", "piece value", "capture", "protection", "trade"],
+  // Stage 1: kid is learning piece names and what they look like.
+  // Coordinate vocabulary (rank/file/diagonal) is Stage 2+ — a Stage 1 kid
+  // doesn't yet know how pieces move, so spatial references are meaningless.
+  1: ["pieces", "king", "queen", "rook", "bishop", "knight", "pawn", "board"],
+  2: ["square", "rank", "file", "diagonal", "piece movement", "piece value", "capture", "protection", "trade"],
   3: ["check", "checkmate", "stalemate", "castling", "en passant", "promotion"],
   4: ["fork", "pin", "skewer", "discovered attack", "hanging piece", "back rank"],
   5: ["outpost", "open file", "pawn structure", "opposition", "zugzwang"],
@@ -25,7 +28,7 @@ export type TacticId = typeof TACTIC_IDS[number];
 
 export const TACTIC_DESCRIPTIONS: Record<TacticId, Record<LearningStage, string>> = {
   fork: {
-    1: "you can attack two pieces at the same time",
+    1: "you can attack two of their pieces with one move!",
     2: "you can attack two pieces at the same time",
     3: "you can attack two pieces at the same time",
     4: "fork — attack two pieces at once",
@@ -53,7 +56,7 @@ export const TACTIC_DESCRIPTIONS: Record<TacticId, Record<LearningStage, string>
     5: "discovered attack",
   },
   hanging_piece: {
-    1: "that piece isn't safe",
+    1: "that piece can be taken for free!",
     2: "that piece isn't safe — it can be captured for free",
     3: "that piece can be captured for free — nothing is defending it",
     4: "hanging piece — undefended and free to capture",

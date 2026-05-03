@@ -11,61 +11,68 @@ function ans(overrides: Partial<TrialAnswer> & Pick<TrialAnswer, "roundId" | "co
   };
 }
 
+// R1: 2 piece-recognition questions (knight, queen)
 function r1Pass(): TrialAnswer[] {
-  return [0,1,2,3,4].map((i) => ans({ roundId: 1, questionIndex: i, correct: true }));
+  return [0, 1].map((i) => ans({ roundId: 1, questionIndex: i, correct: true }));
 }
+function r1Fail(): TrialAnswer[] {
+  return [0, 1].map((i) => ans({ roundId: 1, questionIndex: i, correct: false }));
+}
+
+// R2: 2 movement questions (rook, knight)
 function r2Pass(): TrialAnswer[] {
-  return ["rook","bishop","queen","king","knight","pawn"].map((p, i) =>
-    ans({ roundId: 2, questionIndex: i, correct: true, pieceKind: p as any })
-  );
+  return [
+    ans({ roundId: 2, questionIndex: 0, correct: true, pieceKind: "rook" }),
+    ans({ roundId: 2, questionIndex: 1, correct: true, pieceKind: "knight" }),
+  ];
 }
+
+// R3: 2 questions (check-detection, checkmate-in-1)
 function r3Pass(): TrialAnswer[] {
-  return [0,1,2,3].map((i) => ans({ roundId: 3, questionIndex: i, correct: true }));
+  return [0, 1].map((i) => ans({ roundId: 3, questionIndex: i, correct: true }));
 }
+
+// R4: 2 tactic questions (fork, pin)
 function r4Pass(): TrialAnswer[] {
-  return ["fork","pin","skewer","discovered_attack"].map((t, i) =>
-    ans({ roundId: 4, questionIndex: i, correct: true, tacticId: t })
-  );
+  return [
+    ans({ roundId: 4, questionIndex: 0, correct: true, tacticId: "fork" }),
+    ans({ roundId: 4, questionIndex: 1, correct: true, tacticId: "pin" }),
+  ];
 }
+
+// R5: 1 strategy question
 function r5Pass(): TrialAnswer[] {
-  return [0,1,2].map((i) => ans({ roundId: 5, questionIndex: i, correct: true }));
+  return [ans({ roundId: 5, questionIndex: 0, correct: true })];
 }
 
 describe("placeTrial()", () => {
-  it("zero score → Stage 1 / village", () => {
-    const answers = [0,1,2,3,4].map((i) => ans({ roundId: 1, questionIndex: i, correct: false }));
-    const result = placeTrial(answers);
+  // ── Round 1 gate ─────────────────────────────────────────────
+
+  it("R1 all wrong → Stage 1 / village", () => {
+    const result = placeTrial(r1Fail());
     expect(result.learningStage).toBe(1);
     expect(result.kingdomId).toBe("village");
-  });
-
-  it("R1 fails (3/5 correct) → Stage 1", () => {
-    const answers = [
-      ans({ roundId: 1, questionIndex: 0, correct: true }),
-      ans({ roundId: 1, questionIndex: 1, correct: true }),
-      ans({ roundId: 1, questionIndex: 2, correct: true }),
-      ans({ roundId: 1, questionIndex: 3, correct: false }),
-      ans({ roundId: 1, questionIndex: 4, correct: false }),
-    ];
-    const result = placeTrial(answers);
-    expect(result.learningStage).toBe(1);
     expect(result.strengthsAndGaps.boardKnowledge).toBe("weak");
   });
 
-  it("R1 4/5 with 3 guesses → Stage 1 (weighted score < 4)", () => {
+  it("R1 1/2 correct → passes R1 (≥1 correct required)", () => {
     const answers = [
-      ans({ roundId: 1, questionIndex: 0, correct: true, confident: true }),
-      ans({ roundId: 1, questionIndex: 1, correct: true, confident: false }), // 0.5
-      ans({ roundId: 1, questionIndex: 2, correct: true, confident: false }), // 0.5
-      ans({ roundId: 1, questionIndex: 3, correct: true, confident: false }), // 0.5
-      ans({ roundId: 1, questionIndex: 4, correct: false }),
+      ans({ roundId: 1, questionIndex: 0, correct: true }),
+      ans({ roundId: 1, questionIndex: 1, correct: false }),
     ];
     const result = placeTrial(answers);
-    // weighted = 1 + 0.5 + 0.5 + 0.5 + 0 = 2.5 → < 4 → Stage 1
+    expect(result.learningStage).toBeGreaterThanOrEqual(2);
+    expect(result.strengthsAndGaps.boardKnowledge).toBe("strong");
+  });
+
+  it("R1 empty → Stage 1", () => {
+    const result = placeTrial([]);
     expect(result.learningStage).toBe(1);
   });
 
-  it("R1 passes, R2 fails at rook → Stage 2, pieceMovement rook: weak", () => {
+  // ── Round 2 gate ─────────────────────────────────────────────
+
+  it("R1 passes, R2 fails at rook → Stage 2, rook: weak", () => {
     const answers = [
       ...r1Pass(),
       ans({ roundId: 2, questionIndex: 0, correct: false, pieceKind: "rook" }),
@@ -76,41 +83,44 @@ describe("placeTrial()", () => {
     expect(result.strengthsAndGaps.pieceMovement.rook).toBe("weak");
   });
 
-  it("R1 passes, R2 fails at knight → Stage 2, rook/bishop/queen/king strong, knight weak", () => {
+  it("R1 passes, R2 fails at knight → Stage 2, rook strong, knight weak", () => {
     const answers = [
       ...r1Pass(),
       ans({ roundId: 2, questionIndex: 0, correct: true, pieceKind: "rook" }),
-      ans({ roundId: 2, questionIndex: 1, correct: true, pieceKind: "bishop" }),
-      ans({ roundId: 2, questionIndex: 2, correct: true, pieceKind: "queen" }),
-      ans({ roundId: 2, questionIndex: 3, correct: true, pieceKind: "king" }),
-      ans({ roundId: 2, questionIndex: 4, correct: false, pieceKind: "knight" }),
+      ans({ roundId: 2, questionIndex: 1, correct: false, pieceKind: "knight" }),
     ];
     const result = placeTrial(answers);
     expect(result.learningStage).toBe(2);
     expect(result.strengthsAndGaps.pieceMovement.rook).toBe("strong");
     expect(result.strengthsAndGaps.pieceMovement.knight).toBe("weak");
+    // pieces not tested in R2 are untested
     expect(result.strengthsAndGaps.pieceMovement.pawn).toBe("untested");
   });
 
-  it("R1+R2 pass, R3 fails (2/4) → Stage 3", () => {
+  // ── Round 3 gate ─────────────────────────────────────────────
+
+  it("R1+R2 pass, R3 fails (1/2) → Stage 3, checkUnderstanding: weak", () => {
     const answers = [
       ...r1Pass(),
       ...r2Pass(),
       ans({ roundId: 3, questionIndex: 0, correct: true }),
-      ans({ roundId: 3, questionIndex: 1, correct: true }),
-      ans({ roundId: 3, questionIndex: 2, correct: false }),
-      ans({ roundId: 3, questionIndex: 3, correct: false }),
+      ans({ roundId: 3, questionIndex: 1, correct: false }),
     ];
     const result = placeTrial(answers);
     expect(result.learningStage).toBe(3);
     expect(result.strengthsAndGaps.checkUnderstanding).toBe("weak");
   });
 
-  it("R1-R3 pass, R4 fails at fork (first tactic) → Stage 4 / fork_forest", () => {
+  it("R1-R3 pass → checkUnderstanding: strong", () => {
+    const result = placeTrial([...r1Pass(), ...r2Pass(), ...r3Pass()]);
+    expect(result.strengthsAndGaps.checkUnderstanding).toBe("strong");
+  });
+
+  // ── Round 4 gate ─────────────────────────────────────────────
+
+  it("R1-R3 pass, R4 fails at fork → Stage 4 / fork_forest", () => {
     const answers = [
-      ...r1Pass(),
-      ...r2Pass(),
-      ...r3Pass(),
+      ...r1Pass(), ...r2Pass(), ...r3Pass(),
       ans({ roundId: 4, questionIndex: 0, correct: false, tacticId: "fork", missType: "blind" }),
     ];
     const result = placeTrial(answers);
@@ -119,100 +129,87 @@ describe("placeTrial()", () => {
     expect(result.strengthsAndGaps.tacticsMissed[0]).toEqual({ id: "fork", missType: "blind" });
   });
 
-  it("R1-R3 pass, R4 fork✓ pin✓ skewer✗ → Stage 4 / skewer_spire", () => {
-    const answers = [
-      ...r1Pass(),
-      ...r2Pass(),
-      ...r3Pass(),
-      ans({ roundId: 4, questionIndex: 0, correct: true, tacticId: "fork" }),
-      ans({ roundId: 4, questionIndex: 1, correct: true, tacticId: "pin" }),
-      ans({ roundId: 4, questionIndex: 2, correct: false, tacticId: "skewer", missType: "execution" }),
-    ];
-    const result = placeTrial(answers);
-    expect(result.learningStage).toBe(4);
-    expect(result.kingdomId).toBe("skewer_spire");
-    expect(result.strengthsAndGaps.tacticsKnown).toEqual(["fork", "pin"]);
-    expect(result.strengthsAndGaps.tacticsMissed[0]).toEqual({ id: "skewer", missType: "execution" });
-  });
-
-  it("R1-R3 pass, R4 fork✓ pin✓ skewer✗ execution missType is preserved", () => {
+  it("R1-R3 pass, R4 fork✓ pin✗ → Stage 4 / pin_palace, fork in tacticsKnown", () => {
     const answers = [
       ...r1Pass(), ...r2Pass(), ...r3Pass(),
       ans({ roundId: 4, questionIndex: 0, correct: true, tacticId: "fork" }),
-      ans({ roundId: 4, questionIndex: 1, correct: true, tacticId: "pin" }),
-      ans({ roundId: 4, questionIndex: 2, correct: false, tacticId: "skewer", missType: "execution" }),
+      ans({ roundId: 4, questionIndex: 1, correct: false, tacticId: "pin", missType: "execution" }),
+    ];
+    const result = placeTrial(answers);
+    expect(result.learningStage).toBe(4);
+    expect(result.kingdomId).toBe("pin_palace");
+    expect(result.strengthsAndGaps.tacticsKnown).toEqual(["fork"]);
+    expect(result.strengthsAndGaps.tacticsMissed[0]).toEqual({ id: "pin", missType: "execution" });
+  });
+
+  it("missType is preserved correctly", () => {
+    const answers = [
+      ...r1Pass(), ...r2Pass(), ...r3Pass(),
+      ans({ roundId: 4, questionIndex: 0, correct: false, tacticId: "fork", missType: "execution" }),
     ];
     const result = placeTrial(answers);
     expect(result.strengthsAndGaps.tacticsMissed[0].missType).toBe("execution");
   });
 
-  it("R1-R4 pass, R5 fails (1/3) → Stage 4 / discovery_depths (finish tactics first)", () => {
+  // ── Round 5 gate ─────────────────────────────────────────────
+
+  it("R1-R4 pass, R5 fails → Stage 4 / discovery_depths", () => {
     const answers = [
       ...r1Pass(), ...r2Pass(), ...r3Pass(), ...r4Pass(),
-      ans({ roundId: 5, questionIndex: 0, correct: true }),
-      ans({ roundId: 5, questionIndex: 1, correct: false }),
-      ans({ roundId: 5, questionIndex: 2, correct: false }),
+      ans({ roundId: 5, questionIndex: 0, correct: false }),
     ];
     const result = placeTrial(answers);
     expect(result.learningStage).toBe(4);
     expect(result.kingdomId).toBe("discovery_depths");
   });
 
-  it("R1-R4 pass, R5 passes (2/3) → Stage 5 / strategy_summit", () => {
-    const answers = [
-      ...r1Pass(), ...r2Pass(), ...r3Pass(), ...r4Pass(),
-      ans({ roundId: 5, questionIndex: 0, correct: true }),
-      ans({ roundId: 5, questionIndex: 1, correct: true }),
-      ans({ roundId: 5, questionIndex: 2, correct: false }),
-    ];
+  it("R1-R4 pass, R5 absent → Stage 4 / discovery_depths", () => {
+    const result = placeTrial([...r1Pass(), ...r2Pass(), ...r3Pass(), ...r4Pass()]);
+    expect(result.learningStage).toBe(4);
+    expect(result.kingdomId).toBe("discovery_depths");
+  });
+
+  it("R1-R5 all pass → Stage 5 / strategy_summit", () => {
+    const answers = [...r1Pass(), ...r2Pass(), ...r3Pass(), ...r4Pass(), ...r5Pass()];
     const result = placeTrial(answers);
     expect(result.learningStage).toBe(5);
     expect(result.kingdomId).toBe("strategy_summit");
+  });
+
+  it("R5 with confident: false → advancedPlayer: false", () => {
+    const answers = [
+      ...r1Pass(), ...r2Pass(), ...r3Pass(), ...r4Pass(),
+      ans({ roundId: 5, questionIndex: 0, correct: true, confident: false }),
+    ];
+    const result = placeTrial(answers);
+    expect(result.learningStage).toBe(5);
     expect(result.advancedPlayer).toBe(false);
   });
 
-  it("R1-R5 all perfect → Stage 5 / strategy_summit, advancedPlayer: true (never Stage 6)", () => {
+  it("R5 with confident: true → advancedPlayer: true", () => {
     const answers = [
       ...r1Pass(), ...r2Pass(), ...r3Pass(), ...r4Pass(),
-      ...r5Pass().map((a) => ({ ...a, confident: true as const })),
+      ans({ roundId: 5, questionIndex: 0, correct: true, confident: true }),
     ];
     const result = placeTrial(answers);
     expect(result.learningStage).toBe(5);
     expect(result.advancedPlayer).toBe(true);
   });
 
-  it("color question miss does not change stage placement", () => {
-    // R1 passes with board squares, color question fails — still passes R1
-    const answers = [
-      ...r1Pass(),
-      ans({ roundId: 1, questionIndex: 5, correct: false }), // color question
-    ];
-    const result = placeTrial(answers);
-    expect(result.learningStage).toBeGreaterThanOrEqual(2);
-    expect(result.strengthsAndGaps.colorAwareness).toBe("weak");
-  });
-
-  it("R2 stops after 3 failures — remaining pieces are untested", () => {
-    const answers = [
-      ...r1Pass(),
-      ans({ roundId: 2, questionIndex: 0, correct: false, pieceKind: "rook" }),
-      ans({ roundId: 2, questionIndex: 1, correct: false, pieceKind: "bishop" }),
-      ans({ roundId: 2, questionIndex: 2, correct: false, pieceKind: "queen" }),
-    ];
-    const result = placeTrial(answers);
-    expect(result.learningStage).toBe(2);
-    expect(result.strengthsAndGaps.pieceMovement.king).toBe("untested");
-    expect(result.strengthsAndGaps.pieceMovement.knight).toBe("untested");
-    expect(result.strengthsAndGaps.pieceMovement.pawn).toBe("untested");
-  });
+  // ── strengthsAndGaps ─────────────────────────────────────────
 
   it("boardKnowledge is strong when R1 passes cleanly", () => {
-    const result = placeTrial([...r1Pass(), ...r2Pass(), ...r3Pass()]);
+    const result = placeTrial([...r1Pass(), ...r2Pass()]);
     expect(result.strengthsAndGaps.boardKnowledge).toBe("strong");
   });
 
-  it("checkUnderstanding is strong when R3 passes", () => {
-    const result = placeTrial([...r1Pass(), ...r2Pass(), ...r3Pass()]);
-    expect(result.strengthsAndGaps.checkUnderstanding).toBe("strong");
+  it("untested pieces stay untested when R2 stops early", () => {
+    const answers = [
+      ...r1Pass(),
+      ans({ roundId: 2, questionIndex: 0, correct: false, pieceKind: "rook" }),
+    ];
+    const result = placeTrial(answers);
+    expect(result.strengthsAndGaps.pieceMovement.knight).toBe("untested");
+    expect(result.strengthsAndGaps.pieceMovement.pawn).toBe("untested");
   });
 });

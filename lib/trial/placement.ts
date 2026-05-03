@@ -22,9 +22,6 @@ function buildStrengthsAndGaps(answers: TrialAnswer[]): StrengthsAndGaps {
     : r1.filter((a) => a.correct).length >= 1 ? "strong"
     : "weak";
 
-  // Color awareness is no longer tested in R1 — mark untested
-  const colorAwareness: SkillLevel = "untested";
-
   const pieceMovement = Object.fromEntries(
     ALL_PIECE_KINDS.map((kind) => {
       const ans = r2.find((a) => a.pieceKind === kind);
@@ -49,7 +46,7 @@ function buildStrengthsAndGaps(answers: TrialAnswer[]): StrengthsAndGaps {
       missType: a.missType ?? "blind" as const,
     }));
 
-  return { boardKnowledge, colorAwareness, pieceMovement, checkUnderstanding, tacticsKnown, tacticsMissed };
+  return { boardKnowledge, pieceMovement, checkUnderstanding, tacticsKnown, tacticsMissed };
 }
 
 export function placeTrial(answers: TrialAnswer[]): TrialResult {

@@ -34,35 +34,69 @@ export interface TheTrialProps {
 type ConfidenceState = "showing" | "done";
 type FeedbackFlash = { sq: string; type: "correct" | "wrong" } | null;
 
-// Produces the spoken/displayed prompt for a specific question.
-// Returns null when the round-level intro is enough (Round 4/5).
-function getPromptVoice(roundId: TrialRoundId, qIndex: number): string | null {
+// Single source of truth for what the kid sees and hears for each
+// (round, questionIndex). The visible panel uses `display`; the spoken
+// line uses `voice`. `uppercase` controls the display value's casing
+// without relying on a length heuristic.
+interface QuestionPrompt {
+  display: { label: string; value: string; uppercase: boolean };
+  voice: string;
+}
+
+function getQuestion(roundId: TrialRoundId, qIndex: number): QuestionPrompt | null {
   if (roundId === 1) {
     if (qIndex < 5) {
       const target = ROUND1_QUESTIONS[qIndex]?.target;
       if (!target) return null;
       const file = target[0].toUpperCase();
       const rank = target[1];
-      return `Tap the square ${file} ${rank}.`;
+      return {
+        display: { label: "Find the square", value: target, uppercase: true },
+        voice: `Tap the square ${file} ${rank}.`,
+      };
     }
     if (qIndex === 5) {
       const sq = ROUND1_COLOR_QUESTION.square;
-      return `Is ${sq[0].toUpperCase()} ${sq[1]} a light or dark square? Tap it!`;
+      return {
+        display: { label: "What color is", value: sq, uppercase: true },
+        voice: `Is ${sq[0].toUpperCase()} ${sq[1]} a light or dark square? Tap it!`,
+      };
     }
   }
   if (roundId === 2) {
     const pq = ROUND2_PIECE_QUESTIONS[ROUND2_PIECE_ORDER[qIndex]];
     if (!pq) return null;
-    return `Tap every square the ${pq.pieceKind} can move to.`;
+    return {
+      display: { label: "Where can the", value: `${pq.pieceKind} go?`, uppercase: false },
+      voice: `Tap every square the ${pq.pieceKind} can move to.`,
+    };
   }
   if (roundId === 3) {
     const q = ROUND3_QUESTIONS[qIndex];
     if (!q) return null;
-    if (q.type === "check-detection") return "Is the king in check? Tap Yes or No.";
-    return "Find the move that delivers checkmate.";
+    if (q.type === "check-detection") {
+      return {
+        display: { label: "Question", value: "Is the king in check?", uppercase: false },
+        voice: "Is the king in check? Tap Yes or No.",
+      };
+    }
+    return {
+      display: { label: "Question", value: "Find checkmate in 1", uppercase: false },
+      voice: "Find the move that delivers checkmate.",
+    };
   }
-  if (roundId === 4) return "Find the best move in this position.";
-  if (roundId === 5) return "Pick the move that fits the best plan.";
+  if (roundId === 4) {
+    return {
+      display: { label: "Question", value: "Find the best move", uppercase: false },
+      voice: "Find the best move in this position.",
+    };
+  }
+  if (roundId === 5) {
+    return {
+      display: { label: "Question", value: "Pick the best plan", uppercase: false },
+      voice: "Pick the move that fits the best plan.",
+    };
+  }
   return null;
 }
 
@@ -73,16 +107,18 @@ function getCoachMessage(
   extra?: string
 ): string {
   if (state === "bridge") return extra ?? "Let's get started!";
-  if (state === "final") return extra ?? `Welcome, ${playerName}! Let's begin! 🎉`;
-  if (state === "correct") return ["Nice! ✓", "You got it! ⭐", "Perfect!", "Great move! 🌟"][Math.floor(Math.random() * 4)];
+  if (state === "final") return extra ?? `Welcome, ${playerName}! Let's begin!`;
+  if (state === "correct") return ["Nice!", "You got it!", "Perfect!", "Great move!"][Math.floor(Math.random() * 4)];
   if (state === "wrong") return extra ?? "Not quite — let me show you!";
 
+  // R1 intro is intentionally short — the prompt panel + voice carry the
+  // actionable instruction. The other rounds get a one-line bridge.
   const intros: Record<TrialRoundId, string> = {
-    1: `Hey ${playerName}! I'm Coach Pawn 🐾 Let's see what you already know! Tap the square I name for you.`,
-    2: "Awesome! Now let's see how the pieces move. Tap ALL the squares this piece can reach!",
-    3: "You know how pieces move! Let's try some real chess positions. Is the king in check?",
-    4: "Great work! Now for the sneaky tricks — find the best move in each position!",
-    5: "Impressive! One last challenge — which move makes the best use of your position?",
+    1: `Hey ${playerName}! Let's see what you already know.`,
+    2: "Awesome! Now let's see how the pieces move.",
+    3: "Great! Let's try some real chess positions.",
+    4: "Now for the sneaky tricks — tactics!",
+    5: "One last challenge — strategy.",
   };
   return intros[roundId];
 }
@@ -93,8 +129,8 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   const [allAnswers, setAllAnswers] = useState<TrialAnswer[]>([]);
   const [coachMessage, setCoachMessage] = useState(() => {
     const intro = getCoachMessage(1, playerName, "intro");
-    const firstPrompt = getPromptVoice(1, 0);
-    return firstPrompt ? `${intro} ${firstPrompt}` : intro;
+    const first = getQuestion(1, 0);
+    return first ? `${intro} ${first.voice}` : intro;
   });
   const [coachExpression, setCoachExpression] = useState<CoachExpression>("talking");
   const [confidenceState, setConfidenceState] = useState<ConfidenceState | null>(null);
@@ -107,6 +143,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
 
   const questionStartTime = useRef(Date.now());
   const confidenceClickedRef = useRef(false);
+  const confidenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const speech = useSpeech();
   // Tracks the latest coachMessage so the enabled-watcher can speak it
@@ -117,12 +154,18 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
 
   // On mount: unconditionally enable voice using the one-way enable() — safe
   // even if voice was already on from a previous session.
+  // Deps omitted: this must run exactly once on mount; speech.enable is
+  // useCallback-stable, but listing it would re-run the effect if a future
+  // change makes it unstable.
   useEffect(() => {
     speech.enable();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // When enabled flips true (initial auto-enable OR user toggling back on),
   // speak the current coach message so voice always resumes audibly.
+  // Deps omitted: speech.speak closes over `enabled`; listing speech here
+  // would cause double-speak when the parent re-renders. Only `enabled`
+  // matters for re-running.
   useEffect(() => {
     if (!speech.enabled) return;
     speech.speak(latestMessageRef.current);
@@ -130,6 +173,9 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   }, [speech.enabled]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Speak subsequent messages as coachMessage changes (voice already on).
+  // Deps omitted: only coachMessage should trigger; speech.speak is
+  // useCallback-stable but listing it would risk re-speaking on unrelated
+  // re-renders if its closure ever changed.
   useEffect(() => {
     if (!hasSpokeRef.current) return;
     speech.speak(coachMessage);
@@ -147,11 +193,29 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     confidenceClickedRef.current = false;
     setPendingAnswer(answer);
     setConfidenceState("showing");
-    setTimeout(() => {
+    if (confidenceTimerRef.current) clearTimeout(confidenceTimerRef.current);
+    confidenceTimerRef.current = setTimeout(() => {
+      confidenceTimerRef.current = null;
       if (!confidenceClickedRef.current) {
         commitAnswer({ ...answer, confident: null });
       }
     }, 3000);
+  }
+
+  // Clear pending confidence-fallback timer on unmount to avoid setting
+  // state on an unmounted component (e.g., after final round completes).
+  useEffect(() => {
+    return () => {
+      if (confidenceTimerRef.current) clearTimeout(confidenceTimerRef.current);
+    };
+  }, []);
+
+  function handleConfidenceClick(confident: boolean) {
+    if (confidenceTimerRef.current) {
+      clearTimeout(confidenceTimerRef.current);
+      confidenceTimerRef.current = null;
+    }
+    handleConfidence(confident);
   }
 
   function handleConfidence(confident: boolean) {
@@ -203,9 +267,9 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
       setQuestionIndex(nextIdx);
       resetQuestionState();
       // Speak the next question's prompt so the kid hears what to do.
-      const nextPromptVoice = getPromptVoice(currentRound, nextIdx);
-      if (nextPromptVoice) {
-        setCoachMessage(nextPromptVoice);
+      const next = getQuestion(currentRound, nextIdx);
+      if (next) {
+        setCoachMessage(next.voice);
         setCoachExpression("talking");
       }
       return;
@@ -225,8 +289,8 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     setQuestionIndex(0);
     resetQuestionState();
     const intro = getCoachMessage(nextRound, playerName, "intro");
-    const firstPrompt = getPromptVoice(nextRound, 0);
-    setCoachMessage(firstPrompt ? `${intro} ${firstPrompt}` : intro);
+    const first = getQuestion(nextRound, 0);
+    setCoachMessage(first ? `${intro} ${first.voice}` : intro);
     setCoachExpression("talking");
   }
 
@@ -348,11 +412,18 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
 
   function getCurrentBoardProps() {
     if (currentRound === 1) {
+      const r1Target =
+        questionIndex < 5
+          ? ROUND1_QUESTIONS[questionIndex]?.target
+          : questionIndex === 5
+          ? ROUND1_COLOR_QUESTION.square
+          : undefined;
       return {
         mode: "tap-square" as const,
         fen: "8/8/8/8/8/8/8/8 w - - 0 1",
         onSquareTap: handleR1SquareTap,
         flashSquare,
+        highlightGutterFor: r1Target,
       };
     }
     if (currentRound === 2) {
@@ -420,30 +491,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
   // Per-question prompt shown prominently above the board. This is the
   // actual question (e.g. "Find: e4") — separate from coachMessage which
   // is general encouragement.
-  function getQuestionPrompt(): { label: string; value: string } | null {
-    if (currentRound === 1) {
-      if (questionIndex < 5) {
-        const target = ROUND1_QUESTIONS[questionIndex]?.target;
-        return target ? { label: "Find the square", value: target } : null;
-      }
-      if (questionIndex === 5) {
-        return { label: "What color is", value: ROUND1_COLOR_QUESTION.square };
-      }
-    }
-    if (currentRound === 2) {
-      const pq = ROUND2_PIECE_QUESTIONS[ROUND2_PIECE_ORDER[questionIndex]];
-      return { label: "Where can the", value: `${pq.pieceKind} go?` };
-    }
-    if (currentRound === 3) {
-      const q = ROUND3_QUESTIONS[questionIndex];
-      if (q.type === "check-detection") return { label: "Question", value: "Is the king in check?" };
-      return { label: "Question", value: "Find checkmate in 1" };
-    }
-    if (currentRound === 4) return { label: "Question", value: "Find the best move" };
-    if (currentRound === 5) return { label: "Question", value: "Pick the best plan" };
-    return null;
-  }
-  const prompt = getQuestionPrompt();
+  const prompt = getQuestion(currentRound, questionIndex)?.display ?? null;
 
   return (
     <div style={{
@@ -549,7 +597,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
               letterSpacing: "-0.01em",
               lineHeight: 1.1,
               fontVariantNumeric: "tabular-nums",
-              textTransform: prompt.value.length <= 4 ? "uppercase" : "none",
+              textTransform: prompt.uppercase ? "uppercase" : "none",
             }}
           >
             {prompt.value}
@@ -565,7 +613,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
         <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
           <button
             type="button"
-            onClick={() => handleConfidence(true)}
+            onClick={() => handleConfidenceClick(true)}
             className="btn-press"
             style={{
               flex: 1,
@@ -585,7 +633,7 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
           </button>
           <button
             type="button"
-            onClick={() => handleConfidence(false)}
+            onClick={() => handleConfidenceClick(false)}
             className="btn-press"
             style={{
               flex: 1,

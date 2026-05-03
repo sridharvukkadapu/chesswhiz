@@ -27,6 +27,9 @@ export interface TrialBoardProps {
   mode: TrialBoardMode;
   fen?: string;                      // position to display (default: empty board)
   highlightSquares?: string[];       // squares highlighted as targets (shown in purple)
+  /** When set, highlights matching gutter file/rank labels (does NOT
+   *  fill the square — for Round 1 where the answer must stay hidden). */
+  highlightGutterFor?: string;
   _correctSquare?: string;           // shown briefly after wrong tap
   onSquareTap?: (sq: string) => void; // mode: tap-square
   // multi-select
@@ -66,6 +69,7 @@ export default function TrialBoard({
   mode,
   fen = "8/8/8/8/8/8/8/8 w - - 0 1",
   highlightSquares = [],
+  highlightGutterFor,
   _correctSquare,
   onSquareTap,
   selectedSquares = [],
@@ -110,10 +114,81 @@ export default function TrialBoard({
 
   const boardSize = 320;
   const sqSize = boardSize / 8;
+  const GUTTER = 18;
+
+  // Highlight the file/rank gutter labels that match the current target.
+  // Used in Round 1 to nudge the kid toward the correct file and rank
+  // without filling the square (which would give the answer away).
+  const isValidSq = highlightGutterFor && /^[a-h][1-8]$/.test(highlightGutterFor);
+  const targetFile = isValidSq ? highlightGutterFor![0] : null;
+  const targetRank = isValidSq ? highlightGutterFor![1] : null;
 
   return (
-    <div style={{ position: "relative", width: boardSize, userSelect: "none" }}>
+    <div style={{ position: "relative", width: boardSize + GUTTER, userSelect: "none" }}>
       <PieceDefs />
+      {/* File labels (a-h) above the board */}
+      <div
+        aria-hidden
+        style={{
+          display: "grid",
+          gridTemplateColumns: `${GUTTER}px repeat(8, 1fr)`,
+          width: boardSize + GUTTER,
+          marginBottom: 4,
+        }}
+      >
+        <div />
+        {COLS.split("").map((f) => (
+          <div
+            key={f}
+            style={{
+              textAlign: "center",
+              fontFamily: T.fontUI,
+              fontSize: 13,
+              fontWeight: 800,
+              color: targetFile === f ? T.coral : T.inkLow,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {f}
+          </div>
+        ))}
+      </div>
+
+      <div style={{ display: "flex", alignItems: "stretch" }}>
+        {/* Rank labels (8-1) to the left of the board */}
+        <div
+          aria-hidden
+          style={{
+            width: GUTTER,
+            display: "grid",
+            gridTemplateRows: "repeat(8, 1fr)",
+            height: boardSize,
+            paddingRight: 4,
+          }}
+        >
+          {Array.from({ length: 8 }, (_, i) => {
+            const rank = String(8 - i);
+            return (
+              <div
+                key={rank}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  fontFamily: T.fontUI,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  color: targetRank === rank ? T.coral : T.inkLow,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {rank}
+              </div>
+            );
+          })}
+        </div>
+
       <svg width={boardSize} height={boardSize} style={{ display: "block", borderRadius: 6, overflow: "hidden" }}>
         {/* Squares */}
         {Array.from({ length: 8 }, (_, r) =>
@@ -147,31 +222,6 @@ export default function TrialBoard({
             );
           })
         )}
-
-        {/* Coordinate labels */}
-        {Array.from({ length: 8 }, (_, i) => (
-          <g key={`coord-${i}`}>
-            <text
-              x={i * sqSize + sqSize - 4}
-              y={boardSize - 3}
-              fontSize={9}
-              textAnchor="end"
-              fill={i % 2 === 0 ? DARK_SQ : LIGHT_SQ}
-              style={{ pointerEvents: "none" }}
-            >
-              {COLS[i]}
-            </text>
-            <text
-              x={3}
-              y={i * sqSize + 11}
-              fontSize={9}
-              fill={i % 2 === 0 ? LIGHT_SQ : DARK_SQ}
-              style={{ pointerEvents: "none" }}
-            >
-              {8 - i}
-            </text>
-          </g>
-        ))}
 
         {/* Arrow overlays (Round 5) */}
         {mode === "arrows" && arrows.map((arrow) => {
@@ -228,6 +278,7 @@ export default function TrialBoard({
           })
         )}
       </svg>
+      </div>
 
       {/* Multi-select counter */}
       {mode === "multi-select" && selectedSquares.length > 0 && expectedCount !== undefined && (

@@ -10,29 +10,20 @@ const TACTIC_TO_KINGDOM: Record<string, KingdomId> = {
   discovered_attack: "discovery_depths",
 };
 
-function weightedScore(answers: TrialAnswer[]): number {
-  return answers.reduce(
-    (sum, a) => sum + (a.correct ? (a.confident === false ? 0.5 : 1) : 0),
-    0
-  );
-}
-
 function buildStrengthsAndGaps(answers: TrialAnswer[]): StrengthsAndGaps {
-  const r1 = answers.filter((a) => a.roundId === 1 && a.questionIndex < 5);
-  const colorAnswer = answers.find((a) => a.roundId === 1 && a.questionIndex === 5);
+  const r1 = answers.filter((a) => a.roundId === 1);
   const r2 = answers.filter((a) => a.roundId === 2);
   const r3 = answers.filter((a) => a.roundId === 3);
   const r4 = answers.filter((a) => a.roundId === 4);
 
+  // R1 now tests piece recognition (tap the knight / tap the queen)
   const boardKnowledge: SkillLevel =
     r1.length === 0 ? "untested"
-    : weightedScore(r1) >= 4 ? "strong"
+    : r1.filter((a) => a.correct).length >= 1 ? "strong"
     : "weak";
 
-  const colorAwareness: SkillLevel =
-    colorAnswer === undefined ? "untested"
-    : colorAnswer.correct ? "strong"
-    : "weak";
+  // Color awareness is no longer tested in R1 — mark untested
+  const colorAwareness: SkillLevel = "untested";
 
   const pieceMovement = Object.fromEntries(
     ALL_PIECE_KINDS.map((kind) => {
@@ -44,7 +35,7 @@ function buildStrengthsAndGaps(answers: TrialAnswer[]): StrengthsAndGaps {
 
   const checkUnderstanding: SkillLevel =
     r3.length === 0 ? "untested"
-    : r3.filter((a) => a.correct).length >= 3 ? "strong"
+    : r3.filter((a) => a.correct).length >= r3.length ? "strong"
     : "weak";
 
   const tacticsKnown: string[] = r4
@@ -64,50 +55,49 @@ function buildStrengthsAndGaps(answers: TrialAnswer[]): StrengthsAndGaps {
 export function placeTrial(answers: TrialAnswer[]): TrialResult {
   const strengthsAndGaps = buildStrengthsAndGaps(answers);
 
-  // ── Round 1 ───────────────────────────────────────────────
-  const r1Answers = answers.filter((a) => a.roundId === 1 && a.questionIndex < 5);
-  if (r1Answers.length === 0 || weightedScore(r1Answers) < 4) {
+  // ── Round 1: Piece Recognition ────────────────────────────
+  const r1Answers = answers.filter((a) => a.roundId === 1);
+  const r1Pass = r1Answers.length > 0 && r1Answers.filter((a) => a.correct).length >= 1;
+  if (!r1Pass) {
     return { learningStage: 1, kingdomId: "village", advancedPlayer: false, strengthsAndGaps };
   }
 
-  // ── Round 2 ───────────────────────────────────────────────
+  // ── Round 2: Piece Movement ───────────────────────────────
   const r2Answers = answers.filter((a) => a.roundId === 2);
-  const r2Fail = r2Answers.find((a) => !a.correct);
-  if (r2Fail || r2Answers.length === 0) {
+  const r2Pass = r2Answers.length > 0 && r2Answers.every((a) => a.correct);
+  if (!r2Pass) {
     return { learningStage: 2, kingdomId: "village", advancedPlayer: false, strengthsAndGaps };
   }
 
-  // ── Round 3 ───────────────────────────────────────────────
+  // ── Round 3: Check & Checkmate ────────────────────────────
   const r3Answers = answers.filter((a) => a.roundId === 3);
-  if (r3Answers.length === 0 || r3Answers.filter((a) => a.correct).length < 3) {
+  const r3Pass = r3Answers.length > 0 && r3Answers.every((a) => a.correct);
+  if (!r3Pass) {
     return { learningStage: 3, kingdomId: "village", advancedPlayer: false, strengthsAndGaps };
   }
 
-  // ── Round 4 ───────────────────────────────────────────────
+  // ── Round 4: Tactics ──────────────────────────────────────
   const r4Answers = answers.filter((a) => a.roundId === 4);
-  const r4FirstMiss = r4Answers.find((a) => !a.correct);
-  const r4Correct = r4Answers.filter((a) => a.correct).length;
-
-  if (r4Answers.length === 0 || r4Correct < 3) {
+  const r4Pass = r4Answers.length > 0 && r4Answers.every((a) => a.correct);
+  if (!r4Pass) {
+    const r4FirstMiss = r4Answers.find((a) => !a.correct);
     const kingdom: KingdomId = r4FirstMiss?.tacticId
       ? (TACTIC_TO_KINGDOM[r4FirstMiss.tacticId] ?? "fork_forest")
       : "fork_forest";
     return { learningStage: 4, kingdomId: kingdom, advancedPlayer: false, strengthsAndGaps };
   }
 
-  // ── Round 5 ───────────────────────────────────────────────
+  // ── Round 5: Strategy ─────────────────────────────────────
   const r5Answers = answers.filter((a) => a.roundId === 5);
   if (r5Answers.length === 0) {
-    // R4 passed but R5 not shown — place at discovery_depths
     return { learningStage: 4, kingdomId: "discovery_depths", advancedPlayer: false, strengthsAndGaps };
   }
 
-  const r5Correct = r5Answers.filter((a) => a.correct).length;
-  if (r5Correct < 2) {
+  const r5Pass = r5Answers.every((a) => a.correct);
+  if (!r5Pass) {
     return { learningStage: 4, kingdomId: "discovery_depths", advancedPlayer: false, strengthsAndGaps };
   }
 
-  // R5 passed — Stage 5. advancedPlayer = true if all 3 correct and confident
-  const r5Perfect = r5Correct === 3 && r5Answers.every((a) => a.confident !== false);
+  const r5Perfect = r5Answers.every((a) => a.confident !== false);
   return { learningStage: 5, kingdomId: "strategy_summit", advancedPlayer: r5Perfect, strengthsAndGaps };
 }

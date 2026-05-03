@@ -13,8 +13,8 @@ import type { TrialAnswer, TrialRoundId, TrialResult } from "@/lib/trial/types";
 import { placeTrial } from "@/lib/trial/placement";
 import {
   getNextRound,
+  ROUND1_START_FEN,
   ROUND1_QUESTIONS,
-  ROUND1_COLOR_QUESTION,
   ROUND2_PIECE_ORDER,
   ROUND2_PIECE_QUESTIONS,
   ROUND3_QUESTIONS,
@@ -45,56 +45,43 @@ interface QuestionPrompt {
 
 function getQuestion(roundId: TrialRoundId, qIndex: number): QuestionPrompt | null {
   if (roundId === 1) {
-    if (qIndex < 5) {
-      const target = ROUND1_QUESTIONS[qIndex]?.target;
-      if (!target) return null;
-      const file = target[0].toUpperCase();
-      const rank = target[1];
-      return {
-        display: { label: "Find the square", value: target, uppercase: true },
-        voice: `Tap the square ${file} ${rank}.`,
-      };
-    }
-    if (qIndex === 5) {
-      const sq = ROUND1_COLOR_QUESTION.square;
-      return {
-        display: { label: "What color is", value: sq, uppercase: true },
-        voice: `Is ${sq[0].toUpperCase()} ${sq[1]} a light or dark square? Tap it!`,
-      };
-    }
+    const q = ROUND1_QUESTIONS[qIndex];
+    if (!q) return null;
+    return {
+      display: { label: "Tap this piece", value: q.displayLabel, uppercase: false },
+      voice: q.voice,
+    };
   }
   if (roundId === 2) {
     const pq = ROUND2_PIECE_QUESTIONS[ROUND2_PIECE_ORDER[qIndex]];
     if (!pq) return null;
     return {
-      display: { label: "Where can the", value: `${pq.pieceKind} go?`, uppercase: false },
-      voice: `Tap every square the ${pq.pieceKind} can move to.`,
+      display: { label: "Tap all squares it can reach", value: pq.displayLabel, uppercase: false },
+      voice: pq.voice,
     };
   }
   if (roundId === 3) {
     const q = ROUND3_QUESTIONS[qIndex];
     if (!q) return null;
-    if (q.type === "check-detection") {
-      return {
-        display: { label: "Question", value: "Is the king in check?", uppercase: false },
-        voice: "Is the king in check? Tap Yes or No.",
-      };
-    }
     return {
-      display: { label: "Question", value: "Find checkmate in 1", uppercase: false },
-      voice: "Find the move that delivers checkmate.",
+      display: { label: "Chess challenge", value: q.displayLabel, uppercase: false },
+      voice: q.voice,
     };
   }
   if (roundId === 4) {
+    const q = ROUND4_TACTIC_QUESTIONS[qIndex];
+    if (!q) return null;
     return {
-      display: { label: "Question", value: "Find the best move", uppercase: false },
-      voice: "Find the best move in this position.",
+      display: { label: "Tactic puzzle", value: q.displayLabel, uppercase: false },
+      voice: q.voice,
     };
   }
   if (roundId === 5) {
+    const q = ROUND5_STRATEGY_QUESTIONS[qIndex];
+    if (!q) return null;
     return {
-      display: { label: "Question", value: "Pick the best plan", uppercase: false },
-      voice: "Pick the move that fits the best plan.",
+      display: { label: "Strategy challenge", value: q.displayLabel, uppercase: false },
+      voice: q.voice,
     };
   }
   return null;
@@ -111,12 +98,10 @@ function getCoachMessage(
   if (state === "correct") return ["Nice!", "You got it!", "Perfect!", "Great move!"][Math.floor(Math.random() * 4)];
   if (state === "wrong") return extra ?? "Not quite — let me show you!";
 
-  // R1 intro is intentionally short — the prompt panel + voice carry the
-  // actionable instruction. The other rounds get a one-line bridge.
   const intros: Record<TrialRoundId, string> = {
-    1: `Hey ${playerName}! Let's see what you already know.`,
-    2: "Awesome! Now let's see how the pieces move.",
-    3: "Great! Let's try some real chess positions.",
+    1: `Hey ${playerName}! Let's see if you know the pieces.`,
+    2: "Great! Now show me how pieces move.",
+    3: "Nice work! Let's try some real positions.",
     4: "Now for the sneaky tricks — tactics!",
     5: "One last challenge — strategy.",
   };
@@ -240,26 +225,26 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     let roundPassed = false;
 
     if (currentRound === 1) {
-      const squareAnswers = roundAnswers.filter((a) => a.questionIndex < 5);
-      roundComplete = squareAnswers.length >= 5;
+      // 2 piece-recognition questions; pass if at least 1 correct
+      roundComplete = roundAnswers.length >= ROUND1_QUESTIONS.length;
       if (roundComplete) {
-        const squareOnes = answers.filter((a) => a.roundId === 1 && a.questionIndex < 5);
-        const weighted = squareOnes.reduce((s, a) => s + (a.correct ? (a.confident === false ? 0.5 : 1) : 0), 0);
-        roundPassed = weighted >= 4;
+        roundPassed = roundAnswers.filter((a) => a.correct).length >= 1;
       }
     } else if (currentRound === 2) {
-      roundComplete = !lastAnswer.correct || questionIndex >= ROUND2_PIECE_ORDER.length - 1;
-      roundPassed = !lastAnswer.correct ? false : questionIndex >= ROUND2_PIECE_ORDER.length - 1;
+      // 2 questions: rook + knight; any fail stops the round (fail → Stage 2)
+      roundComplete = !lastAnswer.correct || roundAnswers.length >= ROUND2_PIECE_ORDER.length;
+      roundPassed = roundAnswers.length >= ROUND2_PIECE_ORDER.length && roundAnswers.every((a) => a.correct);
     } else if (currentRound === 3) {
-      roundComplete = roundAnswers.length >= 4;
-      roundPassed = roundAnswers.filter((a) => a.correct).length >= 3;
+      // 2 questions: check-detection + checkmate-in-1; need both right
+      roundComplete = roundAnswers.length >= ROUND3_QUESTIONS.length;
+      roundPassed = roundAnswers.filter((a) => a.correct).length >= ROUND3_QUESTIONS.length;
     } else if (currentRound === 4) {
-      const correct = roundAnswers.filter((a) => a.correct).length;
-      roundComplete = roundAnswers.length >= 4 || !lastAnswer.correct;
-      roundPassed = correct >= 3 && roundAnswers.length === 4;
+      // 2 tactic questions; need both right to reach strategy
+      roundComplete = roundAnswers.length >= ROUND4_TACTIC_QUESTIONS.length || !lastAnswer.correct;
+      roundPassed = roundAnswers.length >= ROUND4_TACTIC_QUESTIONS.length && roundAnswers.every((a) => a.correct);
     } else if (currentRound === 5) {
-      roundComplete = roundAnswers.length >= 3;
-      roundPassed = roundAnswers.filter((a) => a.correct).length >= 2;
+      roundComplete = roundAnswers.length >= ROUND5_STRATEGY_QUESTIONS.length;
+      roundPassed = roundAnswers.filter((a) => a.correct).length >= ROUND5_STRATEGY_QUESTIONS.length;
     }
 
     if (!roundComplete) {
@@ -321,24 +306,11 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     setTimeout(() => showConfidenceToggle(answer), correct ? 400 : 600);
   }
 
-  function handleR1SquareTap(sq: string) {
-    const isColorQuestion = questionIndex === 5;
-    if (isColorQuestion) {
-      const fileIdx = sq.charCodeAt(0) - 97;
-      const rank = parseInt(sq[1], 10);
-      const isLight = (fileIdx + rank) % 2 === 0;
-      const correct = isLight === (ROUND1_COLOR_QUESTION.color === "light");
-      setFlashSquare({ sq, type: correct ? "correct" : "wrong" });
-      recordAnswer(correct, { questionIndex: 5 });
-      return;
-    }
-    const target = ROUND1_QUESTIONS[questionIndex]?.target;
-    const correct = sq === target;
+  function handleR1PieceTap(sq: string, tappedKind: string) {
+    const q = ROUND1_QUESTIONS[questionIndex];
+    if (!q) return;
+    const correct = tappedKind === q.pieceKind && q.correctSquares.includes(sq);
     setFlashSquare({ sq, type: correct ? "correct" : "wrong" });
-    if (!correct && target) {
-      setTimeout(() => setFlashSquare({ sq: target, type: "correct" }), 400);
-      setTimeout(() => setFlashSquare(null), 1200);
-    }
     recordAnswer(correct);
   }
 
@@ -412,25 +384,27 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
 
   function getCurrentBoardProps() {
     if (currentRound === 1) {
-      const r1Target =
-        questionIndex < 5
-          ? ROUND1_QUESTIONS[questionIndex]?.target
-          : questionIndex === 5
-          ? ROUND1_COLOR_QUESTION.square
-          : undefined;
+      const q = ROUND1_QUESTIONS[questionIndex];
       return {
-        mode: "tap-square" as const,
-        fen: "8/8/8/8/8/8/8/8 w - - 0 1",
-        onSquareTap: handleR1SquareTap,
+        mode: "tap-piece" as const,
+        fen: ROUND1_START_FEN,
+        targetPieceKind: q?.pieceKind,
+        onPieceKindTap: handleR1PieceTap,
         flashSquare,
-        highlightGutterFor: r1Target,
       };
     }
     if (currentRound === 2) {
       const pq = ROUND2_PIECE_QUESTIONS[ROUND2_PIECE_ORDER[questionIndex]];
+      // Build FEN with just the piece on its starting square
+      const pieceChar = pq.pieceKind === "knight" ? "N" : pq.pieceKind === "rook" ? "R" : pq.pieceKind[0].toUpperCase();
+      const fenMap: Record<string, string> = {
+        rook: "8/8/8/8/3R4/8/8/8 w - - 0 1",
+        knight: "8/8/8/8/3N4/8/8/8 w - - 0 1",
+      };
+      const moveFen = fenMap[pq.pieceKind] ?? `8/8/8/8/3${pieceChar}4/8/8/8 w - - 0 1`;
       return {
         mode: "multi-select" as const,
-        fen: "8/8/8/8/8/8/8/8 w - - 0 1",
+        fen: moveFen,
         selectedSquares,
         expectedCount: pq.expectedSquares.length,
         onSquareToggle: (sq: string) =>

@@ -11,7 +11,8 @@ import type { PieceKind } from "@/lib/trial/types";
 // ── Types ────────────────────────────────────────────────────
 
 export type TrialBoardMode =
-  | "tap-square"    // Round 1: tap a named square
+  | "tap-piece"     // Round 1: tap a piece of the named kind
+  | "tap-square"    // legacy / color question: tap a named square
   | "multi-select"  // Round 2: tap all squares a piece can reach
   | "move"          // Rounds 3–5: tap piece, then tap destination
   | "arrows";       // Round 5: pre-drawn arrows, tap one
@@ -30,7 +31,9 @@ export interface TrialBoardProps {
   /** When set, highlights matching gutter file/rank labels (does NOT
    *  fill the square — for Round 1 where the answer must stay hidden). */
   highlightGutterFor?: string;
-  _correctSquare?: string;           // shown briefly after wrong tap
+  // tap-piece mode
+  targetPieceKind?: string;          // e.g. "knight" — pieces of this kind pulse
+  onPieceKindTap?: (sq: string, kind: string) => void;
   onSquareTap?: (sq: string) => void; // mode: tap-square
   // multi-select
   selectedSquares?: string[];
@@ -70,7 +73,8 @@ export default function TrialBoard({
   fen = "8/8/8/8/8/8/8/8 w - - 0 1",
   highlightSquares = [],
   highlightGutterFor,
-  _correctSquare,
+  targetPieceKind,
+  onPieceKindTap,
   onSquareTap,
   selectedSquares = [],
   expectedCount,
@@ -103,14 +107,18 @@ export default function TrialBoard({
     return () => clearTimeout(t);
   }, [flashSquare]);
 
-  const handleSquareClick = useCallback((sq: string) => {
-    if (mode === "tap-square") onSquareTap?.(sq);
-    else if (mode === "multi-select") onSquareToggle?.(sq);
-    else if (mode === "move") {
+  const handleSquareClick = useCallback((sq: string, pieceKind?: string) => {
+    if (mode === "tap-piece") {
+      if (pieceKind) onPieceKindTap?.(sq, pieceKind);
+    } else if (mode === "tap-square") {
+      onSquareTap?.(sq);
+    } else if (mode === "multi-select") {
+      onSquareToggle?.(sq);
+    } else if (mode === "move") {
       if (selectedPiece) onMoveTap?.(sq);
       else onPieceTap?.(sq);
     }
-  }, [mode, selectedPiece, onSquareTap, onSquareToggle, onPieceTap, onMoveTap]);
+  }, [mode, selectedPiece, onSquareTap, onSquareToggle, onPieceTap, onMoveTap, onPieceKindTap]);
 
   const boardSize = 320;
   const sqSize = boardSize / 8;
@@ -189,95 +197,102 @@ export default function TrialBoard({
           })}
         </div>
 
-      <svg width={boardSize} height={boardSize} style={{ display: "block", borderRadius: 6, overflow: "hidden" }}>
-        {/* Squares */}
-        {Array.from({ length: 8 }, (_, r) =>
-          Array.from({ length: 8 }, (_, c) => {
-            const sq = squareFromRC(r, c);
-            const isLight = (r + c) % 2 === 0;
-            const isSelected = selectedSquares.includes(sq);
-            const isLegal = legalMoveSquares.includes(sq);
-            const isHighlight = highlightSquares.includes(sq);
-            const isPieceSelected = selectedPiece === sq;
-            const flash = flashState?.sq === sq ? flashState.type : null;
+        <svg width={boardSize} height={boardSize} style={{ display: "block", borderRadius: 6, overflow: "hidden" }}>
+          {/* Squares */}
+          {Array.from({ length: 8 }, (_, r) =>
+            Array.from({ length: 8 }, (_, c) => {
+              const sq = squareFromRC(r, c);
+              const isLight = (r + c) % 2 === 0;
+              const isSelected = selectedSquares.includes(sq);
+              const isLegal = legalMoveSquares.includes(sq);
+              const isHighlight = highlightSquares.includes(sq);
+              const isPieceSelected = selectedPiece === sq;
+              const flash = flashState?.sq === sq ? flashState.type : null;
 
-            let fill = isLight ? LIGHT_SQ : DARK_SQ;
-            if (isHighlight || isSelected) fill = "rgba(139,92,246,0.45)";
-            if (isLegal) fill = "rgba(52,211,153,0.45)";
-            if (isPieceSelected) fill = "rgba(251,191,36,0.55)";
-            if (flash === "correct") fill = "rgba(52,211,153,0.85)";
-            if (flash === "wrong") fill = "rgba(239,68,68,0.65)";
+              let fill = isLight ? LIGHT_SQ : DARK_SQ;
+              if (isHighlight || isSelected) fill = "rgba(139,92,246,0.45)";
+              if (isLegal) fill = "rgba(52,211,153,0.45)";
+              if (isPieceSelected) fill = "rgba(251,191,36,0.55)";
+              if (flash === "correct") fill = "rgba(52,211,153,0.85)";
+              if (flash === "wrong") fill = "rgba(239,68,68,0.65)";
 
+              return (
+                <rect
+                  key={sq}
+                  x={c * sqSize}
+                  y={r * sqSize}
+                  width={sqSize}
+                  height={sqSize}
+                  fill={fill}
+                  style={{ cursor: "pointer", transition: "fill 150ms" }}
+                  onClick={() => handleSquareClick(sq)}
+                />
+              );
+            })
+          )}
+
+          {/* Arrow overlays (Round 5) */}
+          {mode === "arrows" && arrows.map((arrow) => {
+            const from = rcFromSquare(arrow.from);
+            const to = rcFromSquare(arrow.to);
+            const x1 = from.c * sqSize + sqSize / 2;
+            const y1 = from.r * sqSize + sqSize / 2;
+            const x2 = to.c * sqSize + sqSize / 2;
+            const y2 = to.r * sqSize + sqSize / 2;
+            const isChosen = selectedArrow === arrow.id;
+            const color = isChosen ? "#F59E0B" : "rgba(99,102,241,0.75)";
+            const arrowId = `arrowhead-${arrow.id}`;
             return (
-              <rect
-                key={sq}
-                x={c * sqSize}
-                y={r * sqSize}
-                width={sqSize}
-                height={sqSize}
-                fill={fill}
-                style={{ cursor: "pointer", transition: "fill 150ms" }}
-                onClick={() => handleSquareClick(sq)}
-              />
-            );
-          })
-        )}
-
-        {/* Arrow overlays (Round 5) */}
-        {mode === "arrows" && arrows.map((arrow) => {
-          const from = rcFromSquare(arrow.from);
-          const to = rcFromSquare(arrow.to);
-          const x1 = from.c * sqSize + sqSize / 2;
-          const y1 = from.r * sqSize + sqSize / 2;
-          const x2 = to.c * sqSize + sqSize / 2;
-          const y2 = to.r * sqSize + sqSize / 2;
-          const isChosen = selectedArrow === arrow.id;
-          const color = isChosen ? "#F59E0B" : "rgba(99,102,241,0.75)";
-          const arrowId = `arrowhead-${arrow.id}`;
-          return (
-            <g key={arrow.id} onClick={() => onArrowTap?.(arrow.id)} style={{ cursor: "pointer" }}>
-              <defs>
-                <marker id={arrowId} markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                  <path d="M0,0 L0,6 L6,3 Z" fill={color} />
-                </marker>
-              </defs>
-              <line
-                x1={x1} y1={y1} x2={x2} y2={y2}
-                stroke={color}
-                strokeWidth={isChosen ? 6 : 4}
-                markerEnd={`url(#${arrowId})`}
-                opacity={0.9}
-              />
-            </g>
-          );
-        })}
-
-        {/* Pieces */}
-        {board.map((row, r) =>
-          row.map((cell, c) => {
-            if (!cell) return null;
-            const sq = squareFromRC(r, c);
-            const pieceType = CHESS_TO_PIECE_TYPE[cell.type] ?? "pawn";
-            const color = cell.color === "w" ? "white" : "black";
-            const x = c * sqSize;
-            const y = r * sqSize;
-            return (
-              <g
-                key={sq}
-                transform={`translate(${x},${y})`}
-                style={{ cursor: mode === "move" ? "pointer" : "default" }}
-                onClick={() => handleSquareClick(sq)}
-              >
-                <Piece
-                  type={pieceType}
-                  color={color}
-                  size={sqSize}
+              <g key={arrow.id} onClick={() => onArrowTap?.(arrow.id)} style={{ cursor: "pointer" }}>
+                <defs>
+                  <marker id={arrowId} markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L6,3 Z" fill={color} />
+                  </marker>
+                </defs>
+                <line
+                  x1={x1} y1={y1} x2={x2} y2={y2}
+                  stroke={color}
+                  strokeWidth={isChosen ? 6 : 4}
+                  markerEnd={`url(#${arrowId})`}
+                  opacity={0.9}
                 />
               </g>
             );
-          })
-        )}
-      </svg>
+          })}
+
+          {/* Pieces */}
+          {board.map((row, r) =>
+            row.map((cell, c) => {
+              if (!cell) return null;
+              const sq = squareFromRC(r, c);
+              const pieceType = CHESS_TO_PIECE_TYPE[cell.type] ?? "pawn";
+              const color = cell.color === "w" ? "white" : "black";
+              const x = c * sqSize;
+              const y = r * sqSize;
+              const isTargetPiece = mode === "tap-piece" && targetPieceKind === pieceType && color === "white";
+              const flash = flashState?.sq === sq ? flashState.type : null;
+              const isClickable = mode === "move" || (mode === "tap-piece" && !!cell);
+              return (
+                <g
+                  key={sq}
+                  transform={`translate(${x},${y})`}
+                  style={{
+                    cursor: isClickable ? "pointer" : "default",
+                    // Subtle scale-up on target pieces so kids notice them
+                    filter: isTargetPiece && !flash ? "drop-shadow(0 0 6px rgba(255,107,90,0.9))" : "none",
+                  }}
+                  onClick={() => handleSquareClick(sq, pieceType)}
+                >
+                  <Piece
+                    type={pieceType}
+                    color={color}
+                    size={sqSize}
+                  />
+                </g>
+              );
+            })
+          )}
+        </svg>
       </div>
 
       {/* Multi-select counter */}

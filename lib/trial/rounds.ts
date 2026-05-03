@@ -1,37 +1,52 @@
 // lib/trial/rounds.ts
 import type { TrialAnswer, TrialRoundId, PieceKind } from "./types";
 
-// ── Round 1: Board Knowledge ──────────────────────────────────
-export const BOARD_SQUARES = ["e4", "d4", "a1", "h8", "c6", "f3", "b5", "g7"] as const;
-export type BoardSquare = typeof BOARD_SQUARES[number];
+// ── Round 1: Piece Recognition ────────────────────────────────
+// Starting position FEN — kid sees a real chess board, not an empty grid.
+export const ROUND1_START_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-// Pick 5 random squares from the bank (deterministic order for now, can shuffle at runtime)
-export const ROUND1_QUESTIONS: Array<{ target: BoardSquare }> = [
-  { target: "e4" },
-  { target: "a1" },
-  { target: "h8" },
-  { target: "f3" },
-  { target: "b5" },
-];
-// Color question: f1 is a light square (rank 1, file f = index 5; (5+1) % 2 = 0 → light)
-export const ROUND1_COLOR_QUESTION = { square: "f1", color: "light" as const };
-
-// ── Round 2: Piece Movement ───────────────────────────────────
-export const ROUND2_PIECE_ORDER: PieceKind[] = [
-  "rook", "bishop", "queen", "king", "knight", "pawn",
-];
-
-// FEN-like board config per piece: { fen, piece, color, expectedSquares }
-// Pieces placed at mid-board for a good move set
-export interface PieceQuestion {
+// Each question: "tap the [piece]" — tests can the kid identify pieces visually.
+// We ask about white pieces so the squares are deterministic and unambiguous.
+export interface PieceRecognitionQuestion {
   pieceKind: PieceKind;
-  placedOn: string;             // e.g. "d4"
-  color: "white" | "black";
-  expectedSquares: string[];    // all squares this piece can reach from placedOn
-  extraPieces?: Array<{ square: string; color: "white" | "black"; kind: PieceKind }>;
+  // All squares on the board that count as correct (there may be two knights, etc.)
+  correctSquares: string[];
+  // Voice prompt
+  voice: string;
+  displayLabel: string;
 }
 
-export const ROUND2_PIECE_QUESTIONS: Record<PieceKind, PieceQuestion> = {
+export const ROUND1_QUESTIONS: PieceRecognitionQuestion[] = [
+  {
+    pieceKind: "knight",
+    correctSquares: ["b1", "g1"],
+    voice: "Tap one of the white knights!",
+    displayLabel: "Tap a White Knight",
+  },
+  {
+    pieceKind: "queen",
+    correctSquares: ["d1"],
+    voice: "Now tap the white queen!",
+    displayLabel: "Tap the White Queen",
+  },
+];
+
+// ── Round 2: Piece Movement ───────────────────────────────────
+// Only rook and knight — rook tests sliding piece understanding,
+// knight tests the L-shape (hardest to learn, best differentiator).
+export const ROUND2_PIECE_ORDER: PieceKind[] = ["rook", "knight"];
+
+export interface PieceQuestion {
+  pieceKind: PieceKind;
+  placedOn: string;
+  color: "white" | "black";
+  expectedSquares: string[];
+  extraPieces?: Array<{ square: string; color: "white" | "black"; kind: PieceKind }>;
+  voice: string;
+  displayLabel: string;
+}
+
+export const ROUND2_PIECE_QUESTIONS: Record<string, PieceQuestion> = {
   rook: {
     pieceKind: "rook",
     placedOn: "d4",
@@ -40,48 +55,16 @@ export const ROUND2_PIECE_QUESTIONS: Record<PieceKind, PieceQuestion> = {
       "a4","b4","c4","e4","f4","g4","h4",
       "d1","d2","d3","d5","d6","d7","d8",
     ],
-  },
-  bishop: {
-    pieceKind: "bishop",
-    placedOn: "d4",
-    color: "white",
-    expectedSquares: [
-      "a1","b2","c3","e5","f6","g7","h8",
-      "a7","b6","c5","e3","f2","g1",
-    ],
-  },
-  queen: {
-    pieceKind: "queen",
-    placedOn: "d4",
-    color: "white",
-    expectedSquares: [
-      // rook moves
-      "a4","b4","c4","e4","f4","g4","h4",
-      "d1","d2","d3","d5","d6","d7","d8",
-      // bishop moves
-      "a1","b2","c3","e5","f6","g7","h8",
-      "a7","b6","c5","e3","f2","g1",
-    ],
-  },
-  king: {
-    pieceKind: "king",
-    placedOn: "d4",
-    color: "white",
-    expectedSquares: ["c3","d3","e3","c4","e4","c5","d5","e5"],
+    voice: "Tap every square the rook can reach!",
+    displayLabel: "Where can the Rook go?",
   },
   knight: {
     pieceKind: "knight",
     placedOn: "d4",
     color: "white",
     expectedSquares: ["b3","b5","c2","c6","e2","e6","f3","f5"],
-  },
-  pawn: {
-    pieceKind: "pawn",
-    placedOn: "e2",
-    color: "white",
-    // opponent pawn on d3 → test diagonal capture
-    extraPieces: [{ square: "d3", color: "black", kind: "pawn" }],
-    expectedSquares: ["e3", "e4", "d3"],
+    voice: "Knights jump in an L-shape — tap all the squares it can reach!",
+    displayLabel: "Where can the Knight jump?",
   },
 };
 
@@ -90,38 +73,34 @@ export interface CheckQuestion {
   type: "check-detection";
   fen: string;
   isInCheck: boolean;
+  voice: string;
+  displayLabel: string;
 }
 export interface MateQuestion {
   type: "checkmate-in-1";
   fen: string;
   correctMove: { from: string; to: string };
+  voice: string;
+  displayLabel: string;
 }
 export type Round3Question = CheckQuestion | MateQuestion;
 
 export const ROUND3_QUESTIONS: Round3Question[] = [
-  // Check detection: white king on e1, black rook on e8 (open file → check)
   {
     type: "check-detection",
+    // White king on e1, black rook fires down the e-file — king IS in check
     fen: "4r2k/8/8/8/8/8/8/4K3 w - - 0 1",
     isInCheck: true,
+    voice: "Is the white king in check right now?",
+    displayLabel: "Is the King in check?",
   },
-  // Check detection: white king on e1, black rook on a8 (no check)
-  {
-    type: "check-detection",
-    fen: "r6k/8/8/8/8/8/8/4K3 w - - 0 1",
-    isInCheck: false,
-  },
-  // Checkmate-in-1: Q+K box mate (queen delivers mate)
   {
     type: "checkmate-in-1",
+    // Q+K ladder mate: Qh7 is checkmate
     fen: "7k/8/6KQ/8/8/8/8/8 w - - 0 1",
     correctMove: { from: "h6", to: "h7" },
-  },
-  // Checkmate-in-1: R+K back-rank mate
-  {
-    type: "checkmate-in-1",
-    fen: "7k/8/6K1/8/8/8/8/7R w - - 0 1",
-    correctMove: { from: "h1", to: "h8" },
+    voice: "Move the queen to give checkmate in one move!",
+    displayLabel: "Checkmate in 1 — find it!",
   },
 ];
 
@@ -130,37 +109,32 @@ export interface TacticQuestion {
   tacticId: string;
   fen: string;
   correctMove: { from: string; to: string };
-  correctPiece: string;  // the square of the piece to tap first
+  correctPiece: string;
+  voice: string;
+  displayLabel: string;
+  hint: string;
 }
 
 export const ROUND4_TACTIC_QUESTIONS: TacticQuestion[] = [
-  // Fork: knight on c3 forks king on e4 and rook on a4
   {
+    // Royal fork: knight on b5 → Nc7 attacks king on e8 AND rook on a8
     tacticId: "fork",
-    fen: "8/8/8/8/r3k3/2N5/8/4K3 w - - 0 1",
-    correctMove: { from: "c3", to: "b5" },
-    correctPiece: "c3",
+    fen: "r3k3/8/8/1N6/8/8/8/4K3 w - - 0 1",
+    correctMove: { from: "b5", to: "c7" },
+    correctPiece: "b5",
+    voice: "The knight can attack TWO pieces at once! Find the fork!",
+    displayLabel: "Find the Fork!",
+    hint: "Move the knight to attack both the king and the rook",
   },
-  // Pin: bishop on b2 pins knight on d4 to king on f6
   {
+    // Pin: Bishop pins the knight to the king
     tacticId: "pin",
     fen: "8/8/5k2/8/3n4/8/1B6/4K3 w - - 0 1",
     correctMove: { from: "b2", to: "d4" },
     correctPiece: "b2",
-  },
-  // Skewer: rook on a1 skewers king on a8, rook on a6 behind
-  {
-    tacticId: "skewer",
-    fen: "k7/8/r7/8/8/8/8/R3K3 w - - 0 1",
-    correctMove: { from: "a1", to: "a8" },
-    correctPiece: "a1",
-  },
-  // Discovered attack: white bishop on c1 is blocked; moving d2 pawn reveals it
-  {
-    tacticId: "discovered_attack",
-    fen: "4k3/8/8/8/8/8/3P4/2B1K3 w - - 0 1",
-    correctMove: { from: "d2", to: "d4" },
-    correctPiece: "d2",
+    voice: "The bishop can pin a piece to the king! Find it!",
+    displayLabel: "Find the Pin!",
+    hint: "Attack a piece that can't move because it shields the king",
   },
 ];
 
@@ -171,36 +145,25 @@ export interface StrategyQuestion {
   mediocreMove: { from: string; to: string };
   badMove: { from: string; to: string };
   theme: string;
+  voice: string;
+  displayLabel: string;
 }
 
 export const ROUND5_STRATEGY_QUESTIONS: StrategyQuestion[] = [
-  // Open file: white rook should go to d1 (open d-file), not a1, not h1
   {
+    // Active rook: Rook should take the open e-file
     fen: "r1bqkb1r/ppp2ppp/2np1n2/4p3/2B1P3/3P1N2/PPP2PPP/RNBQR1K1 w kq - 0 1",
     theme: "open-file",
-    bestMove: { from: "e1", to: "e3" },     // rook to open e-file
-    mediocreMove: { from: "d1", to: "d2" }, // queen development (fine but not the plan)
-    badMove: { from: "c4", to: "f7" },      // premature bishop sac
-  },
-  // Active vs passive: knight should go to f5 (outpost), not retreat to d3
-  {
-    fen: "r2q1rk1/ppp1bppp/2np1n2/4p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQ - 0 1",
-    theme: "active-piece",
-    bestMove: { from: "c3", to: "d5" },     // knight to strong outpost
-    mediocreMove: { from: "f3", to: "d2" }, // passive retreat
-    badMove: { from: "c4", to: "b3" },      // bishop retreat for no reason
-  },
-  // Pawn structure: avoid doubled pawns by recapturing with pawn, not bishop
-  {
-    fen: "r1bqk2r/pppp1ppp/2n2n2/4p3/1bB1P3/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 1",
-    theme: "pawn-structure",
-    bestMove: { from: "c3", to: "b4" },     // recapture with knight (keeps structure)
-    mediocreMove: { from: "d2", to: "b4" }, // pawn recapture (creates doubled pawns)
-    badMove: { from: "c4", to: "b5" },      // random bishop move
+    bestMove: { from: "e1", to: "e3" },
+    mediocreMove: { from: "d1", to: "d2" },
+    badMove: { from: "c4", to: "f7" },
+    voice: "Rooks love open files! Which move puts the rook on the best square?",
+    displayLabel: "Best plan for the Rook?",
   },
 ];
 
 // ── Adaptive short-circuit ────────────────────────────────────
+// Returns the next round to show, or null to stop and score.
 export function getNextRound(
   currentRound: TrialRoundId,
   answers: TrialAnswer[]
@@ -208,29 +171,30 @@ export function getNextRound(
   const roundAnswers = answers.filter((a) => a.roundId === currentRound);
 
   if (currentRound === 1) {
-    const weighted = roundAnswers.reduce(
-      (sum, a) => sum + (a.correct ? (a.confident === false ? 0.5 : 1) : 0),
-      0
-    );
-    if (weighted < 4) return null; // fail → stop, place at Stage 1
+    // Must recognise at least 1 of 2 pieces to continue (very low bar — almost everyone passes)
+    const correct = roundAnswers.filter((a) => a.correct).length;
+    if (correct === 0) return null; // total blank → Stage 1
     return 2;
   }
 
   if (currentRound === 2) {
+    // Both movement questions; any failure → Stage 2
     const failCount = roundAnswers.filter((a) => !a.correct).length;
-    if (failCount > 0) return null; // any failure → stop, place at Stage 2
+    if (failCount > 0) return null;
     return 3;
   }
 
   if (currentRound === 3) {
+    // 2 questions; need both right to advance
     const correct = roundAnswers.filter((a) => a.correct).length;
-    if (correct < 3) return null; // fail → stop, place at Stage 3
+    if (correct < 2) return null;
     return 4;
   }
 
   if (currentRound === 4) {
+    // 2 tactic questions; need both right to advance to strategy
     const correct = roundAnswers.filter((a) => a.correct).length;
-    if (correct < 3) return null; // partial or full fail → stop, place at Stage 4
+    if (correct < 2) return null;
     return 5;
   }
 

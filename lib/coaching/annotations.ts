@@ -1,7 +1,8 @@
-import type { BoardAnnotation } from "@/lib/chess/types";
+import type { BoardAnnotation, AnnotationColor } from "@/lib/chess/types";
 import type { TacticDetection } from "@/lib/progression/types";
 import type { Move } from "@/lib/chess/types";
 import type { MoveAnalysis } from "@/lib/chess/types";
+import type { Annotation } from "@/lib/coaching/schema";
 
 const CENTER_SQUARES = new Set(["d4", "d5", "e4", "e5"]);
 
@@ -134,4 +135,86 @@ export function generateAnnotation(
 
   // No annotation for routine moves — clean board, no clutter.
   return null;
+}
+
+export function llmAnnotationToBoard(a: Annotation): BoardAnnotation | null {
+  const sq = a.squares ?? [];
+  const sq2 = a.secondarySquares ?? [];
+  if (a.type === "none" || sq.length === 0) return null;
+
+  const colorMap: Record<string, AnnotationColor> = {
+    fork_rays: "green",
+    pin_line: "blue",
+    skewer_line: "red",
+    discovered_attack: "red",
+    hanging_piece: "red",
+    defended_chain: "green",
+    attack_arrow: "yellow",
+    danger_square: "red",
+    highlight_square: "green",
+  };
+  const color = colorMap[a.type] ?? "yellow";
+
+  switch (a.type) {
+    case "fork_rays":
+      return {
+        heroSquare: sq[0],
+        heroColor: "green",
+        arrows: sq.slice(1).map((s) => ({ from: sq[0], to: s, color: "green" as const })),
+        circles: [{ square: sq[0], color: "green" as const }],
+        threatSquares: sq.slice(1),
+        duration: 6000,
+      };
+    case "pin_line":
+    case "skewer_line":
+      return {
+        heroSquare: sq[0],
+        heroColor: color,
+        arrows: sq.length >= 2
+          ? [{ from: sq[0], to: sq[1], color }, ...(sq[2] ? [{ from: sq[1], to: sq[2], color, opacity: 0.3 }] : [])]
+          : [],
+        circles: sq.length >= 2 ? [{ square: sq[1], color }] : [],
+        threatSquares: sq.slice(1, 2),
+        duration: 6000,
+      };
+    case "discovered_attack":
+      return {
+        arrows: sq.length >= 2 ? [{ from: sq[0], to: sq[1], color: "red" as const }] : [],
+        circles: sq.map((s) => ({ square: s, color: "red" as const })),
+        threatSquares: sq.slice(1),
+        duration: 6000,
+      };
+    case "hanging_piece":
+      return {
+        circles: [{ square: sq[0], color: "red" as const }],
+        dangerSquares: sq,
+        duration: 5000,
+      };
+    case "defended_chain":
+      return {
+        circles: sq.map((s) => ({ square: s, color: "green" as const })),
+        arrows: sq.length >= 2 ? sq.slice(0, -1).map((s, i) => ({ from: s, to: sq[i + 1], color: "green" as const, opacity: 0.4 })) : [],
+        duration: 5000,
+      };
+    case "attack_arrow":
+      return {
+        arrows: sq.length >= 2 ? [{ from: sq[0], to: sq[1], color: "yellow" as const }] : [],
+        circles: sq2.length > 0 ? sq2.map((s) => ({ square: s, color: "yellow" as const })) : [],
+        duration: 5000,
+      };
+    case "danger_square":
+      return {
+        dangerSquares: sq,
+        circles: sq.map((s) => ({ square: s, color: "red" as const })),
+        duration: 5000,
+      };
+    case "highlight_square":
+      return {
+        highlights: sq.map((s) => ({ square: s, color: "green" as const, opacity: 0.3 })),
+        circles: sq.map((s) => ({ square: s, color: "green" as const })),
+        duration: 5000,
+      };
+    default:
+      return null;
+  }
 }

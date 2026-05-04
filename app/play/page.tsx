@@ -23,7 +23,7 @@ import { analyzeMoveQuality } from "@/lib/coaching/analyzer";
 import { shouldCoach } from "@/lib/coaching/triggers";
 import { FALLBACKS } from "@/lib/coaching/prompts";
 import { analyzeOpportunities } from "@/lib/coaching/opportunity";
-import { generateAnnotation } from "@/lib/coaching/annotations";
+import { generateAnnotation, llmAnnotationToBoard } from "@/lib/coaching/annotations";
 import { findBestMove } from "@/lib/chess/ai";
 import { ageToBand } from "@/lib/coaching/schema";
 import { getDeviceId } from "@/lib/identity/device";
@@ -635,21 +635,36 @@ export default function PlayPage() {
       if (!res.ok) throw new Error("API error");
 
       const data = await res.json();
+      console.log("[coach] response", {
+        trigger: analysis.trigger,
+        message: data.message,
+        annotationType: data.annotation?.type ?? "none",
+        annotationSquares: data.annotation?.squares ?? [],
+        emotion: data.emotion,
+        chipCount: data.followUpChips?.length ?? 0,
+      });
       if (data.shouldSpeak !== undefined) {
         // Visual-first: set annotation BEFORE response
+        // Prefer LLM annotation (has square-level detail), fall back to local
+        let boardAnnotation: ReturnType<typeof llmAnnotationToBoard> = null;
         if (data.annotation && data.annotation.type !== "none") {
-          const legacyAnnotation = generateAnnotation(analysis, analysis.tactics ?? [], {
+          boardAnnotation = llmAnnotationToBoard(data.annotation);
+          console.log("[coach] LLM annotation →", boardAnnotation ? "converted" : "null", data.annotation);
+        }
+        if (!boardAnnotation) {
+          boardAnnotation = generateAnnotation(analysis, analysis.tactics ?? [], {
             from: lastMoveFrom,
             to: lastMoveTo,
           });
-          if (legacyAnnotation) {
-            store.setBoardAnnotation(legacyAnnotation);
-            if (annotationClearTimerRef.current) clearTimeout(annotationClearTimerRef.current);
-            annotationClearTimerRef.current = setTimeout(
-              () => store.setBoardAnnotation(null),
-              legacyAnnotation.duration ?? 5000,
-            );
-          }
+          console.log("[coach] fallback annotation →", boardAnnotation ? "generated" : "none");
+        }
+        if (boardAnnotation) {
+          store.setBoardAnnotation(boardAnnotation);
+          if (annotationClearTimerRef.current) clearTimeout(annotationClearTimerRef.current);
+          annotationClearTimerRef.current = setTimeout(
+            () => store.setBoardAnnotation(null),
+            boardAnnotation.duration ?? 5000,
+          );
         }
         store.setCoachResponse(data);
 

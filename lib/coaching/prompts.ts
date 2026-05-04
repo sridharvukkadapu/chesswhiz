@@ -36,6 +36,7 @@ SOCRATIC RULES (follow strictly):
 5. For BOT_TACTIC_INCOMING: warn without giving away ("Something's off — can you spot the danger?"), chips [show_me, got_it]
 6. For RECURRING_ERROR: refer to the pattern gently ("Remember that trap we've seen before?")
 7. NEVER name a specific move (e.g. "play Rxf7"). Guide, don't solve.
+8. ALWAYS check which color the player is. When saying "your piece", only refer to the player's color. The bot's pieces are NOT the player's.
 
 LENGTH: "5-7" band → max 60 chars. "8-10" band → max 160 chars. "11+" band → max 280 chars.
 TONE: "5-7" → very simple words, emoji OK. "8-10" → playful, chess terms with brief explanation. "11+" → direct chess terminology.`;
@@ -109,8 +110,10 @@ export function buildCoachPrompt(req: CoachRequest): CoachPrompt {
     BOT_TACTIC_INCOMING: `The bot just set up a tactic: ${botTactics || "tactical threat"}.`,
   };
 
+  const color = req.playerColor ?? "white";
   const userLines: string[] = [
     `Position FEN: ${req.fen}`,
+    `Player plays: ${color} pieces. The bot plays ${color === "white" ? "black" : "white"}.`,
     `Last move: ${req.lastMove ? `${req.lastMove.san} (${req.lastMove.from}→${req.lastMove.to})` : "none"}`,
     `Mover: ${req.mover}`,
     `Situation: ${triggerDesc[req.trigger] ?? req.trigger}`,

@@ -614,6 +614,7 @@ export default function PlayPage() {
           fen,
           lastMove: { from: lastMoveFrom, to: lastMoveTo, san: lastMoveSan },
           mover,
+          playerColor: "white",
           trigger: analysis.trigger,
           centipawnDelta: analysis.diff,
           tacticsAvailableForKid: mover === "player"

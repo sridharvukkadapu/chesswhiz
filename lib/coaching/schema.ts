@@ -77,6 +77,7 @@ export const CoachRequestSchema = z.object({
   fen: z.string(),
   lastMove: z.object({ from: z.string(), to: z.string(), san: z.string() }).optional(),
   mover: z.enum(["player", "bot"]),
+  playerColor: z.enum(["white", "black"]).optional(),
   trigger: z.enum([
     "GREAT_MOVE",
     "OK_MOVE",

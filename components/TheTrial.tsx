@@ -188,8 +188,6 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
     confidenceClickedRef.current = false;
     setPendingAnswer(answer);
     setConfidenceState("showing");
-    setCoachMessage("Were you sure, or just guessing?");
-    setCoachExpression("talking");
     if (confidenceTimerRef.current) clearTimeout(confidenceTimerRef.current);
     confidenceTimerRef.current = setTimeout(() => {
       confidenceTimerRef.current = null;

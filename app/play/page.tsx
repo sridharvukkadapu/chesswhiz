@@ -437,9 +437,15 @@ export default function PlayPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, progression.currentKingdom]);
 
-  // Game-start: fetch personalized welcome-back callback from /api/coach/session
+  // Game-start: fetch personalized welcome-back callback from /api/coach/session.
+  // The LLM call is async — by the time it responds the kid may have already
+  // made moves. Only replace the intro if no moves have happened yet;
+  // otherwise the "Welcome back!" lands mid-game and looks like a restart.
+  const sessionFiredRef = useRef(false);
   useEffect(() => {
-    if (screen !== "playing") return;
+    if (screen !== "playing") { sessionFiredRef.current = false; return; }
+    if (sessionFiredRef.current) return;
+    sessionFiredRef.current = true;
     const deviceId = getDeviceId();
     if (!deviceId) return;
     fetch("/api/coach/session", {
@@ -454,9 +460,8 @@ export default function PlayPage() {
     })
       .then((r) => r.json())
       .then((data: { message?: string }) => {
-        if (data.message) {
-          // Replace the first coach message (intro) with the personalized callback
-          store.addCoachMessage({ type: "intro", text: data.message });
+        if (data.message && store.moveCount === 0) {
+          store.replaceIntroMessage(data.message);
         }
       })
       .catch(() => {});
@@ -663,25 +668,34 @@ export default function PlayPage() {
     store.setCoachLoading(false);
   }, [learnerModel, playerName, playerAge, progression, store]);
 
+  const dismissCoachResponse = useCallback(() => {
+    const resp = store.currentCoachResponse;
+    if (resp?.message) {
+      const type = resp.interactionType === "celebration" ? "praise"
+        : resp.interactionType === "warning" ? "correction"
+        : "tip";
+      store.addCoachMessage({ type, text: resp.message });
+    }
+    store.setCoachResponse(null);
+  }, [store]);
+
   const handleChipTap = useCallback((chip: FollowUpChip) => {
     switch (chip.intent) {
       case "got_it":
       case "i_see_it":
-        store.setCoachResponse(null);
+        dismissCoachResponse();
         break;
       case "show_me":
-        // Re-trigger annotation for current position
-        store.setCoachResponse(null);
+        dismissCoachResponse();
         break;
       case "try_again":
+        dismissCoachResponse();
         store.undo();
-        store.setCoachResponse(null);
         break;
       default:
-        // tell_me_more / what_if — no-op for now, coach will elaborate on next move
         break;
     }
-  }, [store]);
+  }, [store, dismissCoachResponse]);
 
   const executeMove = useCallback((move: Move) => {
     const prevChess = new Chess(chess.fen());

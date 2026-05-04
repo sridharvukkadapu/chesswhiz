@@ -64,12 +64,12 @@ export type ReplayStep = z.infer<typeof ReplayStepSchema>;
 export const CoachResponseSchema = z.object({
   shouldSpeak: z.boolean(),
   message: z.string().max(280),
-  annotation: AnnotationSchema.optional(),
+  annotation: AnnotationSchema.nullable().optional(),
   interactionType: InteractionTypeSchema,
-  followUpChips: z.array(FollowUpChipSchema).max(3).optional(),
-  conceptTaught: z.string().optional(),
-  emotion: z.enum(["happy", "thinking", "concerned", "excited", "neutral"]).optional(),
-  replay: z.array(ReplayStepSchema).max(3).optional(),
+  followUpChips: z.array(FollowUpChipSchema).max(3).nullable().optional(),
+  conceptTaught: z.string().nullable().optional(),
+  emotion: z.enum(["happy", "thinking", "concerned", "excited", "neutral"]).nullable().optional(),
+  replay: z.array(ReplayStepSchema).max(3).nullable().optional(),
 });
 export type CoachResponse = z.infer<typeof CoachResponseSchema>;
 

@@ -28,6 +28,11 @@ function debouncedSync(model: LearnerModel, playerName: string, playerAge: numbe
   }, 3000);
 }
 
+function saveAndSync(model: LearnerModel, getName: () => string, getAge: () => number) {
+  saveLearnerModel(model);
+  debouncedSync(model, getName(), getAge());
+}
+
 const PROGRESSION_KEY = "chesswhiz.progression";
 const PROGRESSION_SALT = "cw-v1";
 
@@ -260,6 +265,7 @@ interface GameStore {
   hidePromoModal: () => void;
   setBotThinking: (val: boolean) => void;
   addCoachMessage: (msg: Omit<CoachMessage, "id">) => void;
+  replaceIntroMessage: (text: string) => void;
   setCoachLoading: (val: boolean) => void;
   resetGame: () => void;
   undo: () => void;
@@ -440,6 +446,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ],
       lastCoachMove: state.moveCount,
     })),
+
+  replaceIntroMessage: (text) =>
+    set((state) => {
+      const idx = state.coachMessages.findIndex((m) => m.type === "intro");
+      if (idx === -1) return {};
+      const updated = [...state.coachMessages];
+      updated[idx] = { ...updated[idx], text };
+      return { coachMessages: updated };
+    }),
 
   setCoachLoading: (val) => set({ coachLoading: val }),
 
@@ -758,25 +773,33 @@ export const useGameStore = create<GameStore>((set, get) => ({
   ingestLearnerSignal: (signal) => {
     const { learnerModel } = get();
     const updated = applySignal(learnerModel, signal);
-    saveLearnerModel(updated);
+    saveAndSync(updated, () => get().playerName, () => get().playerAge);
     set({ learnerModel: updated });
-    debouncedSync(updated, get().playerName, get().playerAge);
   },
 
   setCoachResponse: (response) => {
-    const { learnerModel } = get();
+    const { learnerModel, currentCoachResponse: prev } = get();
     let updated = learnerModel;
     if (response?.message) {
       updated = recordCoachMessage(learnerModel, response.message);
-      saveLearnerModel(updated);
+      saveAndSync(updated, () => get().playerName, () => get().playerAge);
     }
-    set({ currentCoachResponse: response, learnerModel: updated, lastCoachMove: get().moveCount });
+    // Persist the outgoing response into legacy messages so conversation
+    // history is not lost when a new response replaces the old one.
+    let messages = get().coachMessages;
+    if (prev?.message && response !== null) {
+      const type = prev.interactionType === "celebration" ? "praise" as const
+        : prev.interactionType === "warning" ? "correction" as const
+        : "tip" as const;
+      messages = [...messages, { id: crypto.randomUUID(), type, text: prev.message }];
+    }
+    set({ currentCoachResponse: response, learnerModel: updated, lastCoachMove: get().moveCount, coachMessages: messages });
   },
 
   resetForNewGame: () => {
     const { learnerModel, playerName } = get();
     const updated = startNewGame(learnerModel);
-    saveLearnerModel(updated);
+    saveAndSync(updated, () => get().playerName, () => get().playerAge);
     clearSavedGame();
     const newDifficulty = computeDifficulty(get().progression);
     set({
@@ -811,7 +834,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...learnerModel,
       conceptsIntroduced: learnerModel.conceptsIntroduced.filter((c) => c.conceptId !== conceptId),
     };
-    saveLearnerModel(updated);
+    saveAndSync(updated, () => get().playerName, () => get().playerAge);
     set({ learnerModel: updated });
   },
 
@@ -821,7 +844,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...learnerModel,
       recurringErrors: learnerModel.recurringErrors.filter((e) => e.patternId !== patternId),
     };
-    saveLearnerModel(updated);
+    saveAndSync(updated, () => get().playerName, () => get().playerAge);
     set({ learnerModel: updated });
   },
 }));

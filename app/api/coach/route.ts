@@ -69,7 +69,13 @@ async function callLLM(req: CoachRequest, model: "haiku" | "sonnet"): Promise<Co
       console.error(`[coach] SCHEMA_FAILURE engine=${model} trigger=${req.trigger} calls=${callCount} failures=${parseFailureCount} failRate=${(parseFailureCount/callCount*100).toFixed(1)}% issues=${JSON.stringify(validated.error.issues)}`);
       return safeFallback(req.trigger, req.playerName);
     }
-    return validated.data;
+    const data = validated.data;
+    if (data.annotation === null) data.annotation = undefined;
+    if (data.followUpChips === null) data.followUpChips = undefined;
+    if (data.conceptTaught === null) data.conceptTaught = undefined;
+    if (data.emotion === null) data.emotion = undefined;
+    if (data.replay === null) data.replay = undefined;
+    return data;
   } catch (err) {
     console.error("[coach] LLM error:", err);
     return safeFallback(req.trigger, req.playerName);

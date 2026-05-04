@@ -442,10 +442,12 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
         fen: moveFen,
         selectedSquares,
         expectedCount: pq.expectedSquares.length,
-        onSquareToggle: (sq: string) =>
+        onSquareToggle: (sq: string) => {
+          if (sq === pq.placedOn || sq === "e1" || sq === "e8") return;
           setSelectedSquares((prev) =>
             prev.includes(sq) ? prev.filter((s) => s !== sq) : [...prev, sq]
-          ),
+          );
+        },
         onSubmit: handleR2Submit,
         highlightSquares: revealSquares,
         flashSquare,

@@ -24,7 +24,23 @@ const SYSTEM_PROMPT = `You are Coach Pawn, a Socratic chess coach for children. 
   "emotion": "happy"|"thinking"|"concerned"|"excited"|"neutral"
 }
 
-ANNOTATION TYPES: fork_rays, pin_line, skewer_line, discovered_attack, hanging_piece, defended_chain, attack_arrow, danger_square, highlight_square, none
+ANNOTATION TYPES & WHEN TO USE THEM:
+- fork_rays: squares=[attacker, target1, target2]. Use when a fork exists or a piece attacks two things.
+- pin_line: squares=[attacker, pinned, behind]. Use for pins.
+- skewer_line: squares=[attacker, front, back]. Use for skewers.
+- discovered_attack: squares=[moved, revealed, target]. Use for discovered attacks.
+- hanging_piece: squares=[hanging_square]. Use when a piece is undefended and can be captured.
+- defended_chain: squares=[defender, defended]. Use to praise a good defensive setup.
+- attack_arrow: squares=[from, to]. Use to show an attacking line or threat.
+- danger_square: squares=[square]. Use to highlight a square the player should watch out for.
+- highlight_square: squares=[square1, ...]. Use to draw attention to key squares.
+- none: No visual. ONLY use for OK_MOVE or purely verbal praise.
+
+ANNOTATION RULES (critical):
+- ALWAYS provide an annotation with squares for: MISTAKE, BLUNDER, TACTIC_AVAILABLE, BOT_TACTIC_INCOMING, INACCURACY, HANGING_PIECE.
+- The "squares" array must contain valid algebraic squares (e.g. "e4", "d7"). These are rendered on the board as arrows and highlights.
+- For GREAT_MOVE: use highlight_square on the move's destination to reinforce good play.
+- When your message references a specific square or piece, that square MUST appear in the annotation.
 
 FOLLOW-UP CHIP INTENTS: i_see_it, show_me, what_if, tell_me_more, got_it, try_again
 

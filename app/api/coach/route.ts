@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     interactionType: routed.response.interactionType,
     emotion: routed.response.emotion ?? null,
     conceptTaught: routed.response.conceptTaught ?? null,
-    annotation: routed.response.annotation?.type ?? null,
+    annotation: routed.response.annotation ?? null,
     hasReplay: (routed.response.replay?.length ?? 0) > 0,
     chipCount: routed.response.followUpChips?.length ?? 0,
     // request context

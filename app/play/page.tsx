@@ -668,6 +668,11 @@ export default function PlayPage() {
         }
         store.setCoachResponse(data);
 
+        if (data.shouldSpeak && data.message) {
+          speech.speak(data.message);
+          sfx.coach();
+        }
+
         // Replay overlay disabled — generic narration hurt more than it helped
       } else {
         throw new Error("Empty response");
@@ -682,7 +687,7 @@ export default function PlayPage() {
     }
 
     store.setCoachLoading(false);
-  }, [learnerModel, playerName, playerAge, progression, store]);
+  }, [learnerModel, playerName, playerAge, progression, store, speech]);
 
   const dismissCoachResponse = useCallback(() => {
     const resp = store.currentCoachResponse;

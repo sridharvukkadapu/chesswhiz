@@ -7,7 +7,8 @@ import type { LearnerModel } from "@/lib/learner/types";
 import { summarizeForPrompt } from "@/lib/learner/model";
 
 const client = new Anthropic();
-const HAIKU_MODEL = "claude-haiku-4-5-20251001";
+// TODO: revert — testing Sonnet-only
+const HAIKU_MODEL = "claude-sonnet-4-6";
 
 const SessionRequestSchema = z.object({
   deviceId: z.string(),

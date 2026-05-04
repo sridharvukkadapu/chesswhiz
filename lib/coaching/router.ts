@@ -19,9 +19,8 @@ const SONNET_TRIGGERS = new Set([
 ]);
 
 export function pickEngine(req: CoachRequest, hadTemplate: boolean): "haiku" | "sonnet" {
-  if (SONNET_TRIGGERS.has(req.trigger)) return "sonnet";
-  if (req.trigger === "MISTAKE") return "sonnet";
-  return "haiku";
+  // TODO: revert — testing Sonnet-only
+  return "sonnet";
 }
 
 export async function route(
@@ -30,11 +29,11 @@ export async function route(
 ): Promise<RoutedResponse> {
   const start = Date.now();
 
-  // 1. Cache check
-  const cached = getCached(req);
-  if (cached) {
-    return { response: cached, engine: "cache", latencyMs: Date.now() - start };
-  }
+  // 1. Cache check — temporarily disabled for testing
+  // const cached = getCached(req);
+  // if (cached) {
+  //   return { response: cached, engine: "cache", latencyMs: Date.now() - start };
+  // }
 
   // 2. Template (skip for LLM-required triggers)
   if (!requiresLLM(req.trigger)) {

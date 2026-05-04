@@ -433,10 +433,10 @@ export default function TheTrial({ playerName, ageBand: _ageBand, onComplete }: 
       // Build FEN with just the piece on its starting square
       const pieceChar = pq.pieceKind === "knight" ? "N" : pq.pieceKind === "rook" ? "R" : pq.pieceKind[0].toUpperCase();
       const fenMap: Record<string, string> = {
-        rook: "8/8/8/8/3R4/8/8/8 w - - 0 1",
-        knight: "8/8/8/8/3N4/8/8/8 w - - 0 1",
+        rook: "4k3/8/8/8/3R4/8/8/4K3 w - - 0 1",
+        knight: "4k3/8/8/8/3N4/8/8/4K3 w - - 0 1",
       };
-      const moveFen = fenMap[pq.pieceKind] ?? `8/8/8/8/3${pieceChar}4/8/8/8 w - - 0 1`;
+      const moveFen = fenMap[pq.pieceKind] ?? `4k3/8/8/8/3${pieceChar}4/8/8/4K3 w - - 0 1`;
       return {
         mode: "multi-select" as const,
         fen: moveFen,
